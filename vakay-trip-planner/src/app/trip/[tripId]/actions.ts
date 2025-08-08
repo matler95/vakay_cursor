@@ -4,48 +4,134 @@
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
-import { z } from 'zod';
 import { redirect } from 'next/navigation';
-import { createClient } from '@supabase/supabase-js';
+import { z } from 'zod';
+import { Database } from '@/types/database.types';
 
-// --- MODIFIED: The function now returns a 'status' in all paths ---
-export async function saveItineraryDay(prevState: any, formData: FormData) {
-  const supabase = createServerActionClient({ cookies });
+type ItineraryDay = Database['public']['Tables']['itinerary_days']['Row'];
 
-  const schema = z.object({
-    trip_id: z.string().uuid(),
-    date: z.string().date(),
-    notes: z.string().optional(),
-    location_1_id: z.string().optional(),
-    location_2_id: z.string().optional(),
+// Schema for validating itinerary day data
+const itineraryDaySchema = z.object({
+  date: z.string(),
+  trip_id: z.string(),
+  location_1_id: z.number().nullable(),
+  location_2_id: z.number().nullable(),
+  notes: z.string().nullable(),
+  summary: z.string().nullable(),
+});
+
+const saveItinerarySchema = z.object({
+  tripId: z.string(),
+  itineraryDays: z.array(itineraryDaySchema),
+});
+
+export async function saveItineraryChanges(prevState: { message: string }, formData: FormData) {
+  const supabase = createServerActionClient<Database>({ cookies });
+
+  // Check authentication
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (!user) {
+    return { message: 'You must be logged in to save itinerary changes.' };
+  }
+
+  // Parse and validate the form data
+  const tripId = formData.get('tripId');
+  const itineraryDaysJson = formData.get('itineraryDays');
+  
+  if (!tripId || !itineraryDaysJson || typeof tripId !== 'string' || typeof itineraryDaysJson !== 'string') {
+    return { message: 'Missing required data.' };
+  }
+
+  const tripIdStr = tripId as string;
+  const itineraryDaysJsonStr = itineraryDaysJson as string;
+
+  // Check if user has access to this trip
+  const { count } = await supabase
+    .from('trip_participants')
+    .select('*', { count: 'exact', head: true })
+    .eq('trip_id', tripIdStr)
+    .eq('user_id', user.id);
+
+  if (count === 0) {
+    return { message: 'You do not have permission to edit this trip.' };
+  }
+
+  let itineraryDays: ItineraryDay[];
+  try {
+    itineraryDays = JSON.parse(itineraryDaysJsonStr);
+  } catch (error) {
+    return { message: 'Invalid itinerary data format.' };
+  }
+
+  // Validate the data structure
+  const validation = saveItinerarySchema.safeParse({
+    tripId: tripIdStr,
+    itineraryDays,
   });
 
-  const validatedFields = schema.safeParse(Object.fromEntries(formData.entries()));
-
-  if (!validatedFields.success) {
-    return { status: 'error', message: 'Invalid data.' };
+  if (!validation.success) {
+    return { message: 'Invalid itinerary data.' };
   }
 
-  const location1Id = validatedFields.data.location_1_id ? Number(validatedFields.data.location_1_id) : null;
-  const location2Id = validatedFields.data.location_2_id ? Number(validatedFields.data.location_2_id) : null;
-  const { trip_id, date, notes } = validatedFields.data;
+  try {
+    // Start a transaction-like operation
+    const { error: upsertError } = await supabase
+      .from('itinerary_days')
+      .upsert(
+        itineraryDays.map(day => ({
+          trip_id: day.trip_id,
+          date: day.date,
+          location_1_id: day.location_1_id,
+          location_2_id: day.location_2_id,
+          notes: day.notes,
+          summary: day.summary,
+        })),
+        {
+          onConflict: 'trip_id,date',
+          ignoreDuplicates: false,
+        }
+      );
 
-  const { error } = await supabase.from('itinerary_days').upsert(
-    { trip_id, date, notes, location_1_id: location1Id, location_2_id: location2Id },
-    { onConflict: 'trip_id, date' }
-  );
+    if (upsertError) {
+      console.error('Save itinerary error:', upsertError);
+      return { message: `Failed to save itinerary: ${upsertError.message}` };
+    }
 
-  if (error) {
-    console.error('Upsert Error:', error);
-    return { status: 'error', message: `Failed to save day: ${error.message}` };
+    // Revalidate the trip page to show updated data
+    revalidatePath(`/trip/${tripIdStr}`);
+    
+    return { message: 'Itinerary saved successfully!' };
+  } catch (error) {
+    console.error('Unexpected error saving itinerary:', error);
+    return { message: 'An unexpected error occurred while saving the itinerary.' };
   }
-
-  revalidatePath(`/trip/${trip_id}`);
-  return { status: 'success', message: 'Saved!' };
 }
 
+// Helper function to delete itinerary days (for cleanup)
+export async function deleteItineraryDay(tripId: string, date: string) {
+  const supabase = createServerActionClient<Database>({ cookies });
 
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { message: 'You must be logged in to delete itinerary days.' };
+  }
 
+  const { error } = await supabase
+    .from('itinerary_days')
+    .delete()
+    .eq('trip_id', tripId)
+    .eq('date', date);
+
+  if (error) {
+    console.error('Delete itinerary day error:', error);
+    return { message: `Failed to delete itinerary day: ${error.message}` };
+  }
+
+  revalidatePath(`/trip/${tripId}`);
+  return { message: 'Itinerary day deleted successfully!' };
+}
+
+// Location management functions
 export async function addLocation(prevState: any, formData: FormData) {
   const supabase = createServerActionClient({ cookies });
 
@@ -115,10 +201,7 @@ export async function inviteUser(prevState: any, formData: FormData) {
   }
   
   // Create a special admin client to invite users
-  const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  const supabaseAdmin = createServerActionClient({ cookies });
 
   // Invite the user by email
   const { data: invitedUser, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email);

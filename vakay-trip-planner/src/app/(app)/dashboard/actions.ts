@@ -24,28 +24,33 @@ export async function createTrip(prevState: { message: string }, formData: FormD
 
   const schema = z.object({
     name: z.string().min(3, { message: 'Trip name must be at least 3 characters.' }),
+    destination: z.string().min(2, { message: 'Destination is required.' }),
     start_date: z.string().date(),
     end_date: z.string().date(),
   });
 
   const validatedFields = schema.safeParse({
     name: formData.get('name'),
+    destination: formData.get('destination'),
     start_date: formData.get('start_date'),
     end_date: formData.get('end_date'),
   });
 
   if (!validatedFields.success) {
     return {
-      message: validatedFields.error.flatten().fieldErrors.name?.[0] || 'Invalid data provided.',
+      message:
+        validatedFields.error.flatten().fieldErrors.name?.[0] ||
+        validatedFields.error.flatten().fieldErrors.destination?.[0] ||
+        'Invalid data provided.',
     };
   }
   
-  const { name, start_date, end_date } = validatedFields.data;
+  const { name, destination, start_date, end_date } = validatedFields.data;
 
   // 1. Insert the new trip into the 'trips' table
   const { data: trip, error: tripError } = await supabase
     .from('trips')
-    .insert({ name, start_date, end_date })
+    .insert({ name, destination, start_date, end_date })
     .select('id')
     .single();
 

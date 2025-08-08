@@ -32,6 +32,10 @@ export function CreateTripForm() {
             <Label htmlFor="name">Trip Name</Label>
             <Input id="name" name="name" placeholder="e.g., Summer in Italy" required />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="destination">Destination</Label>
+            <Input id="destination" name="destination" placeholder="e.g., Rome, Italy" required />
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="start_date">Start Date</Label>
