@@ -44,6 +44,39 @@ export async function updatePassword(prevState: any, formData: FormData) {
     if (updateProfileError) {
       return { message: `Could not update profile: ${updateProfileError.message}` };
     }
+
+    // --- NEW: Check for pending invitations and add to trips ---
+    // Get the user's email
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id, full_name')
+      .eq('id', user.id)
+      .single();
+    const userEmail = user.email;
+    if (userEmail) {
+      // Find all pending invitations for this email
+      const { data: pendingInvites } = await supabase
+        .from('pending_invitations')
+        .select('id, trip_id, role')
+        .eq('email', userEmail);
+      if (pendingInvites && pendingInvites.length > 0) {
+        // Add the user as a participant to each trip
+        for (const invite of pendingInvites) {
+          await supabase
+            .from('trip_participants')
+            .insert({
+              trip_id: invite.trip_id,
+              user_id: user.id,
+              role: invite.role || 'traveler',
+            });
+          // Delete the processed invitation
+          await supabase
+            .from('pending_invitations')
+            .delete()
+            .eq('id', invite.id);
+        }
+      }
+    }
   }
 
   // --- NEW: Redirect to the dashboard after success ---

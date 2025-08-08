@@ -1,7 +1,7 @@
 // src/app/_components/LoginForm.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 
@@ -13,6 +13,21 @@ export default function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Handle Supabase invite links with #access_token
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.hash) {
+      const hash = window.location.hash.substring(1);
+      const params = new URLSearchParams(hash);
+      const access_token = params.get('access_token');
+      const refresh_token = params.get('refresh_token');
+      if (access_token && refresh_token) {
+        supabase.auth.setSession({ access_token, refresh_token }).then(() => {
+          router.replace('/set-password');
+        });
+      }
+    }
+  }, [router]);
 
   const handleSignIn = async (event: React.FormEvent) => {
     event.preventDefault();
