@@ -46,11 +46,12 @@ function Switch({ checked, onCheckedChange, id, label, disabled }: { checked: bo
 }
 
 export function DayCard({ date, dayData, locations, isEditingCalendar, isSelected, selectionCount, onSelectDate, onUpdateDraft }: DayCardProps) {
-  const [isTransfer, setIsTransfer] = useState(!!dayData?.location_2_id);
-
   const locationsMap = new Map(locations.map((loc) => [loc.id, loc]));
   const location1 = dayData?.location_1_id ? (locationsMap.get(dayData.location_1_id) ?? null) : null;
   const location2 = dayData?.location_2_id ? (locationsMap.get(dayData.location_2_id) ?? null) : null;
+  
+  // Calculate isTransfer based on current data, not just initial state
+  const isTransfer = !!location2;
 
   // Unified color logic:
   let dayStyle: React.CSSProperties = {};
@@ -72,7 +73,7 @@ export function DayCard({ date, dayData, locations, isEditingCalendar, isSelecte
 
   return (
     <div
-      className={`relative flex flex-col p-3 min-h-40 rounded-xl transition-all duration-200 shadow-none border border-transparent
+      className={`relative flex flex-col p-3 min-h-40 rounded-xl transition-all duration-200 shadow-none border border-gray-100
         ${cardBgClass}
         ${isEditingCalendar ? 'cursor-pointer hover:scale-[1.02] hover:shadow-md hover:border-gray-200' : ''}
         ${isSelected ? 'ring-2 ring-blue-400 border-blue-200 shadow-lg' : ''}
@@ -151,9 +152,8 @@ export function DayCard({ date, dayData, locations, isEditingCalendar, isSelecte
     <Switch
       checked={isTransfer}
       onCheckedChange={checked => {
-        setIsTransfer(!!checked);
         if (!checked) {
-          // Optionally clear location_2_id in draft
+          // Clear location_2_id in draft when unchecking
           onUpdateDraft(dateStr, { location_2_id: null });
         }
       }}

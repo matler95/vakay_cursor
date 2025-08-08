@@ -2,6 +2,7 @@
 'use server';
 
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
@@ -182,6 +183,7 @@ export async function deleteLocation(locationId: number, tripId: string) {
 export async function inviteUser(prevState: any, formData: FormData) {
   const tripId = formData.get('trip_id') as string;
   const email = formData.get('email') as string;
+  const role = formData.get('role') as string || 'traveler';
 
   // Create a regular client to check the current user's permissions
   const supabase = createServerActionClient({ cookies });
@@ -199,32 +201,40 @@ export async function inviteUser(prevState: any, formData: FormData) {
   if (participant?.role !== 'admin') {
     return { message: 'You do not have permission to invite users.' };
   }
-  
-  // Create a special admin client to invite users
-  const supabaseAdmin = createServerActionClient({ cookies });
 
-  // Invite the user by email
-  const { data: invitedUser, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email);
-
-  if (inviteError) {
-    return { message: `Error inviting user: ${inviteError.message}` };
-  }
-
-  // Add the invited user to the trip_participants table
-  const { error: addError } = await supabase
-    .from('trip_participants')
-    .insert({
-      trip_id: tripId,
-      user_id: invitedUser.user.id,
-      role: 'traveler', // Invited users are travelers by default
+  try {
+    // Create a Supabase client with service role for admin operations
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    );
+    
+    // Use Supabase's built-in invitation system
+    const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+      data: {
+        trip_id: tripId,
+        role: role,
+        invited_by: user.id
+      }
     });
-  
-  if (addError) {
-    return { message: `Error adding user to trip: ${addError.message}` };
-  }
 
-  revalidatePath(`/trip/${tripId}`);
-  return { message: `Invitation sent to ${email}!` };
+    if (error) {
+      console.error('Invitation error:', error);
+      return { message: `Error sending invitation: ${error.message}` };
+    }
+
+    revalidatePath(`/trip/${tripId}`);
+    return { message: `Invitation sent to ${email}! Check your email for the invitation link.` };
+  } catch (error) {
+    console.error('Unexpected error:', error);
+    return { message: 'Failed to send invitation. Please try again.' };
+  }
 }
 
 export async function updateTripDetails(prevState: any, formData: FormData) {
@@ -328,4 +338,73 @@ export async function bulkUpdateDays(
 
   // 5. Revalidate the path to refresh the UI
   revalidatePath(`/trip/${tripId}`);
+}
+
+// --- ADD PARTICIPANT REMOVAL FUNCTIONS ---
+export async function removeParticipant(participantId: string, tripId: string) {
+  const supabase = createServerActionClient({ cookies });
+
+  // Security check: Verify the user is an admin of this trip
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { message: 'Not authenticated.' };
+
+  const { data: participant } = await supabase
+    .from('trip_participants')
+    .select('role')
+    .eq('trip_id', tripId)
+    .eq('user_id', user.id)
+    .single();
+
+  if (participant?.role !== 'admin') {
+    return { message: 'You do not have permission to remove participants from this trip.' };
+  }
+
+  // Remove the participant from the trip
+  const { error } = await supabase
+    .from('trip_participants')
+    .delete()
+    .eq('trip_id', tripId)
+    .eq('user_id', participantId);
+
+  if (error) {
+    console.error('Remove Participant Error:', error);
+    return { message: `Failed to remove participant: ${error.message}` };
+  }
+
+  revalidatePath(`/trip/${tripId}`);
+  return { message: 'Participant removed successfully!' };
+}
+
+export async function removeMultipleParticipants(participantIds: string[], tripId: string) {
+  const supabase = createServerActionClient({ cookies });
+
+  // Security check: Verify the user is an admin of this trip
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { message: 'Not authenticated.' };
+
+  const { data: participant } = await supabase
+    .from('trip_participants')
+    .select('role')
+    .eq('trip_id', tripId)
+    .eq('user_id', user.id)
+    .single();
+
+  if (participant?.role !== 'admin') {
+    return { message: 'You do not have permission to remove participants from this trip.' };
+  }
+
+  // Remove multiple participants from the trip
+  const { error } = await supabase
+    .from('trip_participants')
+    .delete()
+    .eq('trip_id', tripId)
+    .in('user_id', participantIds);
+
+  if (error) {
+    console.error('Remove Multiple Participants Error:', error);
+    return { message: `Failed to remove participants: ${error.message}` };
+  }
+
+  revalidatePath(`/trip/${tripId}`);
+  return { message: `${participantIds.length} participant(s) removed successfully!` };
 }

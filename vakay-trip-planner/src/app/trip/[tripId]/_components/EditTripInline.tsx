@@ -2,8 +2,12 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Database } from '@/types/database.types';
-import { EditTripForm } from './EditTripForm';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Settings } from 'lucide-react';
+import { EditTripModal } from './EditTripModal';
 
 type Trip = Database['public']['Tables']['trips']['Row'];
 
@@ -13,26 +17,45 @@ interface EditTripInlineProps {
 }
 
 export function EditTripInline({ trip, userRole }: EditTripInlineProps) {
-  const [isEditing, setIsEditing] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const router = useRouter();
 
   // Only admins can see the edit functionality
   if (userRole !== 'admin') {
     return null;
   }
 
-  if (isEditing) {
-    // If we are editing, show the form and pass a function to close it
-    return (
-      <div className="my-6 rounded-lg border bg-white p-6 shadow-sm">
-        <EditTripForm trip={trip} onCancel={() => setIsEditing(false)} onSuccess={() => setIsEditing(false)} />
-      </div>
-    );
-  }
+  const handleTripUpdated = () => {
+    // Refresh the page to get updated trip data
+    router.refresh();
+  };
 
-  // If not editing, just show the button
   return (
-    <button onClick={() => setIsEditing(true)} className="text-sm text-indigo-600 hover:text-indigo-800">
-      Edit Trip Details
-    </button>
+    <>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            onClick={() => setIsModalOpen(true)}
+            size="sm"
+            variant="outline"
+            className="h-8 px-3"
+          >
+            <Settings className="h-4 w-4 mr-1" />
+            Edit Trip
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Edit trip details</p>
+        </TooltipContent>
+      </Tooltip>
+
+      {/* Edit Trip Modal */}
+      <EditTripModal
+        trip={trip}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onTripUpdated={handleTripUpdated}
+      />
+    </>
   );
 }

@@ -2,11 +2,13 @@
 'use client';
 
 import { Database } from '@/types/database.types';
-// --- NEW: Import useState for managing the color selection ---
 import { useState } from 'react';
-import { useActionState } from 'react';
-import { useFormStatus } from 'react-dom';
-import { addLocation, deleteLocation } from '../actions';
+import { useRouter } from 'next/navigation';
+import { deleteLocation } from '../actions';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Plus, Trash2, AlertTriangle } from 'lucide-react';
+import { AddLocationModal } from './AddLocationModal';
 
 type Location = Database['public']['Tables']['locations']['Row'];
 
@@ -15,134 +17,257 @@ interface LocationManagerProps {
   locations: Location[];
 }
 
-// --- NEW: Define the array of preset colors ---
-const presetColors = [
-  { name: 'Red', hex: '#FF383C' }, { name: 'Orange', hex: '#FF8D28' },
-  { name: 'Yellow', hex: '#FFCC00' }, { name: 'Green', hex: '#34C759' },
-  { name: 'Mint', hex: '#00C8B3' }, { name: 'Teal', hex: '#00C3D0' },
-  { name: 'Cyan', hex: '#00C0E8' }, { name: 'Blue', hex: '#0088FF' },
-  { name: 'Indigo', hex: '#6155F5' }, { name: 'Purple', hex: '#CB30E0' },
-  { name: 'Pink', hex: '#FF2D55' }, { name: "Brown", hex: "#AC7F5E" }, { name: "Gray", hex: "#8E8E93" }
-];
-
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:opacity-50"
-    >
-      {pending ? 'Adding...' : 'Add Location'}
-    </button>
-  );
-}
-
 export function LocationManager({ tripId, locations }: LocationManagerProps) {
-  const [state, formAction] = useActionState(addLocation, { message: '' });
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteMode, setIsDeleteMode] = useState(false);
+  const [selectedLocations, setSelectedLocations] = useState<Set<string>>(new Set());
+  const [locationToDelete, setLocationToDelete] = useState<Location | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const router = useRouter();
 
-  // --- NEW: State to manage the selected color and custom picker visibility ---
-  const [selectedColor, setSelectedColor] = useState(presetColors[7].hex); // Default to Blue
-  const [isCustom, setIsCustom] = useState(false);
+  const handleLocationAdded = () => {
+    // Refresh the page to get updated locations
+    router.refresh();
+  };
+
+  const handleDeleteClick = (location: Location) => {
+    setLocationToDelete(location);
+  };
+
+  const handleBulkDeleteClick = () => {
+    if (selectedLocations.size > 0) {
+      setLocationToDelete({ id: -1, name: `${selectedLocations.size} locations`, color: '', trip_id: tripId } as Location);
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!locationToDelete) return;
+
+    setIsDeleting(true);
+
+    if (locationToDelete.id === -1) {
+      // Bulk delete
+      for (const locationId of selectedLocations) {
+        await deleteLocation(parseInt(locationId), tripId);
+      }
+      setSelectedLocations(new Set());
+      setIsDeleteMode(false);
+    } else {
+      // Single delete
+      await deleteLocation(locationToDelete.id, tripId);
+    }
+
+    setIsDeleting(false);
+    setLocationToDelete(null);
+    router.refresh();
+  };
+
+  const cancelDelete = () => {
+    setLocationToDelete(null);
+  };
+
+  const toggleDeleteMode = () => {
+    setIsDeleteMode(!isDeleteMode);
+    setSelectedLocations(new Set());
+  };
+
+  const toggleLocationSelection = (locationId: string) => {
+    const newSelected = new Set(selectedLocations);
+    if (newSelected.has(locationId)) {
+      newSelected.delete(locationId);
+    } else {
+      newSelected.add(locationId);
+    }
+    setSelectedLocations(newSelected);
+  };
+
+  const selectAll = () => {
+    setSelectedLocations(new Set(locations.map(loc => loc.id.toString())));
+  };
+
+  const deselectAll = () => {
+    setSelectedLocations(new Set());
+  };
 
   return (
-    <div className="mt-8 rounded-lg bg-white p-6 shadow-md">
-      <h2 className="text-xl font-semibold">Locations</h2>
-      <p className="mt-1 text-sm text-gray-500">Define places for your trip and give them a color.</p>
-      
-      <form action={formAction} className="mt-4 space-y-4">
-        <input type="hidden" name="trip_id" value={tripId} />
-        {/* This hidden input sends the actual selected color hex code to the server */}
-        <input type="hidden" name="color" value={selectedColor} />
-        
-        <div>
-          <label htmlFor="name" className="block text-sm font-medium text-gray-900">Location Name</label>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            required
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-            placeholder="e.g., Paris"
-          />
-        </div>
-
-        {/* --- NEW: The refined color selection UI --- */}
-        <div>
-          <label className="block text-sm font-medium text-gray-900">Color</label>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            {presetColors.map((color) => (
-              <button
-                type="button"
-                key={color.name}
-                onClick={() => {
-                  setSelectedColor(color.hex);
-                  setIsCustom(false);
-                }}
-                className={`h-8 w-8 rounded-full border-2 ${selectedColor === color.hex && !isCustom ? 'border-indigo-600' : 'border-transparent'}`}
-                style={{ backgroundColor: color.hex }}
-                aria-label={color.name}
-              />
-            ))}
-            {/* The "Custom" button */}
-            <button
-              type="button"
-              onClick={() => setIsCustom(true)}
-              className={`flex h-8 w-8 items-center justify-center rounded-full border-2 bg-gray-100 ${isCustom ? 'border-indigo-600' : 'border-transparent'}`}
-              aria-label="Custom Color"
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold">Locations</h2>
+        <div className="flex items-center gap-2">
+          {locations.length > 0 && (
+            <Button
+              onClick={toggleDeleteMode}
+              size="sm"
+              variant={isDeleteMode ? "destructive" : "outline"}
+              className="h-8 px-3"
             >
-              🎨
-            </button>
-            {/* The color picker, which only shows up if 'Custom' is selected */}
-            {isCustom && (
-              <input
-                type="color"
-                value={selectedColor}
-                onChange={(e) => setSelectedColor(e.target.value)}
-                className="h-10 w-14 cursor-pointer rounded-md border-gray-300 bg-white"
-              />
-            )}
+              <Trash2 className="h-4 w-4 mr-1" />
+              {isDeleteMode ? 'Cancel' : 'Delete'}
+            </Button>
+          )}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={() => setIsModalOpen(true)}
+                size="sm"
+                className="h-8 w-8 p-0"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Add locations</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      </div>
+
+      {/* Floating toolbar - appears when selections are made */}
+      {isDeleteMode && selectedLocations.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40">
+          <div className="bg-white rounded-xl shadow-2xl border border-gray-200 px-4 py-3 flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-red-600" />
+              <span className="text-sm font-medium text-gray-900">
+                {selectedLocations.size} location{selectedLocations.size !== 1 ? 's' : ''} selected
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={selectAll}
+                size="sm"
+                variant="outline"
+                className="h-7 px-2 text-xs"
+              >
+                Select All
+              </Button>
+              <Button
+                onClick={deselectAll}
+                size="sm"
+                variant="outline"
+                className="h-7 px-2 text-xs"
+              >
+                Clear
+              </Button>
+              <Button
+                onClick={handleBulkDeleteClick}
+                size="sm"
+                variant="destructive"
+                className="h-7 px-3 text-xs"
+              >
+                Delete Selected
+              </Button>
+            </div>
           </div>
         </div>
-        
-        <div className="flex justify-end">
-          <SubmitButton />
-        </div>
-      </form>
-      {state?.message && <p className="mt-2 text-sm text-green-600">{state.message}</p>}
+      )}
 
       {/* List of existing locations */}
-      <div className="mt-6 space-y-2">
-        <h3 className="text-md font-semibold">Defined Locations:</h3>
+      <div className="space-y-2">
         {locations.length > 0 ? (
-          <ul className="divide-y divide-gray-200">
-            {locations.map((loc) => (
-              <li key={loc.id} className="flex items-center justify-between py-2">
+          <div className="space-y-2">
+            {locations.map((location) => (
+              <div
+                key={location.id}
+                className={`flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors ${
+                  isDeleteMode && selectedLocations.has(location.id.toString()) 
+                    ? 'bg-red-50 border-red-200' 
+                    : ''
+                }`}
+              >
                 <div className="flex items-center gap-3">
+                  {isDeleteMode && (
+                    <input
+                      type="checkbox"
+                      checked={selectedLocations.has(location.id.toString())}
+                      onChange={() => toggleLocationSelection(location.id.toString())}
+                      className="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
+                    />
+                  )}
                   <div
-                    className="h-6 w-6 flex-shrink-0 rounded-full border"
-                    style={{ backgroundColor: loc.color }}
-                  ></div>
-                  <span className="font-medium">{loc.name}</span>
+                    className="h-6 w-6 rounded-full border border-gray-200"
+                    style={{ backgroundColor: location.color }}
+                  />
+                  <span className="font-medium text-gray-900">{location.name}</span>
                 </div>
 
-                {/* --- NEW: Delete button form --- */}
-                <form action={deleteLocation.bind(null, loc.id, tripId)}>
-                  <button
-                    type="submit"
-                    className="text-xs text-red-500 hover:text-red-700"
-                    aria-label={`Delete ${loc.name}`}
-                  >
-                    Remove
-                  </button>
-                </form>
-              </li>
+                {!isDeleteMode && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        onClick={() => handleDeleteClick(location)}
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-gray-400 hover:text-red-500 hover:bg-red-50"
+                        aria-label={`Delete ${location.name}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Delete {location.name}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
             ))}
-          </ul>
+          </div>
         ) : (
-          <p className="text-sm text-gray-500">No locations defined yet.</p>
+          <div className="text-center py-8 text-gray-500">
+            <p className="text-sm">No locations defined yet.</p>
+            <p className="text-xs mt-1">Click the + button to add your first location.</p>
+          </div>
         )}
       </div>
+
+      {/* Add Location Modal */}
+      <AddLocationModal
+        tripId={tripId}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onLocationAdded={handleLocationAdded}
+      />
+
+      {/* Delete Confirmation Modal */}
+      {locationToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6 border border-gray-200">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex-shrink-0">
+                <AlertTriangle className="h-6 w-6 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Delete Location{locationToDelete.id === -1 ? 's' : ''}</h3>
+                <p className="text-sm text-gray-600">
+                  {locationToDelete.id === -1 
+                    ? `Are you sure you want to delete ${selectedLocations.size} location${selectedLocations.size !== 1 ? 's' : ''}? This action cannot be undone.`
+                    : `Are you sure you want to delete "${locationToDelete.name}"? This action cannot be undone.`
+                  }
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button
+                onClick={cancelDelete}
+                variant="outline"
+                className="flex-1"
+                disabled={isDeleting}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={confirmDelete}
+                variant="destructive"
+                className="flex-1"
+                disabled={isDeleting}
+              >
+                {isDeleting ? 'Deleting...' : 'Delete'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
