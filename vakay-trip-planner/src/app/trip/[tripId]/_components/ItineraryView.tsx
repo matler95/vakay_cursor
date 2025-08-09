@@ -200,12 +200,10 @@ export function ItineraryView({ trip, itineraryDays, locations }: ItineraryViewP
                   {viewMode === 'calendar' ? (
                     <>
                       <List className="h-4 w-4" />
-                      <span className="hidden sm:inline">List</span>
                     </>
                   ) : (
                     <>
                       <Calendar className="h-4 w-4" />
-                      <span className="hidden sm:inline">Calendar</span>
                     </>
                   )}
                 </Button>

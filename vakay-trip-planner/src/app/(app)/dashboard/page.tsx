@@ -31,15 +31,17 @@ export default async function Dashboard() {
           <h2 className="text-2xl font-bold text-gray-900">Your Trips</h2>
           <p className="text-gray-600">Select a trip to view its itinerary or create a new one.</p>
         </div>
+  
+        {/* Align CreateTripModal to the right */}
         <CreateTripModal />
       </div>
-
-      <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+  
+      <div>
         <TripList trips={trips} />
       </div>
     </div>
   );
-}
+  }
 
 // Add the Trip type definition here for clarity
 type Trip = Database['public']['Tables']['trips']['Row'];

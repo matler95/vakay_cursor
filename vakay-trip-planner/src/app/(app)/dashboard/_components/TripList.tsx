@@ -80,7 +80,7 @@ export function TripList({ trips }: TripListProps) {
               </div>
 
               {trip.user_role === 'admin' && (
-                <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                <div className="flex items-center gap-1">
                   <form id={`delete-form-${trip.id}`} action={deleteTrip.bind(null, trip.id)}>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -88,7 +88,7 @@ export function TripList({ trips }: TripListProps) {
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-gray-500 hover:text-red-600 hover:bg-red-50"
+                          className="h-8 w-8 text-gray-400 hover:text-red-500 hover:bg-red-50"
                           onClick={() => setPendingDeleteId(trip.id)}
                           aria-label="Delete trip"
                         >
