@@ -52,10 +52,29 @@ export default async function TripPage({ params }: TripPageProps) {
     .eq('trip_id', tripId)
     .order('name');
 
-  const { data: participants } = await supabase
+  // FIX: Fetch participants and their profiles in two steps to avoid join issues
+  const { data: participantRows } = await supabase
     .from('trip_participants')
-    .select('role, profiles!user_id(id, full_name)')
+    .select('user_id, role')
     .eq('trip_id', tripId);
+
+  let participants: Participant[] = [];
+  if (participantRows && participantRows.length > 0) {
+    const userIds = participantRows.map((p) => p.user_id);
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, full_name')
+      .in('id', userIds);
+
+    const profileMap = new Map((profiles || []).map((p) => [p.id, p.full_name]));
+    participants = participantRows.map((p) => ({
+      role: p.role,
+      profiles: {
+        id: p.user_id,
+        full_name: profileMap.get(p.user_id) ?? null,
+      },
+    }));
+  }
   
   const { data: participantRole } = await supabase
     .from('trip_participants')
@@ -117,7 +136,7 @@ export default async function TripPage({ params }: TripPageProps) {
           <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
             <span className="inline-block w-5 h-5 bg-blue-500 rounded-full text-white flex items-center justify-center font-bold text-base">👥</span> Participants
           </h2>
-          <ParticipantManager tripId={trip.id} participants={participants as any || []} />
+          <ParticipantManager tripId={trip.id} participants={participants as any || []} currentUserRole={participantRole?.role || null} />
         </div>
       </div>
     </div>

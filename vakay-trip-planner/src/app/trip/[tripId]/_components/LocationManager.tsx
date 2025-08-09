@@ -248,20 +248,10 @@ export function LocationManager({ tripId, locations }: LocationManagerProps) {
             </div>
 
             <div className="flex gap-3 pt-4">
-              <Button
-                onClick={cancelDelete}
-                variant="outline"
-                className="flex-1"
-                disabled={isDeleting}
-              >
+              <Button onClick={cancelDelete} variant="outline" className="flex-1" disabled={isDeleting}>
                 Cancel
               </Button>
-              <Button
-                onClick={confirmDelete}
-                variant="destructive"
-                className="flex-1"
-                disabled={isDeleting}
-              >
+              <Button onClick={confirmDelete} variant="destructive" className="flex-1" disabled={isDeleting}>
                 {isDeleting ? 'Deleting...' : 'Delete'}
               </Button>
             </div>

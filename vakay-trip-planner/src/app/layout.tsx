@@ -2,6 +2,7 @@
 import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans"; // Import the font
 import "./globals.css";
+import TopNav from "./_components/TopNav";
 
 export const metadata: Metadata = {
   title: "VAKAY Trip Planner",
@@ -16,7 +17,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       {/* Apply the font class to the body */}
-      <body className={GeistSans.className}>{children}</body>
+      <body className={GeistSans.className}>
+        <TopNav />
+        {children}
+      </body>
     </html>
   );
 }

@@ -5,7 +5,7 @@ import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { updatePassword } from '../actions';
 
-function SubmitButton() {
+function DefaultSubmitButton() {
   const { pending } = useFormStatus();
   return (
     <button type="submit" disabled={pending} className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:opacity-50">
@@ -14,8 +14,14 @@ function SubmitButton() {
   );
 }
 
-export function UpdatePasswordForm() {
+type UpdatePasswordFormProps = {
+  // Optional custom renderer for action buttons inside the form
+  renderActions?: (pending: boolean) => React.ReactNode;
+};
+
+export function UpdatePasswordForm({ renderActions }: UpdatePasswordFormProps) {
   const [state, formAction] = useActionState(updatePassword, { message: '' });
+  const { pending } = useFormStatus();
 
   return (
     <form action={formAction} className="space-y-4">
@@ -27,10 +33,14 @@ export function UpdatePasswordForm() {
         <label htmlFor="password-confirm" className="block text-sm font-medium leading-6 text-gray-900">Confirm New Password</label>
         <input id="password-confirm" name="confirmPassword" type="password" required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
       </div>
-      <div className="flex justify-end items-center gap-4">
-        {state.message && <p className="text-sm text-gray-600">{state.message}</p>}
-        <SubmitButton />
-      </div>
+      {state.message && <p className="text-sm text-gray-600">{state.message}</p>}
+      {renderActions ? (
+        <div className="mt-4">{renderActions(pending)}</div>
+      ) : (
+        <div className="flex justify-end items-center gap-4">
+          <DefaultSubmitButton />
+        </div>
+      )}
     </form>
   );
 }

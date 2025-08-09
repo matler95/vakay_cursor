@@ -204,20 +204,11 @@ export function AddLocationModal({ tripId, isOpen, onClose, onLocationAdded }: A
           )}
 
           <div className="flex gap-3 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              className="flex-1"
-            >
+            <Button type="button" variant="outline" className="flex-1" onClick={onClose} disabled={isSubmitting}>
               Cancel
             </Button>
-            <Button
-              type="submit"
-              disabled={isSubmitting || locations.every(loc => loc.name.trim() === '')}
-              className="flex-1"
-            >
-              {isSubmitting ? 'Adding...' : `Add ${locations.filter(loc => loc.name.trim() !== '').length} Location${locations.filter(loc => loc.name.trim() !== '').length !== 1 ? 's' : ''}`}
+            <Button type="submit" className="flex-1" disabled={isSubmitting || locations.every(loc => loc.name.trim() === '')}>
+              {isSubmitting ? 'Saving...' : `Save ${locations.filter(loc => loc.name.trim() !== '').length} Location${locations.filter(loc => loc.name.trim() !== '').length !== 1 ? 's' : ''}`}
             </Button>
           </div>
         </form>

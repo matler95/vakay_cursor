@@ -21,9 +21,10 @@ export type Participant = {
 interface ParticipantManagerProps {
   tripId: string;
   participants: Participant[];
+  currentUserRole: string | null;
 }
 
-export function ParticipantManager({ tripId, participants }: ParticipantManagerProps) {
+export function ParticipantManager({ tripId, participants, currentUserRole }: ParticipantManagerProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
   const [selectedParticipants, setSelectedParticipants] = useState<Set<string>>(new Set());
@@ -31,16 +32,19 @@ export function ParticipantManager({ tripId, participants }: ParticipantManagerP
   const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
 
+  const isAdmin = currentUserRole === 'admin';
+
   const handleParticipantAdded = () => {
-    // Refresh the page to get updated participants
     router.refresh();
   };
 
   const handleDeleteClick = (participant: Participant) => {
+    if (!isAdmin) return;
     setParticipantToDelete(participant);
   };
 
   const handleBulkDeleteClick = () => {
+    if (!isAdmin) return;
     if (selectedParticipants.size > 0) {
       setParticipantToDelete({ 
         role: 'traveler', 
@@ -53,13 +57,12 @@ export function ParticipantManager({ tripId, participants }: ParticipantManagerP
   };
 
   const confirmDelete = async () => {
-    if (!participantToDelete) return;
+    if (!participantToDelete || !isAdmin) return;
 
     setIsDeleting(true);
 
     try {
       if (participantToDelete.profiles.id === '-1') {
-        // Bulk delete
         const result = await removeMultipleParticipants(Array.from(selectedParticipants), tripId);
         if (result?.message) {
           console.log(result.message);
@@ -67,7 +70,6 @@ export function ParticipantManager({ tripId, participants }: ParticipantManagerP
         setSelectedParticipants(new Set());
         setIsDeleteMode(false);
       } else {
-        // Single delete
         const result = await removeParticipant(participantToDelete.profiles.id, tripId);
         if (result?.message) {
           console.log(result.message);
@@ -87,6 +89,7 @@ export function ParticipantManager({ tripId, participants }: ParticipantManagerP
   };
 
   const toggleDeleteMode = () => {
+    if (!isAdmin) return;
     setIsDeleteMode(!isDeleteMode);
     setSelectedParticipants(new Set());
   };
@@ -134,7 +137,7 @@ export function ParticipantManager({ tripId, participants }: ParticipantManagerP
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">Participants</h2>
         <div className="flex items-center gap-2">
-          {participants.length > 0 && (
+          {isAdmin && participants.length > 0 && (
             <Button
               onClick={toggleDeleteMode}
               size="sm"
@@ -163,7 +166,7 @@ export function ParticipantManager({ tripId, participants }: ParticipantManagerP
       </div>
 
       {/* Floating toolbar - appears when selections are made */}
-      {isDeleteMode && selectedParticipants.size > 0 && (
+      {isAdmin && isDeleteMode && selectedParticipants.size > 0 && (
         <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40">
           <div className="bg-white rounded-xl shadow-2xl border border-gray-200 px-4 py-3 flex items-center gap-4">
             <div className="flex items-center gap-2">
@@ -210,13 +213,13 @@ export function ParticipantManager({ tripId, participants }: ParticipantManagerP
               <div
                 key={participant.profiles?.id}
                 className={`flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors ${
-                  isDeleteMode && selectedParticipants.has(participant.profiles.id) 
+                  isAdmin && isDeleteMode && selectedParticipants.has(participant.profiles.id) 
                     ? 'bg-red-50 border-red-200' 
                     : ''
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  {isDeleteMode && (
+                  {isAdmin && isDeleteMode && (
                     <input
                       type="checkbox"
                       checked={selectedParticipants.has(participant.profiles.id)}
@@ -234,7 +237,7 @@ export function ParticipantManager({ tripId, participants }: ParticipantManagerP
                   <span className="text-sm text-gray-500 capitalize">
                     {getRoleLabel(participant.role)}
                   </span>
-                  {!isDeleteMode && (
+                  {isAdmin && !isDeleteMode && (
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
@@ -272,8 +275,8 @@ export function ParticipantManager({ tripId, participants }: ParticipantManagerP
         onParticipantAdded={handleParticipantAdded}
       />
 
-      {/* Delete Confirmation Modal */}
-      {participantToDelete && (
+      {/* Delete Confirmation Modal (admins only) */}
+      {isAdmin && participantToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6 border border-gray-200">
             <div className="flex items-center gap-3 mb-4">

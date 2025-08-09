@@ -92,9 +92,9 @@ export default function LoginForm() {
 
   if (view === 'message-sent') {
     return (
-        <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-8">
-            <div className="w-full max-w-md text-center">
-            <h1 className="text-2xl font-bold text-gray-800">Check your inbox!</h1>
+        <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-6">
+            <div className="w-full max-w-md text-center rounded-xl border border-gray-100 bg-white p-8 shadow-sm">
+            <h1 className="text-2xl font-bold text-gray-900">Check your inbox!</h1>
             <p className="mt-2 text-gray-600">{message}</p>
             </div>
         </main>
@@ -102,37 +102,37 @@ export default function LoginForm() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-8">
-      <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-md">
-        <h1 className="text-2xl font-bold text-center text-gray-800">VAKAY</h1>
-        <p className="mt-2 text-center text-gray-500">
+    <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-6">
+      <div className="w-full max-w-md rounded-xl border border-gray-100 bg-white p-8 shadow-sm">
+        <h1 className="text-2xl font-bold text-center text-gray-900">VAKAY</h1>
+        <p className="mt-2 text-center text-gray-600">
           {view === 'sign-in' ? 'Welcome back! Sign in to your account.' : 'Sign up or sign in with a magic link.'}
         </p>
 
         {view === 'sign-in' ? (
           <form onSubmit={handleSignIn} className="mt-8 space-y-4">
-            <input type="email" name="email" placeholder="Email" required value={email} onChange={e => setEmail(e.target.value)} className="relative block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm" />
-            <input type="password" name="password" placeholder="Password" required value={password} onChange={e => setPassword(e.target.value)} className="relative block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm" />
-            <button type="submit" disabled={loading} className="group relative flex w-full justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50">
+            <input type="email" name="email" placeholder="Email" required value={email} onChange={e => setEmail(e.target.value)} className="relative block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm" />
+            <input type="password" name="password" placeholder="Password" required value={password} onChange={e => setPassword(e.target.value)} className="relative block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm" />
+            <button type="submit" disabled={loading} className="group relative flex w-full justify-center rounded-md border border-transparent bg-blue-600 py-2 px-4 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50">
               {loading ? 'Signing In...' : 'Sign In'}
             </button>
             <div className="text-center text-sm">
-                <a href="#" onClick={(e) => { e.preventDefault(); handleForgotPassword(); }} className="font-medium text-indigo-600 hover:text-indigo-500">Forgot your password?</a>
+                <a href="#" onClick={(e) => { e.preventDefault(); handleForgotPassword(); }} className="font-medium text-blue-600 hover:text-blue-500">Forgot your password?</a>
             </div>
             <p className="text-center text-sm">
               Don't have an account?{' '}
-              <a href="#" onClick={(e) => { e.preventDefault(); setView('magic-link'); setError(null); }} className="font-medium text-indigo-600 hover:text-indigo-500">Sign up with a magic link</a>
+              <a href="#" onClick={(e) => { e.preventDefault(); setView('magic-link'); setError(null); }} className="font-medium text-blue-600 hover:text-blue-500">Sign up with a magic link</a>
             </p>
           </form>
         ) : (
           <form onSubmit={handleMagicLink} className="mt-8 space-y-4">
-            <input type="email" name="email" placeholder="Email" required value={email} onChange={e => setEmail(e.target.value)} className="relative block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm" />
-            <button type="submit" disabled={loading} className="group relative flex w-full justify-center rounded-md border border-transparent bg-gray-600 py-2 px-4 text-sm font-medium text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50">
+            <input type="email" name="email" placeholder="Email" required value={email} onChange={e => setEmail(e.target.value)} className="relative block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm" />
+            <button type="submit" disabled={loading} className="group relative flex w-full justify-center rounded-md border border-transparent bg-gray-700 py-2 px-4 text-sm font-medium text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50">
               {loading ? 'Sending...' : 'Send Magic Link'}
             </button>
             <p className="text-center text-sm">
               Already have an account?{' '}
-              <a href="#" onClick={(e) => { e.preventDefault(); setView('sign-in'); setError(null); }} className="font-medium text-indigo-600 hover:text-indigo-500">Sign in with password</a>
+              <a href="#" onClick={(e) => { e.preventDefault(); setView('sign-in'); setError(null); }} className="font-medium text-blue-600 hover:text-blue-500">Sign in with password</a>
             </p>
           </form>
         )}
