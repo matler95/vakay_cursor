@@ -7,6 +7,7 @@ import { ItineraryView } from './_components/ItineraryView';
 import { LocationManager } from './_components/LocationManager';
 import { ParticipantManager } from './_components/ParticipantManager';
 import { EditTripInline } from './_components/EditTripInline';
+import { TripNavigation } from './_components/TripNavigation';
 import { type Participant } from './_components/ParticipantManager';
 import { Calendar, MapPin } from 'lucide-react';
 
@@ -149,6 +150,9 @@ export default async function TripPage({ params }: TripPageProps) {
           </div>
         </div>
       </div>
+
+      {/* Trip Navigation */}
+      <TripNavigation tripId={trip.id} />
 
       {/* Calendar Container */}
       <div className="mb-4 sm:mb-8 rounded-xl sm:rounded-2xl bg-white shadow p-3 sm:p-6">
