@@ -121,7 +121,14 @@ export function AddLocationModal({ tripId, isOpen, onClose, onLocationAdded }: A
           </button>
         </div>
 
-        <form action={handleSubmit} className="space-y-4">
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.currentTarget);
+            await handleSubmit(formData);
+          }}
+          className="space-y-4"
+        >
           <div className="space-y-4">
             {locations.map((location, index) => (
               <div key={location.id} className="flex items-start gap-3 p-4 border border-gray-200 rounded-lg bg-gray-50">

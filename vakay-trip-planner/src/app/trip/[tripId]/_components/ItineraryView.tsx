@@ -11,6 +11,7 @@ import { Pencil, CheckCircle, AlertCircle, X } from 'lucide-react';
 import { BulkActionPanel } from './BulkActionPanel';
 import { saveItineraryChanges } from '../actions';
 import { useActionState } from 'react';
+import { Spinner } from '@/components/ui/spinner';
 
 type Trip = Database['public']['Tables']['trips']['Row'];
 type ItineraryDay = Database['public']['Tables']['itinerary_days']['Row'];
@@ -173,9 +174,9 @@ export function ItineraryView({ trip, itineraryDays, locations }: ItineraryViewP
                 Cancel
               </Button>
               <Button onClick={handleSave} disabled={isPending} className="bg-green-600 hover:bg-green-700">
-                {isPending ? (
+              {isPending ? <Spinner size={18} className="mr-2" /> : null}
+              {isPending ? (
                   <>
-                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
                     Saving...
                   </>
                 ) : (
@@ -259,26 +260,24 @@ export function ItineraryView({ trip, itineraryDays, locations }: ItineraryViewP
         })}
       </div>
 
-      {/* Fixed info area under calendar */}
-      <div style={{ minHeight: 72 }} className="w-full flex flex-col justify-center">
-        {isEditing && selectedDates.size > 1 ? (
-          <>
-            <BulkActionPanel
-              selectedCount={selectedDates.size}
-              locations={locations}
-              onBulkUpdate={handleBulkUpdate}
-              onClearSelection={handleClearSelection}
-            />
-            <div className="mb-2 p-2 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
-              ⚠️ <strong>Multiple Days Selected:</strong> Individual editing is disabled for selected days. Use the bulk actions above to edit all selected days at once.
-            </div>
-          </>
-        ) : isEditing ? (
+      {/* Info area under calendar */}
+      <div className="w-full flex flex-col justify-center">
+        {isEditing && selectedDates.size === 0 ? (
           <div className="mb-2 p-2 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
             💡 <strong>Edit Mode:</strong> Edit individual days below, or click on multiple days to use bulk editing.
           </div>
         ) : null}
       </div>
+
+      {/* Floating Bulk Action Panel */}
+      {isEditing && selectedDates.size > 1 && (
+        <BulkActionPanel
+          selectedCount={selectedDates.size}
+          locations={locations}
+          onBulkUpdate={handleBulkUpdate}
+          onClearSelection={handleClearSelection}
+        />
+      )}
     </div>
   );
 }
