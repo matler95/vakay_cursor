@@ -217,7 +217,14 @@ export function AddParticipantModal({ tripId, isOpen, onClose, onParticipantAdde
               disabled={isSubmitting || participants.every(p => p.email.trim() === '')}
               className="flex-1"
             >
-              {isSubmitting ? 'Sending...' : `Send ${participants.filter(p => p.email.trim() !== '').length} Invite${participants.filter(p => p.email.trim() !== '').length !== 1 ? 's' : ''}`}
+              {isSubmitting ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                  Sending...
+                </>
+              ) : (
+                `Send ${participants.filter(p => p.email.trim() !== '').length} Invite${participants.filter(p => p.email.trim() !== '').length !== 1 ? 's' : ''}`
+              )}
             </Button>
           </div>
         </form>

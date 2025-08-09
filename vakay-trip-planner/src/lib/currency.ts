@@ -36,6 +36,7 @@ export const CURRENCIES: CurrencyInfo[] = [
   { code: 'RUB', name: 'Russian Ruble', symbol: '₽' },
   { code: 'KRW', name: 'South Korean Won', symbol: '₩' },
   { code: 'TRY', name: 'Turkish Lira', symbol: '₺' },
+  { code: 'THB', name: 'Thai Baht', symbol: '฿' },
 ];
 
 /**

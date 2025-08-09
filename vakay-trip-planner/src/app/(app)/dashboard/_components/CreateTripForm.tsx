@@ -13,7 +13,14 @@ function SubmitButton() {
   const { pending } = useFormStatus();
   return (
     <Button type="submit" disabled={pending} className="w-full">
-      {pending ? 'Creating...' : 'Create Trip'}
+      {pending ? (
+        <>
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+          Creating...
+        </>
+      ) : (
+        'Create Trip'
+      )}
     </Button>
   );
 }

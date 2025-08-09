@@ -4,7 +4,6 @@ import { Database } from '@/types/database.types';
 import { useState, useEffect } from 'react';
 import { updateTripDetails } from '../actions';
 import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { X } from 'lucide-react';
@@ -146,7 +145,7 @@ export function EditTripModal({ trip, isOpen, onClose, onTripUpdated }: EditTrip
             >
               {isSubmitting ? (
                 <>
-                  <Spinner size={18} className="mr-2" />
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
                   Saving...
                 </>
               ) : (

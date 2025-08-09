@@ -12,7 +12,7 @@ import { Pencil, CheckCircle, AlertCircle, X, Calendar, List } from 'lucide-reac
 import { BulkActionPanel } from './BulkActionPanel';
 import { saveItineraryChanges } from '../actions';
 import { useActionState } from 'react';
-import { Spinner } from '@/components/ui/spinner';
+
 
 type Trip = Database['public']['Tables']['trips']['Row'];
 type ItineraryDay = Database['public']['Tables']['itinerary_days']['Row'];
@@ -220,7 +220,7 @@ export function ItineraryView({ trip, itineraryDays, locations }: ItineraryViewP
                 Cancel
               </Button>
               <Button onClick={handleSave} disabled={isPending} className="flex-1">
-              {isPending ? <Spinner size={18} className="mr-2" /> : null}
+              {isPending ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" /> : null}
               {isPending ? (
                   <>
                     Saving...

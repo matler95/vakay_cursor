@@ -42,6 +42,8 @@ interface ExpenseViewProps {
   addExpenseAction: (prevState: unknown, formData: FormData) => Promise<{ message?: string }>;
   updateExpenseStatusAction: (prevState: unknown, formData: FormData) => Promise<{ message?: string }>;
   updateTripMainCurrencyAction: (prevState: unknown, formData: FormData) => Promise<{ message?: string }>;
+  deleteExpenseAction: (prevState: unknown, formData: FormData) => Promise<{ message?: string }>;
+  updateExpenseAction: (prevState: unknown, formData: FormData) => Promise<{ message?: string }>;
 }
 
 export function ExpenseView({ 
@@ -50,10 +52,12 @@ export function ExpenseView({
   categories, 
   tripParticipants, 
   userRole, 
-  currentUserId,
-  addExpenseAction,
-  updateExpenseStatusAction,
-  updateTripMainCurrencyAction
+  currentUserId, 
+  addExpenseAction, 
+  updateExpenseStatusAction, 
+  updateTripMainCurrencyAction,
+  deleteExpenseAction,
+  updateExpenseAction
 }: ExpenseViewProps) {
   const [isAddExpenseModalOpen, setIsAddExpenseModalOpen] = useState(false);
   const [isCurrencySettingsModalOpen, setIsCurrencySettingsModalOpen] = useState(false);
@@ -116,6 +120,8 @@ export function ExpenseView({
         mainCurrency={trip.main_currency || 'USD'}
         onExpenseUpdated={refreshData}
         updateExpenseStatusAction={updateExpenseStatusAction}
+        deleteExpenseAction={deleteExpenseAction}
+        updateExpenseAction={updateExpenseAction}
       />
 
       {/* Modals */}

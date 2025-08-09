@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Plus, Trash2, AlertTriangle, User, Crown, CopyCheck, X, UsersRound } from 'lucide-react';
 import { AddParticipantModal } from './AddParticipantModal';
-import { Spinner } from '@/components/ui/spinner';
+
 
 export type Participant = {
   role: string | null;
@@ -326,7 +326,7 @@ export function ParticipantManager({ tripId, participants, currentUserRole }: Pa
                 className="flex-1"
                 disabled={isDeleting}
               >
-                {isDeleting ? <Spinner size={18} className="mr-2" /> : null}
+                {isDeleting ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" /> : null}
                 {isDeleting ? 'Removing...' : 'Remove'}
               </Button>
             </div>

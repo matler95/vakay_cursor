@@ -7,7 +7,6 @@ import { Modal } from '@/components/ui/modal';
 import { AlertTriangle } from 'lucide-react';
 import { useActionState } from 'react';
 import { deleteAccount } from '../actions';
-import { Spinner } from '@/components/ui/spinner';
 import { useFormStatus } from 'react-dom';
 
 export function DeleteAccountModal() {
@@ -19,7 +18,7 @@ export function DeleteAccountModal() {
     const { pending } = useFormStatus();
     return (
       <Button type="submit" variant="destructive" className="flex-1" disabled={pending || disabled}>
-        {pending ? <Spinner size={18} className="mr-2" /> : null}
+        {pending ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" /> : null}
         {pending ? 'Deleting...' : 'Delete'}
       </Button>
     );

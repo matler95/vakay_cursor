@@ -42,6 +42,8 @@ interface ExpensesListProps {
   mainCurrency: string;
   onExpenseUpdated: () => void;
   updateExpenseStatusAction: (prevState: unknown, formData: FormData) => Promise<{ message?: string }>;
+  deleteExpenseAction: (prevState: unknown, formData: FormData) => Promise<{ message?: string }>;
+  updateExpenseAction: (prevState: unknown, formData: FormData) => Promise<{ message?: string }>;
 }
 
 export function ExpensesList({ 
@@ -53,7 +55,9 @@ export function ExpensesList({
   currentUserId, 
   mainCurrency,
   onExpenseUpdated,
-  updateExpenseStatusAction
+  updateExpenseStatusAction,
+  deleteExpenseAction,
+  updateExpenseAction
 }: ExpensesListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
@@ -453,10 +457,7 @@ export function ExpensesList({
             setDeleteExpense(null);
             onExpenseUpdated();
           }}
-          deleteExpenseAction={async (_prevState: unknown, _formData: FormData) => {
-            // We'll pass this through the server action - placeholder for now
-            return { message: 'success: Expense deleted successfully' };
-          }}
+          deleteExpenseAction={deleteExpenseAction}
         />
       )}
 
@@ -470,10 +471,7 @@ export function ExpensesList({
             setEditExpense(null);
             onExpenseUpdated();
           }}
-          updateExpenseAction={async (_prevState: unknown, _formData: FormData) => {
-            // We'll pass this through the server action - placeholder for now
-            return { message: 'success: Expense updated successfully' };
-          }}
+          updateExpenseAction={updateExpenseAction}
         />
       )}
     </div>

@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation';
 import { Database } from '@/types/database.types';
 import { ExpenseView } from './_components/ExpenseView';
 import { TripNavigation } from '../_components/TripNavigation';
-import { addExpense, updateExpenseStatus, updateTripMainCurrency } from './actions';
+import { addExpense, updateExpenseStatus, updateTripMainCurrency, deleteExpense, updateExpense } from './actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -114,6 +114,8 @@ export default async function ExpensePage({ params }: ExpensePageProps) {
         addExpenseAction={addExpense}
         updateExpenseStatusAction={updateExpenseStatus}
         updateTripMainCurrencyAction={updateTripMainCurrency}
+        deleteExpenseAction={deleteExpense}
+        updateExpenseAction={updateExpense}
       />
     </div>
   );
