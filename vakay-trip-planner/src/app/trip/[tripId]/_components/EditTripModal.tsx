@@ -1,10 +1,10 @@
 'use client';
 
 import { Database } from '@/types/database.types';
-import { useState, useEffect } from 'react';
-import { useActionState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { updateTripDetails } from '../actions';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { X } from 'lucide-react';
@@ -19,16 +19,45 @@ interface EditTripModalProps {
 }
 
 export function EditTripModal({ trip, isOpen, onClose, onTripUpdated }: EditTripModalProps) {
-  const [state, formAction] = useActionState(updateTripDetails, { message: '', status: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Watch for successful state changes
-  useEffect(() => {
-    if (state?.status === 'success') {
-      // Success - close modal and refresh trip data
-      onTripUpdated();
-      onClose();
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    
+    console.log('Form submission started, setting isSubmitting to true');
+    setIsSubmitting(true);
+    setError(null);
+    
+    const formData = new FormData(event.currentTarget);
+    
+    try {
+      // Add a longer delay to ensure the spinner shows
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      const result = await updateTripDetails(null, formData);
+      
+      if (result.status === 'success') {
+        onClose();
+        onTripUpdated();
+      } else {
+        setError(result.message || 'Failed to update trip');
+      }
+    } catch (err) {
+      setError('An unexpected error occurred');
+    } finally {
+      console.log('Form submission finished, setting isSubmitting to false');
+      setIsSubmitting(false);
     }
-  }, [state, onTripUpdated, onClose]);
+  };
+
+  // Clear error when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setError(null);
+      setIsSubmitting(false);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -40,12 +69,13 @@ export function EditTripModal({ trip, isOpen, onClose, onTripUpdated }: EditTrip
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
+            disabled={isSubmitting}
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <form action={formAction} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <input type="hidden" name="trip_id" value={trip.id} />
           
           <div className="space-y-2">
@@ -55,6 +85,7 @@ export function EditTripModal({ trip, isOpen, onClose, onTripUpdated }: EditTrip
               name="name"
               defaultValue={trip.name}
               required
+              disabled={isSubmitting}
             />
           </div>
 
@@ -65,6 +96,7 @@ export function EditTripModal({ trip, isOpen, onClose, onTripUpdated }: EditTrip
               name="destination"
               defaultValue={trip.destination || ''}
               placeholder="e.g., Rome, Italy"
+              disabled={isSubmitting}
             />
           </div>
 
@@ -77,6 +109,7 @@ export function EditTripModal({ trip, isOpen, onClose, onTripUpdated }: EditTrip
                 type="date"
                 defaultValue={trip.start_date || ''}
                 required
+                disabled={isSubmitting}
               />
             </div>
             <div className="space-y-2">
@@ -87,13 +120,14 @@ export function EditTripModal({ trip, isOpen, onClose, onTripUpdated }: EditTrip
                 type="date"
                 defaultValue={trip.end_date || ''}
                 required
+                disabled={isSubmitting}
               />
             </div>
           </div>
 
-          {state?.message && (
-            <p className={`text-sm ${state.status === 'error' ? 'text-red-600' : 'text-green-600'}`}>
-              {state.message}
+          {error && (
+            <p className="text-sm text-red-600">
+              {error}
             </p>
           )}
 
@@ -103,15 +137,23 @@ export function EditTripModal({ trip, isOpen, onClose, onTripUpdated }: EditTrip
               variant="outline"
               onClick={onClose}
               className="flex-1"
+              disabled={isSubmitting}
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              disabled={false}
+              disabled={isSubmitting}
               className="flex-1"
             >
-              Save Changes
+              {isSubmitting ? (
+                <>
+                  <Spinner size={18} className="mr-2" />
+                  Saving...
+                </>
+              ) : (
+                'Save Changes'
+              )}
             </Button>
           </div>
         </form>
