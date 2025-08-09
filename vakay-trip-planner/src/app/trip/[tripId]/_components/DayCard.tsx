@@ -4,7 +4,7 @@ import { Database } from '@/types/database.types';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 type ItineraryDay = Database['public']['Tables']['itinerary_days']['Row'];
 type Location = Database['public']['Tables']['locations']['Row'];
@@ -50,8 +50,12 @@ export function DayCard({ date, dayData, locations, isEditingCalendar, isSelecte
   const location1 = dayData?.location_1_id ? (locationsMap.get(dayData.location_1_id) ?? null) : null;
   const location2 = dayData?.location_2_id ? (locationsMap.get(dayData.location_2_id) ?? null) : null;
   
-  // Calculate isTransfer based on current data, not just initial state
+  // Calculate isTransfer based on current data (for coloring), but keep a local UI state to allow enabling before a value is chosen
   const isTransfer = !!location2;
+  const [transferEnabled, setTransferEnabled] = useState<boolean>(!!dayData?.location_2_id);
+  useEffect(() => {
+    setTransferEnabled(!!dayData?.location_2_id);
+  }, [dayData?.location_2_id]);
 
   // Unified color logic:
   let dayStyle: React.CSSProperties = {};
@@ -98,7 +102,7 @@ export function DayCard({ date, dayData, locations, isEditingCalendar, isSelecte
           <div className={`text-xs ${textColor} opacity-60 font-light`}>{date.toLocaleDateString('en-US', { weekday: 'short' })}</div>
         </div>
         
-                {showEditOptions ? (
+        {showEditOptions ? (
   <div className={`mt-1 space-y-2 relative${isDisabled ? ' opacity-40 pointer-events-none bg-gray-50 bg-opacity-30 rounded-sm' : ''}`} style={{ minHeight: 110 }} onClick={(e) => e.stopPropagation()}>
     <Select
       name="location_1_id"
@@ -114,20 +118,20 @@ export function DayCard({ date, dayData, locations, isEditingCalendar, isSelecte
       </SelectContent>
     </Select>
 
-    {/* Always reserve space for the second select, but hide it if not transfer */}
+    {/* Always reserve space for the second select, but hide it if not transferEnabled */}
     <div style={{ minHeight: 32, position: 'relative' }}>
       <Select
         name="location_2_id"
         value={dayData?.location_2_id?.toString() || ''}
         onValueChange={value => onUpdateDraft(dateStr, { location_2_id: value ? Number(value) : null })}
-        disabled={isDisabled || !isTransfer}
+        disabled={isDisabled || !transferEnabled}
         >
           <SelectTrigger
-            className={`h-7 text-xs ${isDisabled || !isTransfer ? 'bg-gray-100' : ''}`}
+            className={`h-7 text-xs ${isDisabled || !transferEnabled ? 'bg-gray-100' : ''}`}
             style={{
-              opacity: isTransfer ? 1 : 0,
-              pointerEvents: isTransfer ? 'auto' : 'none',
-              position: isTransfer ? 'static' : 'absolute',
+              opacity: transferEnabled ? 1 : 0,
+              pointerEvents: transferEnabled ? 'auto' : 'none',
+              position: transferEnabled ? 'static' : 'absolute',
               top: 0, left: 0, width: '100%',
               transition: 'opacity 0.2s',
             }}
@@ -150,8 +154,9 @@ export function DayCard({ date, dayData, locations, isEditingCalendar, isSelecte
       disabled={isDisabled}
     />
     <Switch
-      checked={isTransfer}
+      checked={transferEnabled}
       onCheckedChange={checked => {
+        setTransferEnabled(checked);
         if (!checked) {
           // Clear location_2_id in draft when unchecking
           onUpdateDraft(dateStr, { location_2_id: null });
