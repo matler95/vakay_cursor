@@ -4,7 +4,7 @@
 import { Database } from '@/types/database.types';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { X, MapPin } from 'lucide-react';
+
 
 type Location = Database['public']['Tables']['locations']['Row'];
 
@@ -26,19 +26,19 @@ export function BulkActionPanel({ selectedCount, locations, onBulkUpdate, onClea
     });
   };
 
-  return (
-    <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
-      <div className="bg-white rounded-full shadow-lg border border-gray-200 px-6 py-3 flex items-center gap-4">
-        <div className="flex items-center gap-2">
+    return (
+    <div className="fixed bottom-4 sm:bottom-6 left-1/2 transform -translate-x-1/2 z-50">
+      <div className="bg-white rounded-full shadow-lg border border-gray-200 px-4 sm:px-6 py-2 sm:py-3 flex items-center gap-2 sm:gap-4 max-w-[calc(100vw-2rem)]">
+        <div className="flex items-center gap-1 sm:gap-2">
           <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-          <span className="text-sm font-medium text-gray-900">
+          <span className="text-xs sm:text-sm font-medium text-gray-900 whitespace-nowrap">
             {selectedCount} day{selectedCount !== 1 ? 's' : ''} selected
           </span>
         </div>
         
         <div className="flex items-center gap-2">
           <Select onValueChange={handleLocationChange}>
-            <SelectTrigger className="w-[180px] bg-gray-50 border-gray-200 h-8">
+            <SelectTrigger className="w-[120px] sm:w-[180px] bg-gray-50 border-gray-200 h-7 sm:h-8 text-xs">
               <SelectValue placeholder="Set location..." />
             </SelectTrigger>
             <SelectContent>
@@ -61,11 +61,10 @@ export function BulkActionPanel({ selectedCount, locations, onBulkUpdate, onClea
           onClick={onClearSelection}
           size="sm"
           variant="outline"
-          className="h-7 px-2 text-xs"
+          className="h-7 px-2 text-xs whitespace-nowrap"
           >
           Done
-          {/* <X className="h-4 w-4" /> */}
-          </Button>
+        </Button>
       </div>
     </div>
   );

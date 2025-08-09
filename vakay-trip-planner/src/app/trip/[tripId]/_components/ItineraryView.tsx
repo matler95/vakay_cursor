@@ -4,10 +4,11 @@
 import { getDatesInRange } from '@/lib/dateUtils';
 import { Database } from '@/types/database.types';
 import { DayCard } from './DayCard';
+import { ListView } from './ListView';
 import { useState, useEffect, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Pencil, CheckCircle, AlertCircle, X } from 'lucide-react';
+import { Pencil, CheckCircle, AlertCircle, X, Calendar, List } from 'lucide-react';
 import { BulkActionPanel } from './BulkActionPanel';
 import { saveItineraryChanges } from '../actions';
 import { useActionState } from 'react';
@@ -30,11 +31,30 @@ export function ItineraryView({ trip, itineraryDays, locations }: ItineraryViewP
   const [isPending, startTransition] = useTransition();
   const [state, formAction] = useActionState(saveItineraryChanges, { message: '' });
   const [showMessage, setShowMessage] = useState(false);
+  const [viewMode, setViewMode] = useState<'calendar' | 'list'>('list'); // Default to list on mobile
 
   useEffect(() => {
     const initialMap = new Map(itineraryDays.map(day => [day.date, day]));
     setDraftItinerary(initialMap);
   }, [itineraryDays]);
+
+  // Set default view mode based on screen size
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) { // md breakpoint
+        setViewMode('calendar');
+      } else {
+        setViewMode('list');
+      }
+    };
+
+    // Set initial view mode
+    handleResize();
+
+    // Add event listener
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Auto-dismiss status messages after 3 seconds
   useEffect(() => {
@@ -168,6 +188,34 @@ export function ItineraryView({ trip, itineraryDays, locations }: ItineraryViewP
         </div>
         
         <div className="flex items-center gap-2">
+          {/* View Toggle Button */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setViewMode(viewMode === 'calendar' ? 'list' : 'calendar')}
+                  className="hidden md:flex items-center gap-2"
+                >
+                  {viewMode === 'calendar' ? (
+                    <>
+                      <List className="h-4 w-4" />
+                      <span className="hidden sm:inline">List</span>
+                    </>
+                  ) : (
+                    <>
+                      <Calendar className="h-4 w-4" />
+                      <span className="hidden sm:inline">Calendar</span>
+                    </>
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Switch to {viewMode === 'calendar' ? 'list' : 'calendar'} view</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
           {isEditing ? (
             <>
               <Button variant="outline" onClick={handleCancel} disabled={isPending}>
@@ -229,35 +277,51 @@ export function ItineraryView({ trip, itineraryDays, locations }: ItineraryViewP
         </div>
       )}
       
-      {/* Month indicator above weekdays */}
-      <div className="w-full flex justify-center mb-4">
-        <span className="text-base font-normal text-gray-400">
-          {monthLabel}
-        </span>
-      </div>
-      {/* Calendar grid */}
-      <div className="grid grid-cols-7 gap-2 rounded-2xl bg-transparent text-sm overflow-hidden">
-        {Array.from({ length: emptyCells }).map((_, i) => (
-          <div key={`empty-${i}`} className="min-h-40"></div>
-        ))}
-        {tripDates.map((date) => {
-          const dateStr = date.toISOString().split('T')[0];
-          const dayData = draftItinerary.get(dateStr);
-          return (
-            <DayCard
-              key={dateStr}
-              date={date}
-              dayData={dayData}
-              locations={locations}
-              isEditingCalendar={isEditing}
-              isSelected={selectedDates.has(dateStr)}
-              selectionCount={selectedDates.size}
-              onSelectDate={() => handleSelectDate(dateStr)}
-              onUpdateDraft={handleUpdateDraft}
-            />
-          );
-        })}
-      </div>
+      {/* View Content */}
+      {viewMode === 'calendar' ? (
+        <>
+          {/* Month indicator above weekdays */}
+          <div className="w-full flex justify-center mb-4">
+            <span className="text-base font-normal text-gray-400">
+              {monthLabel}
+            </span>
+          </div>
+          {/* Calendar grid */}
+          <div className="grid grid-cols-7 gap-1 sm:gap-2 rounded-xl sm:rounded-2xl bg-transparent text-xs sm:text-sm overflow-hidden">
+            {Array.from({ length: emptyCells }).map((_, i) => (
+              <div key={`empty-${i}`} className="min-h-32 sm:min-h-40"></div>
+            ))}
+            {tripDates.map((date) => {
+              const dateStr = date.toISOString().split('T')[0];
+              const dayData = draftItinerary.get(dateStr);
+              return (
+                <DayCard
+                  key={dateStr}
+                  date={date}
+                  dayData={dayData}
+                  locations={locations}
+                  isEditingCalendar={isEditing}
+                  isSelected={selectedDates.has(dateStr)}
+                  selectionCount={selectedDates.size}
+                  onSelectDate={() => handleSelectDate(dateStr)}
+                  onUpdateDraft={handleUpdateDraft}
+                />
+              );
+            })}
+          </div>
+        </>
+      ) : (
+        /* List view */
+        <ListView
+          tripDates={tripDates}
+          draftItinerary={draftItinerary}
+          locations={locations}
+          isEditingCalendar={isEditing}
+          selectedDates={selectedDates}
+          onSelectDate={handleSelectDate}
+          onUpdateDraft={handleUpdateDraft}
+        />
+      )}
 
       {/* Info area under calendar */}
       <div className="w-full flex flex-col justify-center">

@@ -90,26 +90,25 @@ export default async function TripPage({ params }: TripPageProps) {
   const dateRange = startDate && endDate ? `${startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : '';
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-8 py-4 sm:py-8 bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
       {/* Modern Trip Header */}
-      {/* <div className="mb-8 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-100 shadow-lg p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-6"> */}
-      <div className="mb-8 rounded-2xl shadow p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-6 bg-white">
+      <div className="mb-4 sm:mb-8 rounded-xl sm:rounded-2xl shadow p-4 sm:p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 sm:gap-6 bg-white">
         <div className="flex-1 min-w-0">
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-2 flex items-center gap-3">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 mb-2 flex items-center gap-2 sm:gap-3">
             {trip.name}
           </h1>
-          <div className="flex items-center gap-4 text-gray-600 text-base flex-wrap">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-gray-600 text-sm sm:text-base">
             <span className="flex items-center gap-1">
-              <Calendar className="h-5 w-5 text-blue-500" />
+              <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500" />
               {dateRange}
             </span>
             {trip.destination && (
               <span className="flex items-center gap-1">
-                <MapPin className="h-5 w-5 text-pink-500" />
+                <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-pink-500" />
                 {trip.destination}
               </span>
             )}
-            <span className="flex items-center gap-1 bg-blue-100 text-blue-700 font-semibold px-3 py-1 rounded-full text-sm">
+            <span className="flex items-center gap-1 bg-blue-100 text-blue-700 font-semibold px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm w-fit">
               {totalDays} days
             </span>
           </div>
@@ -120,22 +119,16 @@ export default async function TripPage({ params }: TripPageProps) {
       </div>
 
       {/* Calendar Container */}
-      <div className="mb-8 rounded-2xl bg-white shadow p-6">
+      <div className="mb-4 sm:mb-8 rounded-xl sm:rounded-2xl bg-white shadow p-3 sm:p-6">
         <ItineraryView trip={trip} itineraryDays={itineraryDays || []} locations={locations || []} />
       </div>
 
       {/* Locations & Participants Side-by-Side */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="rounded-2xl bg-white shadow p-6 min-h-[300px] flex flex-col">
-          {/* <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-pink-500" /> Locations
-          </h2> */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8">
+        <div className="rounded-xl sm:rounded-2xl bg-white shadow p-4 sm:p-6 min-h-[250px] sm:min-h-[300px] flex flex-col">
           <LocationManager tripId={trip.id} locations={locations || []} />
         </div>
-        <div className="rounded-2xl bg-white shadow p-6 min-h-[300px] flex flex-col">
-          {/* <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-            <span className="inline-block w-5 h-5 bg-blue-500 rounded-full text-white flex items-center justify-center font-bold text-base">👥</span> Participants
-          </h2> */}
+        <div className="rounded-xl sm:rounded-2xl bg-white shadow p-4 sm:p-6 min-h-[250px] sm:min-h-[300px] flex flex-col">
           <ParticipantManager tripId={trip.id} participants={participants || []} currentUserRole={participantRole?.role || null} />
         </div>
       </div>

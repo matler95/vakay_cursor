@@ -136,10 +136,10 @@ export function ParticipantManager({ tripId, participants, currentUserRole }: Pa
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-          <UsersRound className="h-5 w-5 text-blue-600"/> Participants
+          <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+          <UsersRound className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600"/> Participants
           </h2>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           {isAdmin && participants.length > 0 && (
           <Tooltip>
             <TooltipTrigger asChild>
@@ -147,12 +147,11 @@ export function ParticipantManager({ tripId, participants, currentUserRole }: Pa
                 onClick={toggleDeleteMode}
                 size="sm"
                 variant="outline"
-                className="h-8 w-8 px-3"
+                className="h-7 w-7 sm:h-8 sm:w-8 px-2 sm:px-3"
               >
-                {/* <CopyCheck className="h-4 w-4 mr-1" /> */}
                 {isDeleteMode ? 
-                <X className="h-4 w-4"/>:
-                <CopyCheck className="h-4 w-4"/>}
+                <X className="h-3 w-3 sm:h-4 sm:w-4"/>:
+                <CopyCheck className="h-3 w-3 sm:h-4 sm:w-4"/>}
               </Button>
               </TooltipTrigger>
             <TooltipContent>
@@ -169,9 +168,9 @@ export function ParticipantManager({ tripId, participants, currentUserRole }: Pa
               <Button
                 onClick={() => setIsModalOpen(true)}
                 size="sm"
-                className="h-8 w-8 p-0"
+                className="h-7 w-7 sm:h-8 sm:w-8 p-0"
               >
-                <Plus className="h-4 w-4" />
+                <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>
@@ -183,28 +182,28 @@ export function ParticipantManager({ tripId, participants, currentUserRole }: Pa
 
       {/* Floating toolbar - appears when selections are made */}
       {isAdmin && isDeleteMode && selectedParticipants.size > 0 && (
-        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40">
-          <div className="bg-white rounded-xl shadow-2xl border border-gray-200 px-4 py-3 flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-red-600" />
-              <span className="text-sm font-medium text-gray-900">
+        <div className="fixed bottom-4 sm:bottom-6 left-1/2 transform -translate-x-1/2 z-40">
+          <div className="bg-white rounded-xl shadow-2xl border border-gray-200 px-3 sm:px-4 py-2 sm:py-3 flex items-center gap-2 sm:gap-4 max-w-[calc(100vw-2rem)]">
+            <div className="flex items-center gap-1 sm:gap-2">
+              <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4 text-red-600" />
+              <span className="text-xs sm:text-sm font-medium text-gray-900 whitespace-nowrap">
                 {selectedParticipants.size} participant{selectedParticipants.size !== 1 ? 's' : ''} selected
               </span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
               <Button
                 onClick={selectAll}
                 size="sm"
                 variant="outline"
-                className="h-7 px-2 text-xs"
+                className="h-6 sm:h-7 px-1 sm:px-2 text-xs"
               >
-                Select All
+                All
               </Button>
               <Button
                 onClick={deselectAll}
                 size="sm"
                 variant="outline"
-                className="h-7 px-2 text-xs"
+                className="h-6 sm:h-7 px-1 sm:px-2 text-xs"
               >
                 Clear
               </Button>
@@ -212,9 +211,9 @@ export function ParticipantManager({ tripId, participants, currentUserRole }: Pa
                 onClick={handleBulkDeleteClick}
                 size="sm"
                 variant="destructive"
-                className="h-7 px-3 text-xs"
+                className="h-6 sm:h-7 px-2 sm:px-3 text-xs"
               >
-                Remove Selected
+                Remove
               </Button>
             </div>
           </div>
@@ -228,13 +227,13 @@ export function ParticipantManager({ tripId, participants, currentUserRole }: Pa
             {participants.map((participant) => (
               <div
                 key={participant.profiles?.id}
-                className={`flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors ${
+                className={`flex items-center justify-between p-2 sm:p-3 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors ${
                   isAdmin && isDeleteMode && selectedParticipants.has(participant.profiles.id) 
                     ? 'bg-red-50 border-red-200' 
                     : ''
                 }`}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-3">
                   {isAdmin && isDeleteMode && (
                     <input
                       type="checkbox"
@@ -243,14 +242,16 @@ export function ParticipantManager({ tripId, participants, currentUserRole }: Pa
                       className="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
                     />
                   )}
-                  {getRoleIcon(participant.role)}
-                  <span className="font-medium text-gray-900">
+                  <div className="scale-75 sm:scale-100">
+                    {getRoleIcon(participant.role)}
+                  </div>
+                  <span className="font-medium text-gray-900 text-sm sm:text-base">
                     {participant.profiles?.full_name || 'New User'}
                   </span>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <span className="text-sm text-gray-500 capitalize">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <span className="text-xs sm:text-sm text-gray-500 capitalize">
                     {getRoleLabel(participant.role)}
                   </span>
                   {isAdmin && !isDeleteMode && (
@@ -260,10 +261,10 @@ export function ParticipantManager({ tripId, participants, currentUserRole }: Pa
                           onClick={() => handleDeleteClick(participant)}
                           variant="ghost"
                           size="sm"
-                          className="h-8 w-8 p-0 text-gray-400 hover:text-red-500 hover:bg-red-50"
+                          className="h-7 w-7 sm:h-8 sm:w-8 p-0 text-gray-400 hover:text-red-500 hover:bg-red-50"
                           aria-label={`Remove ${participant.profiles?.full_name || 'participant'}`}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>

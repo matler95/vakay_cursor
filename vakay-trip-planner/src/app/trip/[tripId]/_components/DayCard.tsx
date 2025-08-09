@@ -18,6 +18,7 @@ interface DayCardProps {
   selectionCount: number;
   onSelectDate: () => void;
   onUpdateDraft: (dateStr: string, updatedValues: Partial<ItineraryDay>) => void;
+  isListView?: boolean;
 }
 
 // Add a simple Switch component
@@ -45,7 +46,7 @@ function Switch({ checked, onCheckedChange, id, label, disabled }: { checked: bo
   );
 }
 
-export function DayCard({ date, dayData, locations, isEditingCalendar, isSelected, selectionCount, onSelectDate, onUpdateDraft }: DayCardProps) {
+export function DayCard({ date, dayData, locations, isEditingCalendar, isSelected, selectionCount, onSelectDate, onUpdateDraft, isListView = false }: DayCardProps) {
   const locationsMap = new Map(locations.map((loc) => [loc.id, loc]));
   const location1 = dayData?.location_1_id ? (locationsMap.get(dayData.location_1_id) ?? null) : null;
   const location2 = dayData?.location_2_id ? (locationsMap.get(dayData.location_2_id) ?? null) : null;
@@ -75,7 +76,7 @@ export function DayCard({ date, dayData, locations, isEditingCalendar, isSelecte
 
   return (
     <div
-      className={`relative flex flex-col p-3 min-h-40 rounded-xl transition-all duration-200 shadow-none border border-gray-100
+      className={`relative flex flex-col ${isListView ? 'p-3 sm:p-4 min-h-0' : 'p-2 sm:p-3 min-h-32 sm:min-h-40'} rounded-lg sm:rounded-xl transition-all duration-200 shadow-none border border-gray-100
         ${cardBgClass}
         ${isEditingCalendar ? 'cursor-pointer hover:scale-[1.02] hover:shadow-md hover:border-gray-200' : ''}
         ${isSelected ? 'ring-2 ring-blue-400 border-blue-200 shadow-lg' : ''}
@@ -84,31 +85,37 @@ export function DayCard({ date, dayData, locations, isEditingCalendar, isSelecte
     >
       {/* Selection Checkbox - moved to top left to avoid overlap */}
       {isEditingCalendar && (
-        <div className="absolute top-2 left-2 z-10" onClick={(e) => e.stopPropagation()}>
+        <div className="absolute top-1 left-1 sm:top-2 sm:left-2 z-10" onClick={(e) => e.stopPropagation()}>
           <Checkbox 
             checked={isSelected} 
             onCheckedChange={onSelectDate}
-            className="data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+            className="data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500 scale-75 sm:scale-100"
           />
         </div>
       )}
       
       <div onClick={isEditingCalendar ? onSelectDate : undefined} className="flex-grow">
         {/* Date Header - adjusted spacing for checkbox */}
-        <div className={`flex items-center justify-between mb-2 ${isEditingCalendar ? 'ml-6' : ''}`}>
-          <time dateTime={date.toISOString()} className={`font-semibold text-lg ${textColor}`}>{date.getUTCDate()}</time>
-          <div className={`text-xs ${textColor} opacity-60 font-light`}>{date.toLocaleDateString('en-US', { weekday: 'short' })}</div>
+        <div className={`flex items-center justify-between mb-1 sm:mb-2 ${isEditingCalendar ? 'ml-5 sm:ml-6' : ''}`}>
+          <div className="flex items-center gap-2">
+            <time dateTime={date.toISOString()} className={`font-semibold ${isListView ? 'text-lg sm:text-xl' : 'text-base sm:text-lg'} ${textColor}`}>
+              {isListView ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : date.getUTCDate()}
+            </time>
+            <div className={`${isListView ? 'text-sm' : 'text-xs'} ${textColor} opacity-60 font-light`}>
+              {isListView ? date.toLocaleDateString('en-US', { weekday: 'long' }) : date.toLocaleDateString('en-US', { weekday: 'short' })}
+            </div>
+          </div>
         </div>
         
         {showEditOptions ? (
-  <div className={`mt-1 space-y-2 relative${isDisabled ? ' opacity-40 pointer-events-none bg-gray-50 bg-opacity-30 rounded-sm' : ''}`} style={{ minHeight: 110 }} onClick={(e) => e.stopPropagation()}>
+  <div className={`mt-1 space-y-1 sm:space-y-2 relative${isDisabled ? ' opacity-40 pointer-events-none bg-gray-50 bg-opacity-30 rounded-sm' : ''}`} style={{ minHeight: '80px' }} onClick={(e) => e.stopPropagation()}>
     <Select
       name="location_1_id"
       value={dayData?.location_1_id?.toString() || ''}
       onValueChange={(value) => onUpdateDraft(dateStr, { location_1_id: value ? Number(value) : null })}
       disabled={isDisabled}
     >
-      <SelectTrigger className={`h-7 text-xs ${isDisabled ? 'bg-gray-100' : ''}`}>
+      <SelectTrigger className={`h-6 sm:h-7 text-xs ${isDisabled ? 'bg-gray-100' : ''}`}>
         <SelectValue placeholder="Location" />
       </SelectTrigger>
       <SelectContent>
@@ -117,7 +124,7 @@ export function DayCard({ date, dayData, locations, isEditingCalendar, isSelecte
     </Select>
 
     {/* Always reserve space for the second select, but hide it if not transferEnabled */}
-    <div style={{ minHeight: 32, position: 'relative' }}>
+    <div style={{ minHeight: '24px', position: 'relative' }}>
       <Select
         name="location_2_id"
         value={dayData?.location_2_id?.toString() || ''}
@@ -125,7 +132,7 @@ export function DayCard({ date, dayData, locations, isEditingCalendar, isSelecte
         disabled={isDisabled || !transferEnabled}
         >
           <SelectTrigger
-            className={`h-7 text-xs ${isDisabled || !transferEnabled ? 'bg-gray-100' : ''}`}
+            className={`h-6 sm:h-7 text-xs ${isDisabled || !transferEnabled ? 'bg-gray-100' : ''}`}
             style={{
               opacity: transferEnabled ? 1 : 0,
               pointerEvents: transferEnabled ? 'auto' : 'none',
@@ -148,7 +155,7 @@ export function DayCard({ date, dayData, locations, isEditingCalendar, isSelecte
       value={dayData?.notes || ''}
       onChange={(e) => onUpdateDraft(dateStr, { notes: e.target.value })}
       className={`text-xs resize-none ${isDisabled ? 'bg-gray-100' : ''}`} 
-      rows={2}
+      rows={1}
       disabled={isDisabled}
     />
     <Switch

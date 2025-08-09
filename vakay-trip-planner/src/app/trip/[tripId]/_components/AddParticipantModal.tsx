@@ -1,7 +1,7 @@
 'use client';
 
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { inviteUser } from '../actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -53,7 +53,7 @@ export function AddParticipantModal({ tripId, isOpen, onClose, onParticipantAdde
     ));
   };
 
-  const handleSubmit = async (formData: FormData) => {
+  const handleSubmit = async () => {
     setIsSubmitting(true);
     setMessage('');
     
@@ -95,23 +95,29 @@ export function AddParticipantModal({ tripId, isOpen, onClose, onParticipantAdde
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 p-6 border border-gray-200 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold">Invite Participants</h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20 p-4">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl p-4 sm:p-6 border border-gray-200 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
+          <h2 className="text-lg sm:text-xl font-semibold">Invite Participants</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4 sm:h-5 sm:w-5" />
           </button>
         </div>
 
-        <form action={handleSubmit} className="space-y-4">
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            await handleSubmit();
+          }}
+          className="space-y-4"
+        >
           <div className="space-y-4">
             {participants.map((participant, index) => (
-              <div key={participant.id} className="flex items-start gap-3 p-4 border border-gray-200 rounded-lg bg-gray-50">
-                <div className="flex-grow space-y-3">
+              <div key={participant.id} className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 border border-gray-200 rounded-lg bg-gray-50">
+                <div className="flex-grow space-y-2 sm:space-y-3">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-gray-600">Participant {index + 1}</span>
                     {participants.length > 1 && (
@@ -120,7 +126,7 @@ export function AddParticipantModal({ tripId, isOpen, onClose, onParticipantAdde
                         variant="ghost"
                         size="sm"
                         onClick={() => removeParticipantEntry(participant.id)}
-                        className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                        className="h-5 w-5 sm:h-6 sm:w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
                       >
                         <Trash2 className="h-3 w-3" />
                       </Button>
