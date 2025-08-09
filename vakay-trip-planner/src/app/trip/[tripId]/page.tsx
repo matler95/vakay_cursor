@@ -90,9 +90,10 @@ export default async function TripPage({ params }: TripPageProps) {
   const dateRange = startDate && endDate ? `${startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : '';
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Modern Trip Header */}
-      <div className="mb-8 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-100 shadow-lg p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+      {/* <div className="mb-8 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-100 shadow-lg p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-6"> */}
+      <div className="mb-8 rounded-2xl shadow p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-6 bg-white">
         <div className="flex-1 min-w-0">
           <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-2 flex items-center gap-3">
             {trip.name}
@@ -119,22 +120,22 @@ export default async function TripPage({ params }: TripPageProps) {
       </div>
 
       {/* Calendar Container */}
-      <div className="mb-8 rounded-2xl bg-white shadow-lg p-6">
+      <div className="mb-8 rounded-2xl bg-white shadow p-6">
         <ItineraryView trip={trip} itineraryDays={itineraryDays || []} locations={locations || []} />
       </div>
 
       {/* Locations & Participants Side-by-Side */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="rounded-2xl bg-white shadow p-6 min-h-[300px] flex flex-col">
-          <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+          {/* <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
             <MapPin className="h-5 w-5 text-pink-500" /> Locations
-          </h2>
+          </h2> */}
           <LocationManager tripId={trip.id} locations={locations || []} />
         </div>
         <div className="rounded-2xl bg-white shadow p-6 min-h-[300px] flex flex-col">
-          <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+          {/* <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
             <span className="inline-block w-5 h-5 bg-blue-500 rounded-full text-white flex items-center justify-center font-bold text-base">👥</span> Participants
-          </h2>
+          </h2> */}
           <ParticipantManager tripId={trip.id} participants={participants || []} currentUserRole={participantRole?.role || null} />
         </div>
       </div>

@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { removeParticipant, removeMultipleParticipants } from '../actions';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Plus, Trash2, AlertTriangle, User, Crown } from 'lucide-react';
+import { Plus, Trash2, AlertTriangle, User, Crown, CopyCheck, X, UsersRound } from 'lucide-react';
 import { AddParticipantModal } from './AddParticipantModal';
 import { Spinner } from '@/components/ui/spinner';
 
@@ -136,19 +136,34 @@ export function ParticipantManager({ tripId, participants, currentUserRole }: Pa
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Participants</h2>
+          <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+          <UsersRound className="h-5 w-5 text-blue-600"/> Participants
+          </h2>
         <div className="flex items-center gap-2">
           {isAdmin && participants.length > 0 && (
-            <Button
-              onClick={toggleDeleteMode}
-              size="sm"
-              variant={isDeleteMode ? "destructive" : "outline"}
-              className="h-8 px-3"
-            >
-              <Trash2 className="h-4 w-4 mr-1" />
-              {isDeleteMode ? 'Cancel' : 'Remove'}
-            </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={toggleDeleteMode}
+                size="sm"
+                variant="outline"
+                className="h-8 w-8 px-3"
+              >
+                {/* <CopyCheck className="h-4 w-4 mr-1" /> */}
+                {isDeleteMode ? 
+                <X className="h-4 w-4"/>:
+                <CopyCheck className="h-4 w-4"/>}
+              </Button>
+              </TooltipTrigger>
+            <TooltipContent>
+              <p>{isDeleteMode ? 
+                'Cancel':
+                'Select participants'}
+              </p>
+            </TooltipContent>
+          </Tooltip>
           )}
+
           <Tooltip>
             <TooltipTrigger asChild>
               <Button

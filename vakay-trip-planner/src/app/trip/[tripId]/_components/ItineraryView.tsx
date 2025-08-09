@@ -163,17 +163,17 @@ export function ItineraryView({ trip, itineraryDays, locations }: ItineraryViewP
       {/* Header with Trip Info and Actions */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Itinerary</h2>
-          <p className="text-gray-600">Plan your daily activities and locations</p>
+          <h2 className="text-xl font-bold text-gray-800">Trip plan</h2>
+          {/* <p className="text-gray-600">Plan your daily activities and locations</p> */}
         </div>
         
         <div className="flex items-center gap-2">
           {isEditing ? (
             <>
-              <Button variant="ghost" onClick={handleCancel} disabled={isPending}>
+              <Button variant="outline" onClick={handleCancel} disabled={isPending}>
                 Cancel
               </Button>
-              <Button onClick={handleSave} disabled={isPending} className="bg-green-600 hover:bg-green-700">
+              <Button onClick={handleSave} disabled={isPending} className="flex-1">
               {isPending ? <Spinner size={18} className="mr-2" /> : null}
               {isPending ? (
                   <>
@@ -194,10 +194,9 @@ export function ItineraryView({ trip, itineraryDays, locations }: ItineraryViewP
                     className="flex items-center gap-2"
                   >
                     <Pencil className="h-4 w-4" />
-                    Edit Itinerary
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent><p>Edit your trip itinerary</p></TooltipContent>
+                <TooltipContent><p>Edit trip plan</p></TooltipContent>
               </Tooltip>
             </TooltipProvider>
           )}

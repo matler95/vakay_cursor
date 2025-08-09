@@ -40,8 +40,7 @@ export function EditTripInline({ trip, userRole }: EditTripInlineProps) {
             variant="outline"
             className="h-8 px-3"
           >
-            <Settings className="h-4 w-4 mr-1" />
-            Edit Trip
+            <Settings className="h-4 w-4"/>
           </Button>
         </TooltipTrigger>
         <TooltipContent>

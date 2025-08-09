@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { deleteLocation } from '../actions';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Plus, Trash2, AlertTriangle } from 'lucide-react';
+import { Plus, Trash2, AlertTriangle, CopyCheck, X, MapPin } from 'lucide-react';
 import { AddLocationModal } from './AddLocationModal';
 
 type Location = Database['public']['Tables']['locations']['Row'];
@@ -99,18 +99,32 @@ export function LocationManager({ tripId, locations, onLocationsChange }: Locati
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-      <h2 className="text-xl font-semibold">Locations</h2>
+      <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <MapPin className="h-5 w-5 text-pink-500" /> Locations
+          </h2>
         <div className="flex items-center gap-2">
           {locations.length > 0 && (
-            <Button
-              onClick={toggleDeleteMode}
-              size="sm"
-              variant={isDeleteMode ? "destructive" : "outline"}
-              className="h-8 px-3"
-            >
-              <Trash2 className="h-4 w-4 mr-1" />
-              {isDeleteMode ? 'Cancel' : 'Delete'}
-            </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={toggleDeleteMode}
+                size="sm"
+                variant="outline"
+                className="h-8 w-8 px-3"
+              >
+                {/* <CopyCheck className="h-4 w-4 mr-1" /> */}
+                {isDeleteMode ? 
+                <X className="h-4 w-4"/>:
+                <CopyCheck className="h-4 w-4"/>}
+              </Button>
+              </TooltipTrigger>
+            <TooltipContent>
+              <p>{isDeleteMode ? 
+                'Cancel':
+                'Select locations'}
+              </p>
+            </TooltipContent>
+          </Tooltip>
           )}
           <Tooltip>
             <TooltipTrigger asChild>

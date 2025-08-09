@@ -3,7 +3,7 @@ import React from 'react';
 export function Spinner({ size = 20, className = '' }: { size?: number; className?: string }) {
   return (
     <svg
-      className={`animate-spin text-blue-600 ${className}`}
+      className={`animate-spin text-white ${className}`}
       width={size}
       height={size}
       viewBox="0 0 24 24"
