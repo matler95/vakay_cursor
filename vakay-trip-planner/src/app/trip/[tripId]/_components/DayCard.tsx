@@ -108,74 +108,165 @@ export function DayCard({ date, dayData, locations, isEditingCalendar, isSelecte
         </div>
         
         {showEditOptions ? (
-  <div className={`mt-1 space-y-1 sm:space-y-2 relative${isDisabled ? ' opacity-40 pointer-events-none bg-gray-50 bg-opacity-30 rounded-sm' : ''}`} style={{ minHeight: '80px' }} onClick={(e) => e.stopPropagation()}>
-    <Select
-      name="location_1_id"
-      value={dayData?.location_1_id?.toString() || ''}
-      onValueChange={(value) => onUpdateDraft(dateStr, { location_1_id: value ? Number(value) : null })}
-      disabled={isDisabled}
-    >
-      <SelectTrigger className={`h-6 sm:h-7 text-xs ${isDisabled ? 'bg-gray-100' : ''}`}>
-        <SelectValue placeholder="Location" />
-      </SelectTrigger>
-      <SelectContent>
-        {locations.map((loc) => <SelectItem key={loc.id} value={loc.id.toString()}>{loc.name}</SelectItem>)}
-      </SelectContent>
-    </Select>
+          <div className={`mt-1 relative${isDisabled ? ' opacity-40 pointer-events-none bg-gray-50 bg-opacity-30 rounded-sm' : ''}`} style={{ minHeight: '80px' }} onClick={(e) => e.stopPropagation()}>
+            {isListView ? (
+              // List view layout: locations on left, notes on right
+              <div className="flex gap-3">
+                <div className="flex-1 space-y-1 sm:space-y-2">
+                  <Select
+                    name="location_1_id"
+                    value={dayData?.location_1_id?.toString() || ''}
+                    onValueChange={(value) => onUpdateDraft(dateStr, { location_1_id: value ? Number(value) : null })}
+                    disabled={isDisabled}
+                  >
+                    <SelectTrigger className={`h-6 sm:h-7 text-xs ${isDisabled ? 'bg-gray-100' : ''}`}>
+                      <SelectValue placeholder="Location" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {locations.map((loc) => <SelectItem key={loc.id} value={loc.id.toString()}>{loc.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
 
-    {/* Always reserve space for the second select, but hide it if not transferEnabled */}
-    <div style={{ minHeight: '24px', position: 'relative' }}>
-      <Select
-        name="location_2_id"
-        value={dayData?.location_2_id?.toString() || ''}
-        onValueChange={value => onUpdateDraft(dateStr, { location_2_id: value ? Number(value) : null })}
-        disabled={isDisabled || !transferEnabled}
-        >
-          <SelectTrigger
-            className={`h-6 sm:h-7 text-xs ${isDisabled || !transferEnabled ? 'bg-gray-100' : ''}`}
-            style={{
-              opacity: transferEnabled ? 1 : 0,
-              pointerEvents: transferEnabled ? 'auto' : 'none',
-              position: transferEnabled ? 'static' : 'absolute',
-              top: 0, left: 0, width: '100%',
-              transition: 'opacity 0.2s',
-            }}
-          >
-            <SelectValue placeholder="Transfer to..." />
-          </SelectTrigger>
-                <SelectContent>
-          {locations.map((loc) => <SelectItem key={loc.id} value={loc.id.toString()}>{loc.name}</SelectItem>)}
-        </SelectContent>
-      </Select>
-    </div>
+                  {/* Always reserve space for the second select, but hide it if not transferEnabled */}
+                  <div style={{ minHeight: '24px', position: 'relative' }}>
+                    <Select
+                      name="location_2_id"
+                      value={dayData?.location_2_id?.toString() || ''}
+                      onValueChange={value => onUpdateDraft(dateStr, { location_2_id: value ? Number(value) : null })}
+                      disabled={isDisabled || !transferEnabled}
+                    >
+                      <SelectTrigger
+                        className={`h-6 sm:h-7 text-xs ${isDisabled || !transferEnabled ? 'bg-gray-100' : ''}`}
+                        style={{
+                          opacity: transferEnabled ? 1 : 0,
+                          pointerEvents: transferEnabled ? 'auto' : 'none',
+                          position: transferEnabled ? 'static' : 'absolute',
+                          top: 0, left: 0, width: '100%',
+                          transition: 'opacity 0.2s',
+                        }}
+                      >
+                        <SelectValue placeholder="Transfer to..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {locations.map((loc) => <SelectItem key={loc.id} value={loc.id.toString()}>{loc.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-    <Textarea
-      name="notes"
-      placeholder="Notes..."
-      value={dayData?.notes || ''}
-      onChange={(e) => onUpdateDraft(dateStr, { notes: e.target.value })}
-      className={`text-xs resize-none ${isDisabled ? 'bg-gray-100' : ''}`} 
-      rows={1}
-      disabled={isDisabled}
-    />
-    <Switch
-      checked={transferEnabled}
-      onCheckedChange={checked => {
-        setTransferEnabled(checked);
-        if (!checked) {
-          // Clear location_2_id in draft when unchecking
-          onUpdateDraft(dateStr, { location_2_id: null });
-        }
-      }}
-      label="Transfer Day"
-      disabled={isDisabled}
-    />
-  </div>
-) : (
+                  <Switch
+                    checked={transferEnabled}
+                    onCheckedChange={checked => {
+                      setTransferEnabled(checked);
+                      if (!checked) {
+                        // Clear location_2_id in draft when unchecking
+                        onUpdateDraft(dateStr, { location_2_id: null });
+                      }
+                    }}
+                    label="Transfer Day"
+                    disabled={isDisabled}
+                  />
+                </div>
+
+                <div className="flex-1">
+                  <Textarea
+                    name="notes"
+                    placeholder="Notes..."
+                    value={dayData?.notes || ''}
+                    onChange={(e) => onUpdateDraft(dateStr, { notes: e.target.value })}
+                    className={`text-xs resize-none ${isDisabled ? 'bg-gray-100' : ''}`} 
+                    rows={3}
+                    disabled={isDisabled}
+                  />
+                </div>
+              </div>
+            ) : (
+              // Calendar view layout: vertical stack
+              <div className="space-y-1 sm:space-y-2">
+                <Select
+                  name="location_1_id"
+                  value={dayData?.location_1_id?.toString() || ''}
+                  onValueChange={(value) => onUpdateDraft(dateStr, { location_1_id: value ? Number(value) : null })}
+                  disabled={isDisabled}
+                >
+                  <SelectTrigger className={`h-6 sm:h-7 text-xs ${isDisabled ? 'bg-gray-100' : ''}`}>
+                    <SelectValue placeholder="Location" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {locations.map((loc) => <SelectItem key={loc.id} value={loc.id.toString()}>{loc.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+
+                {/* Always reserve space for the second select, but hide it if not transferEnabled */}
+                <div style={{ minHeight: '24px', position: 'relative' }}>
+                  <Select
+                    name="location_2_id"
+                    value={dayData?.location_2_id?.toString() || ''}
+                    onValueChange={value => onUpdateDraft(dateStr, { location_2_id: value ? Number(value) : null })}
+                    disabled={isDisabled || !transferEnabled}
+                  >
+                    <SelectTrigger
+                      className={`h-6 sm:h-7 text-xs ${isDisabled || !transferEnabled ? 'bg-gray-100' : ''}`}
+                      style={{
+                        opacity: transferEnabled ? 1 : 0,
+                        pointerEvents: transferEnabled ? 'auto' : 'none',
+                        position: transferEnabled ? 'static' : 'absolute',
+                        top: 0, left: 0, width: '100%',
+                        transition: 'opacity 0.2s',
+                      }}
+                    >
+                      <SelectValue placeholder="Transfer to..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {locations.map((loc) => <SelectItem key={loc.id} value={loc.id.toString()}>{loc.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <Textarea
+                  name="notes"
+                  placeholder="Notes..."
+                  value={dayData?.notes || ''}
+                  onChange={(e) => onUpdateDraft(dateStr, { notes: e.target.value })}
+                  className={`text-xs resize-none ${isDisabled ? 'bg-gray-100' : ''}`} 
+                  rows={1}
+                  disabled={isDisabled}
+                />
+                <Switch
+                  checked={transferEnabled}
+                  onCheckedChange={checked => {
+                    setTransferEnabled(checked);
+                    if (!checked) {
+                      // Clear location_2_id in draft when unchecking
+                      onUpdateDraft(dateStr, { location_2_id: null });
+                    }
+                  }}
+                  label="Transfer Day"
+                  disabled={isDisabled}
+                />
+              </div>
+            )}
+          </div>
+        ) : (
           <div className="mt-1 text-xs">
-            {location1 && <p className={`font-semibold ${textColor}`}>{location1.name}</p>}
-            {location2 && <p className={`text-sm ${textColor}`}>→ {location2.name}</p>}
-            <p className={`mt-1 whitespace-pre-wrap ${textColor} opacity-80`}>{dayData?.notes || ''}</p>
+            {isListView ? (
+              // List view layout: locations on left, notes on right
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  {location1 && <p className={`font-semibold ${textColor}`}>{location1.name}</p>}
+                  {location2 && <p className={`text-sm ${textColor}`}>→ {location2.name}</p>}
+                </div>
+                <div className="flex-1">
+                  <p className={`whitespace-pre-wrap ${textColor} opacity-80`}>{dayData?.notes || ''}</p>
+                </div>
+              </div>
+            ) : (
+              // Calendar view layout: vertical stack
+              <>
+                {location1 && <p className={`font-semibold ${textColor}`}>{location1.name}</p>}
+                {location2 && <p className={`text-sm ${textColor}`}>→ {location2.name}</p>}
+                <p className={`mt-1 whitespace-pre-wrap ${textColor} opacity-80`}>{dayData?.notes || ''}</p>
+              </>
+            )}
           </div>
         )}
       </div>

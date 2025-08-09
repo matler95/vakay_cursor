@@ -92,29 +92,61 @@ export default async function TripPage({ params }: TripPageProps) {
   return (
     <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-8 py-4 sm:py-8 bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
       {/* Modern Trip Header */}
-      <div className="mb-4 sm:mb-8 rounded-xl sm:rounded-2xl shadow p-4 sm:p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 sm:gap-6 bg-white">
-        <div className="flex-1 min-w-0">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 mb-2 flex items-center gap-2 sm:gap-3">
-            {trip.name}
-          </h1>
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-gray-600 text-sm sm:text-base">
+      <div className="mb-4 sm:mb-8 rounded-xl sm:rounded-2xl shadow p-4 sm:p-6 bg-white">
+        {/* Mobile Layout: Compact horizontal layout */}
+        <div className="md:hidden">
+          <div className="flex items-start justify-between gap-3 mb-3">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl font-extrabold text-gray-900 truncate">
+                {trip.name}
+              </h1>
+            </div>
+            <div className="flex-shrink-0">
+              <EditTripInline trip={trip} userRole={participantRole?.role || null} />
+            </div>
+          </div>
+          <div className="flex items-center gap-3 text-gray-600 text-sm">
             <span className="flex items-center gap-1">
-              <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500" />
+              <Calendar className="h-4 w-4 text-blue-500" />
               {dateRange}
             </span>
             {trip.destination && (
               <span className="flex items-center gap-1">
-                <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-pink-500" />
+                <MapPin className="h-4 w-4 text-pink-500" />
                 {trip.destination}
               </span>
             )}
-            <span className="flex items-center gap-1 bg-blue-100 text-blue-700 font-semibold px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm w-fit">
+            <span className="flex items-center gap-1 bg-blue-100 text-blue-700 font-semibold px-2 py-1 rounded-full text-xs">
               {totalDays} days
             </span>
           </div>
         </div>
-        <div className="flex-shrink-0">
-          <EditTripInline trip={trip} userRole={participantRole?.role || null} />
+
+        {/* Desktop Layout: Original layout */}
+        <div className="hidden md:flex md:items-center md:justify-between gap-6">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-2 flex items-center gap-3">
+              {trip.name}
+            </h1>
+            <div className="flex flex-row items-center gap-4 text-gray-600 text-base">
+              <span className="flex items-center gap-1">
+                <Calendar className="h-5 w-5 text-blue-500" />
+                {dateRange}
+              </span>
+              {trip.destination && (
+                <span className="flex items-center gap-1">
+                  <MapPin className="h-5 w-5 text-pink-500" />
+                  {trip.destination}
+                </span>
+              )}
+              <span className="flex items-center gap-1 bg-blue-100 text-blue-700 font-semibold px-3 py-1 rounded-full text-sm">
+                {totalDays} days
+              </span>
+            </div>
+          </div>
+          <div className="flex-shrink-0">
+            <EditTripInline trip={trip} userRole={participantRole?.role || null} />
+          </div>
         </div>
       </div>
 

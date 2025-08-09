@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, User as UserIcon } from 'lucide-react';
+import { LayoutDashboard, User as UserIcon, Menu, X } from 'lucide-react';
 import LogoutButton from '../(app)/_components/LogoutButton';
 import Lottie from 'lottie-react';
 import flightAnimation from '@/../public/Flight.json';
@@ -11,6 +11,7 @@ export default function TopNav({ user }: { user?: { id: string; email?: string }
   const router = useRouter();
   const pathname = usePathname();
   const [loading, setLoading] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleNav = (href: string) => (e: React.MouseEvent) => {
     if (pathname !== href) {
@@ -23,6 +24,11 @@ export default function TopNav({ user }: { user?: { id: string; email?: string }
   // Hide loading when path changes
   useEffect(() => {
     setLoading(false);
+  }, [pathname]);
+
+  // Close menu when path changes
+  useEffect(() => {
+    setIsMenuOpen(false);
   }, [pathname]);
 
   return (
@@ -39,21 +45,64 @@ export default function TopNav({ user }: { user?: { id: string; email?: string }
         <div className="container mx-auto flex items-center justify-between px-4 py-3">
           <Link href={user ? '/dashboard' : '/'} className="text-lg font-semibold text-gray-900">VAKAY</Link>
           {user ? (
-            <nav className="flex items-center gap-4 text-sm text-gray-700">
-              <Link href="/dashboard" className="flex items-center gap-2 rounded-md px-3 py-2 hover:bg-gray-50" onClick={handleNav('/dashboard')}>
-                <LayoutDashboard className="h-4 w-4" />
-                <span>Dashboard</span>
-              </Link>
-              <Link href="/dashboard/profile" className="flex items-center gap-2 rounded-md px-3 py-2 hover:bg-gray-50" onClick={handleNav('/dashboard/profile')}>
-                <UserIcon className="h-4 w-4" />
-                <span>Profile</span>
-              </Link>
-              <LogoutButton />
-            </nav>
+            <>
+              {/* Desktop Navigation */}
+              <nav className="hidden md:flex items-center gap-4 text-sm text-gray-700">
+                <Link href="/dashboard" className="flex items-center gap-2 rounded-md px-3 py-2 hover:bg-gray-50" onClick={handleNav('/dashboard')}>
+                  <LayoutDashboard className="h-4 w-4" />
+                  <span>Dashboard</span>
+                </Link>
+                <Link href="/dashboard/profile" className="flex items-center gap-2 rounded-md px-3 py-2 hover:bg-gray-50" onClick={handleNav('/dashboard/profile')}>
+                  <UserIcon className="h-4 w-4" />
+                  <span>Profile</span>
+                </Link>
+                <LogoutButton />
+              </nav>
+
+              {/* Mobile Menu Button */}
+              <button
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="md:hidden p-2 rounded-md hover:bg-gray-50"
+                aria-label="Toggle menu"
+              >
+                {isMenuOpen ? (
+                  <X className="h-5 w-5 text-gray-700" />
+                ) : (
+                  <Menu className="h-5 w-5 text-gray-700" />
+                )}
+              </button>
+            </>
           ) : (
             <div className="text-xs text-gray-500">Plan smarter. Travel lighter.</div>
           )}
         </div>
+
+        {/* Mobile Menu */}
+        {user && isMenuOpen && (
+          <div className="md:hidden border-t border-gray-100 bg-white">
+            <nav className="container mx-auto px-4 py-2 space-y-1">
+              <Link 
+                href="/dashboard" 
+                className="flex items-center gap-3 rounded-md px-3 py-3 text-sm text-gray-700 hover:bg-gray-50" 
+                onClick={handleNav('/dashboard')}
+              >
+                <LayoutDashboard className="h-4 w-4" />
+                <span>Dashboard</span>
+              </Link>
+              <Link 
+                href="/dashboard/profile" 
+                className="flex items-center gap-3 rounded-md px-3 py-3 text-sm text-gray-700 hover:bg-gray-50" 
+                onClick={handleNav('/dashboard/profile')}
+              >
+                <UserIcon className="h-4 w-4" />
+                <span>Profile</span>
+              </Link>
+              <div className="px-3 py-3">
+                <LogoutButton />
+              </div>
+            </nav>
+          </div>
+        )}
       </header>
     </>
   );
