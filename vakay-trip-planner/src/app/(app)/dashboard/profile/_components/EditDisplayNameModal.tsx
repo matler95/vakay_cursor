@@ -9,6 +9,8 @@ import { useActionState } from 'react';
 import { updateProfileName } from '../actions';
 import { useRouter } from 'next/navigation';
 import { Modal } from '@/components/ui/modal';
+import { Spinner } from '@/components/ui/spinner';
+import { useFormStatus } from 'react-dom';
 
 interface EditDisplayNameModalProps {
   currentName: string | null;
@@ -26,6 +28,16 @@ export function EditDisplayNameModal({ currentName }: EditDisplayNameModalProps)
       router.refresh();
     }
   }, [state, router]);
+
+  function SaveButton() {
+    const { pending } = useFormStatus();
+    return (
+      <Button type="submit" className="flex-1" disabled={pending}>
+        {pending ? <Spinner size={18} className="mr-2" /> : null}
+        {pending ? 'Saving...' : 'Save'}
+      </Button>
+    );
+  }
 
   return (
     <>
@@ -62,9 +74,7 @@ export function EditDisplayNameModal({ currentName }: EditDisplayNameModalProps)
               <Button type="button" variant="outline" className="flex-1" onClick={() => setOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" className="flex-1">
-                Save
-              </Button>
+              <SaveButton />
             </div>
           </div>
         </form>

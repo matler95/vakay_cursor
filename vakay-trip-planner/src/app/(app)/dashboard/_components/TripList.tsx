@@ -10,6 +10,9 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import { Spinner } from '@/components/ui/spinner';
+import Lottie from 'lottie-react';
+import flightAnimation from '@/../public/Flight.json';
 
 type TripWithRole = Database['public']['Tables']['trips']['Row'] & {
   user_role: string | null;
@@ -23,6 +26,7 @@ export function TripList({ trips }: TripListProps) {
   const router = useRouter();
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [loadingTripId, setLoadingTripId] = useState<string | null>(null);
 
   const onConfirmDelete = async () => {
     if (!pendingDeleteId) return;
@@ -32,6 +36,11 @@ export function TripList({ trips }: TripListProps) {
     form?.requestSubmit();
     setSubmitting(false);
     setPendingDeleteId(null);
+  };
+
+  const handleTripClick = (tripId: string) => {
+    setLoadingTripId(tripId);
+    router.push(`/trip/${tripId}`);
   };
 
   if (trips.length === 0) {
@@ -44,13 +53,21 @@ export function TripList({ trips }: TripListProps) {
 
   return (
     <div className="space-y-4">
+      {loadingTripId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+          <div className="flex flex-col items-center">
+            <Lottie animationData={flightAnimation} loop style={{ width: 96, height: 96 }} />
+            <span className="mt-4 text-lg text-white font-semibold">Loading trip...</span>
+          </div>
+        </div>
+      )}
       {trips.map((trip) => (
         <Card key={trip.id} className="group relative transition-shadow hover:shadow-md">
           <CardHeader>
             <div className="flex items-start justify-between">
               <div>
                 <CardTitle
-                  onClick={() => router.push(`/trip/${trip.id}`)}
+                  onClick={() => handleTripClick(trip.id)}
                   className="cursor-pointer hover:underline"
                 >
                   {trip.name}

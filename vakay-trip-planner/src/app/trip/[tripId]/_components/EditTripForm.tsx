@@ -6,6 +6,7 @@ import { useEffect } from 'react'; // Make sure useEffect is imported
 import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { updateTripDetails } from '../actions';
+import { Spinner } from '@/components/ui/spinner';
 
 type Trip = Database['public']['Tables']['trips']['Row'];
 
@@ -18,7 +19,8 @@ interface EditTripFormProps {
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" disabled={pending} className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:opacity-50">
+    <button type="submit" disabled={pending} className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:opacity-50 flex items-center justify-center">
+      {pending ? <Spinner size={18} className="mr-2" /> : null}
       {pending ? 'Saving...' : 'Save Changes'}
     </button>
   );

@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
+import { Spinner } from '@/components/ui/spinner';
 
 export default function LoginForm() {
   const router = useRouter();
@@ -114,6 +115,7 @@ export default function LoginForm() {
             <input type="email" name="email" placeholder="Email" required value={email} onChange={e => setEmail(e.target.value)} className="relative block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm" />
             <input type="password" name="password" placeholder="Password" required value={password} onChange={e => setPassword(e.target.value)} className="relative block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm" />
             <button type="submit" disabled={loading} className="group relative flex w-full justify-center rounded-md border border-transparent bg-blue-600 py-2 px-4 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50">
+              {loading ? <Spinner size={18} className="mr-2" /> : null}
               {loading ? 'Signing In...' : 'Sign In'}
             </button>
             <div className="text-center text-sm">
@@ -128,6 +130,7 @@ export default function LoginForm() {
           <form onSubmit={handleMagicLink} className="mt-8 space-y-4">
             <input type="email" name="email" placeholder="Email" required value={email} onChange={e => setEmail(e.target.value)} className="relative block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm" />
             <button type="submit" disabled={loading} className="group relative flex w-full justify-center rounded-md border border-transparent bg-gray-700 py-2 px-4 text-sm font-medium text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50">
+              {loading ? <Spinner size={18} className="mr-2" /> : null}
               {loading ? 'Sending...' : 'Send Magic Link'}
             </button>
             <p className="text-center text-sm">

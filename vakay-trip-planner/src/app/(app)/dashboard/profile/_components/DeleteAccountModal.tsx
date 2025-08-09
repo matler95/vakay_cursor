@@ -7,11 +7,23 @@ import { Modal } from '@/components/ui/modal';
 import { AlertTriangle } from 'lucide-react';
 import { useActionState } from 'react';
 import { deleteAccount } from '../actions';
+import { Spinner } from '@/components/ui/spinner';
+import { useFormStatus } from 'react-dom';
 
 export function DeleteAccountModal() {
   const [open, setOpen] = useState(false);
   const [confirmText, setConfirmText] = useState('');
   const [state, formAction] = useActionState(deleteAccount as any, { message: '' });
+
+  function DeleteButton({ disabled }: { disabled: boolean }) {
+    const { pending } = useFormStatus();
+    return (
+      <Button type="submit" variant="destructive" className="flex-1" disabled={pending || disabled}>
+        {pending ? <Spinner size={18} className="mr-2" /> : null}
+        {pending ? 'Deleting...' : 'Delete'}
+      </Button>
+    );
+  }
 
   return (
     <>
@@ -43,9 +55,7 @@ export function DeleteAccountModal() {
             <Button type="button" variant="outline" className="flex-1" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" variant="destructive" className="flex-1" disabled={confirmText !== 'delete'}>
-              Delete
-            </Button>
+            <DeleteButton disabled={confirmText !== 'delete'} />
           </div>
         </form>
       </Modal>

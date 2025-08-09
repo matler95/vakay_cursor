@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { X, Plus, Trash2 } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 
 type Location = Database['public']['Tables']['locations']['Row'];
 
@@ -208,7 +209,8 @@ export function AddLocationModal({ tripId, isOpen, onClose, onLocationAdded }: A
               Cancel
             </Button>
             <Button type="submit" className="flex-1" disabled={isSubmitting || locations.every(loc => loc.name.trim() === '')}>
-              {isSubmitting ? 'Saving...' : `Save ${locations.filter(loc => loc.name.trim() !== '').length} Location${locations.filter(loc => loc.name.trim() !== '').length !== 1 ? 's' : ''}`}
+              {isSubmitting ? <Spinner size={18} className="mr-2" /> : null}
+              {isSubmitting ? `Saving...` : `Save ${locations.filter(loc => loc.name.trim() !== '').length} Location${locations.filter(loc => loc.name.trim() !== '').length !== 1 ? 's' : ''}`}
             </Button>
           </div>
         </form>

@@ -7,6 +7,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { KeyRound } from 'lucide-react';
 import { UpdatePasswordForm } from './UpdatePasswordForm';
 import { Modal } from '@/components/ui/modal';
+import { Spinner } from '@/components/ui/spinner';
 
 export function EditPasswordModal() {
   const [open, setOpen] = useState(false);
@@ -37,6 +38,7 @@ export function EditPasswordModal() {
                 Cancel
               </Button>
               <Button type="submit" className="flex-1" disabled={pending}>
+                {pending ? <Spinner size={18} className="mr-2" /> : null}
                 {pending ? 'Saving...' : 'Save'}
               </Button>
             </div>

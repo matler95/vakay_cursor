@@ -201,7 +201,7 @@ export async function inviteUser(prevState: any, formData: FormData) {
   if (participant?.role !== 'admin') {
     return { message: 'You do not have permission to invite users.' };
   }
-
+  
   // Insert a pending invitation
   const { error: pendingError } = await supabase
     .from('pending_invitations')
@@ -216,8 +216,8 @@ export async function inviteUser(prevState: any, formData: FormData) {
 
   // Use Supabase's built-in invitation system
   try {
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
       {
         auth: {
@@ -236,7 +236,7 @@ export async function inviteUser(prevState: any, formData: FormData) {
     if (error) {
       return { message: `Error sending invitation: ${error.message}` };
     }
-    revalidatePath(`/trip/${tripId}`);
+  revalidatePath(`/trip/${tripId}`);
     return { message: `Invitation sent to ${email}! Check your email for the invitation link.` };
   } catch (error) {
     return { message: 'Failed to send invitation. Please try again.' };

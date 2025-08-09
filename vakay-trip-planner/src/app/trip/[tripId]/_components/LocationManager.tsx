@@ -92,7 +92,7 @@ export function LocationManager({ tripId, locations }: LocationManagerProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Locations</h2>
+      <h2 className="text-xl font-semibold">Locations</h2>
         <div className="flex items-center gap-2">
           {locations.length > 0 && (
             <Button
@@ -119,9 +119,9 @@ export function LocationManager({ tripId, locations }: LocationManagerProps) {
               <p>Add locations</p>
             </TooltipContent>
           </Tooltip>
+          </div>
         </div>
-      </div>
-
+        
       {/* Floating toolbar - appears when selections are made */}
       {isDeleteMode && selectedLocations.size > 0 && (
         <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40">
