@@ -1,8 +1,7 @@
 'use client';
 
-import { Database } from '@/types/database.types';
+
 import { useState, useEffect } from 'react';
-import { useActionState } from 'react';
 import { addLocation } from '../actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { X, Plus, Trash2 } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 
-type Location = Database['public']['Tables']['locations']['Row'];
+
 
 interface AddLocationModalProps {
   tripId: string;
@@ -44,11 +43,11 @@ interface LocationEntry {
 }
 
 export function AddLocationModal({ tripId, isOpen, onClose, onLocationAdded }: AddLocationModalProps) {
-  const [state, formAction] = useActionState(addLocation, { message: '' });
   const [locations, setLocations] = useState<LocationEntry[]>([
     { id: '1', name: '', color: presetColors[7].hex }
   ]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [message, setMessage] = useState<string>('');
 
   const addLocationEntry = () => {
     const newId = (locations.length + 1).toString();
@@ -69,39 +68,43 @@ export function AddLocationModal({ tripId, isOpen, onClose, onLocationAdded }: A
 
   const handleSubmit = async (formData: FormData) => {
     setIsSubmitting(true);
+    setMessage('');
     
     // Filter out empty locations
     const validLocations = locations.filter(loc => loc.name.trim() !== '');
     
     if (validLocations.length === 0) {
       setIsSubmitting(false);
+      setMessage('Please add at least one location.');
       return;
     }
 
-    // Submit each location
-    for (const location of validLocations) {
-      const locationFormData = new FormData();
-      locationFormData.append('name', location.name.trim());
-      locationFormData.append('color', location.color);
-      locationFormData.append('trip_id', tripId);
+    try {
+      // Submit each location
+      for (const location of validLocations) {
+        const locationFormData = new FormData();
+        locationFormData.append('name', location.name.trim());
+        locationFormData.append('color', location.color);
+        locationFormData.append('trip_id', tripId);
+        
+        const result = await addLocation(null, locationFormData);
+        if (result.message && result.message.includes('error')) {
+          throw new Error(result.message);
+        }
+      }
       
-      await formAction(locationFormData);
+      setIsSubmitting(false);
+      onLocationAdded();
+      onClose();
+      // Reset form
+      setLocations([{ id: '1', name: '', color: presetColors[7].hex }]);
+    } catch (error) {
+      setIsSubmitting(false);
+      setMessage(error instanceof Error ? error.message : 'Failed to add locations');
     }
-
-    setIsSubmitting(false);
-    onLocationAdded();
-    onClose();
-    // Reset form
-    setLocations([{ id: '1', name: '', color: presetColors[7].hex }]);
   };
 
-  // Watch for successful state changes
-  useEffect(() => {
-    if (state?.message && !state.message.includes('error')) {
-      // Success - refresh locations
-      onLocationAdded();
-    }
-  }, [state, onLocationAdded]);
+
 
   if (!isOpen) return null;
 
@@ -198,9 +201,9 @@ export function AddLocationModal({ tripId, isOpen, onClose, onLocationAdded }: A
             Add Another Location
           </Button>
 
-          {state?.message && (
-            <p className={`text-sm ${state.message.includes('error') ? 'text-red-600' : 'text-green-600'}`}>
-              {state.message}
+          {message && (
+            <p className={`text-sm ${message.includes('error') ? 'text-red-600' : 'text-green-600'}`}>
+              {message}
             </p>
           )}
 

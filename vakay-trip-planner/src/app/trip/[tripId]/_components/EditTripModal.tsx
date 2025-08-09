@@ -1,7 +1,7 @@
 'use client';
 
 import { Database } from '@/types/database.types';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { updateTripDetails } from '../actions';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -25,7 +25,6 @@ export function EditTripModal({ trip, isOpen, onClose, onTripUpdated }: EditTrip
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     
-    console.log('Form submission started, setting isSubmitting to true');
     setIsSubmitting(true);
     setError(null);
     
@@ -43,10 +42,9 @@ export function EditTripModal({ trip, isOpen, onClose, onTripUpdated }: EditTrip
       } else {
         setError(result.message || 'Failed to update trip');
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred');
     } finally {
-      console.log('Form submission finished, setting isSubmitting to false');
       setIsSubmitting(false);
     }
   };

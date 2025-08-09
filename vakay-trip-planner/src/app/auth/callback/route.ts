@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   if (code) {
     const supabase = createRouteHandlerClient<Database>({ cookies });
     // This will set the session cookie in the response
-    const { data: { session }, error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data: { session } } = await supabase.auth.exchangeCodeForSession(code);
 
     let redirectTo = '/set-password';
     if (session) {

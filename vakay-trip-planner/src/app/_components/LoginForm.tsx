@@ -122,7 +122,7 @@ export default function LoginForm() {
                 <a href="#" onClick={(e) => { e.preventDefault(); handleForgotPassword(); }} className="font-medium text-blue-600 hover:text-blue-500">Forgot your password?</a>
             </div>
             <p className="text-center text-sm">
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
               <a href="#" onClick={(e) => { e.preventDefault(); setView('magic-link'); setError(null); }} className="font-medium text-blue-600 hover:text-blue-500">Sign up with a magic link</a>
             </p>
           </form>

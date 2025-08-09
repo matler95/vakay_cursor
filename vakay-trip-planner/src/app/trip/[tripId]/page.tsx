@@ -13,9 +13,9 @@ import { Calendar, MapPin } from 'lucide-react';
 export const dynamic = 'force-dynamic';
 
 interface TripPageProps {
-  params: {
+  params: Promise<{
     tripId: string;
-  };
+  }>;
 }
 
 export default async function TripPage({ params }: TripPageProps) {
@@ -83,8 +83,7 @@ export default async function TripPage({ params }: TripPageProps) {
     .eq('user_id', user.id)
     .single();
 
-  // Calculate main location and total days
-  const mainLocation = trip.destination || (locations && locations[0]?.name) || 'Unknown';
+  // Calculate total days
   const startDate = trip.start_date ? new Date(trip.start_date) : null;
   const endDate = trip.end_date ? new Date(trip.end_date) : null;
   const totalDays = startDate && endDate ? Math.max(1, Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1) : 0;
@@ -136,7 +135,7 @@ export default async function TripPage({ params }: TripPageProps) {
           <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
             <span className="inline-block w-5 h-5 bg-blue-500 rounded-full text-white flex items-center justify-center font-bold text-base">👥</span> Participants
           </h2>
-          <ParticipantManager tripId={trip.id} participants={participants as any || []} currentUserRole={participantRole?.role || null} />
+          <ParticipantManager tripId={trip.id} participants={participants || []} currentUserRole={participantRole?.role || null} />
         </div>
       </div>
     </div>

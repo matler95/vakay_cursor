@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import type { Database } from '@/types/database.types';
-import { CalendarDays, LayoutDashboard, User as UserIcon, LogOut, MapPin } from 'lucide-react';
+import { CalendarDays, LayoutDashboard, User as UserIcon, MapPin } from 'lucide-react';
 import LogoutButton from './LogoutButton';
 
 export default async function AppNav() {
@@ -17,7 +17,7 @@ export default async function AppNav() {
       .select('trips(id, name)')
       .eq('user_id', user.id)
       .order('id', { ascending: false });
-    trips = (data || []).map((row: any) => ({ id: row.trips.id, name: row.trips.name }));
+    trips = (data || []).map((row: { trips: { id: string; name: string | null } }) => ({ id: row.trips.id, name: row.trips.name }));
   }
 
   return (

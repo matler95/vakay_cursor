@@ -5,7 +5,7 @@ import { createServerActionClient } from '@supabase/auth-helpers-nextjs';
 import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
+
 import { z } from 'zod';
 import { Database } from '@/types/database.types';
 
@@ -30,7 +30,7 @@ export async function saveItineraryChanges(prevState: { message: string }, formD
   const supabase = createServerActionClient<Database>({ cookies });
 
   // Check authentication
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return { message: 'You must be logged in to save itinerary changes.' };
   }
@@ -60,7 +60,7 @@ export async function saveItineraryChanges(prevState: { message: string }, formD
   let itineraryDays: ItineraryDay[];
   try {
     itineraryDays = JSON.parse(itineraryDaysJsonStr);
-  } catch (error) {
+  } catch {
     return { message: 'Invalid itinerary data format.' };
   }
 
@@ -133,7 +133,7 @@ export async function deleteItineraryDay(tripId: string, date: string) {
 }
 
 // Location management functions
-export async function addLocation(prevState: any, formData: FormData) {
+export async function addLocation(prevState: unknown, formData: FormData) {
   const supabase = createServerActionClient({ cookies });
 
   const schema = z.object({
@@ -180,7 +180,7 @@ export async function deleteLocation(locationId: number, tripId: string) {
 
 
 // --- ADD THIS NEW FUNCTION ---
-export async function inviteUser(prevState: any, formData: FormData) {
+export async function inviteUser(prevState: unknown, formData: FormData) {
   const tripId = formData.get('trip_id') as string;
   const email = formData.get('email') as string;
   const role = formData.get('role') as string || 'traveler';
@@ -238,12 +238,12 @@ export async function inviteUser(prevState: any, formData: FormData) {
     }
   revalidatePath(`/trip/${tripId}`);
     return { message: `Invitation sent to ${email}! Check your email for the invitation link.` };
-  } catch (error) {
+  } catch {
     return { message: 'Failed to send invitation. Please try again.' };
   }
 }
 
-export async function updateTripDetails(prevState: any, formData: FormData) {
+export async function updateTripDetails(prevState: unknown, formData: FormData) {
   const schema = z.object({
     trip_id: z.string().uuid(),
     name: z.string().min(3, { message: 'Trip name must be at least 3 characters.' }),

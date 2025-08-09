@@ -35,7 +35,7 @@ export default async function Dashboard() {
       </div>
 
       <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-        <TripList trips={trips as any} />
+        <TripList trips={trips} />
       </div>
     </div>
   );

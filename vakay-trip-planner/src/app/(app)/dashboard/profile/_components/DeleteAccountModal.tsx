@@ -13,7 +13,7 @@ import { useFormStatus } from 'react-dom';
 export function DeleteAccountModal() {
   const [open, setOpen] = useState(false);
   const [confirmText, setConfirmText] = useState('');
-  const [state, formAction] = useActionState(deleteAccount as any, { message: '' });
+  const [state, formAction] = useActionState(deleteAccount, { message: '' });
 
   function DeleteButton({ disabled }: { disabled: boolean }) {
     const { pending } = useFormStatus();

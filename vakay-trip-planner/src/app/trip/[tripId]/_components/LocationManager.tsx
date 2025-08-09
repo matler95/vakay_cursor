@@ -15,9 +15,10 @@ type Location = Database['public']['Tables']['locations']['Row'];
 interface LocationManagerProps {
   tripId: string;
   locations: Location[];
+  onLocationsChange?: (locations: Location[]) => void;
 }
 
-export function LocationManager({ tripId, locations }: LocationManagerProps) {
+export function LocationManager({ tripId, locations, onLocationsChange }: LocationManagerProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
   const [selectedLocations, setSelectedLocations] = useState<Set<string>>(new Set());
@@ -28,6 +29,12 @@ export function LocationManager({ tripId, locations }: LocationManagerProps) {
   const handleLocationAdded = () => {
     // Refresh the page to get updated locations
     router.refresh();
+    
+    // Also notify parent component if callback is provided
+    if (onLocationsChange) {
+      // We'll need to fetch the updated locations here
+      // For now, just refresh the page
+    }
   };
 
   const handleDeleteClick = (location: Location) => {

@@ -92,21 +92,7 @@ export function ItineraryView({ trip, itineraryDays, locations }: ItineraryViewP
   };
 
   // Quick action handlers
-  const handleSelectAll = () => {
-    const allDates = tripDates.map(date => date.toISOString().split('T')[0]);
-    setSelectedDates(new Set(allDates));
-  };
 
-  const handleCopyPreviousDay = () => {
-    // Implementation for copying previous day's itinerary
-    console.log('Copy previous day functionality');
-  };
-
-  const handleResetToDefault = () => {
-    const initialMap = new Map(itineraryDays.map(day => [day.date, day]));
-    setDraftItinerary(initialMap);
-    setSelectedDates(new Set());
-  };
 
   const handleCancel = () => {
     const initialMap = new Map(itineraryDays.map(day => [day.date, day]));
@@ -147,7 +133,7 @@ export function ItineraryView({ trip, itineraryDays, locations }: ItineraryViewP
   }
 
   const tripDates = getDatesInRange(new Date(trip.start_date), new Date(trip.end_date));
-  const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
 
   // Calculate unique months/years in tripDates
   const monthYearSet = Array.from(new Set(tripDates.map(d => `${d.getUTCMonth()}-${d.getUTCFullYear()}`)))
@@ -254,7 +240,7 @@ export function ItineraryView({ trip, itineraryDays, locations }: ItineraryViewP
         {Array.from({ length: emptyCells }).map((_, i) => (
           <div key={`empty-${i}`} className="min-h-40"></div>
         ))}
-        {tripDates.map((date, idx) => {
+        {tripDates.map((date) => {
           const dateStr = date.toISOString().split('T')[0];
           const dayData = draftItinerary.get(dateStr);
           return (

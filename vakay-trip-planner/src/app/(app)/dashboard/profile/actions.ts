@@ -7,7 +7,7 @@ import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
-import { Database } from '@/types/database.types';
+
 
 // Common password schema: 8+ chars, 1 uppercase, 1 number OR special
 const passwordSchema = z
@@ -16,7 +16,7 @@ const passwordSchema = z
   .refine((val) => /[A-Z]/.test(val), { message: 'Password must contain at least one uppercase letter.' })
   .refine((val) => /[0-9]/.test(val) || /[^A-Za-z0-9]/.test(val), { message: 'Password must contain at least one number or special character.' });
 
-export async function updatePassword(prevState: any, formData: FormData) {
+export async function updatePassword(prevState: unknown, formData: FormData) {
   const supabase = createServerActionClient({ cookies });
 
   const schema = z
@@ -82,7 +82,7 @@ export async function updatePassword(prevState: any, formData: FormData) {
 }
 
 // --- NEW: Update display name in profiles ---
-export async function updateProfileName(prevState: any, formData: FormData) {
+export async function updateProfileName(prevState: unknown, formData: FormData) {
   const supabase = createServerActionClient({ cookies });
 
   const schema = z.object({
@@ -111,7 +111,7 @@ export async function updateProfileName(prevState: any, formData: FormData) {
 }
 
 // --- NEW: Complete account setup (password + optional name) for onboarding ---
-export async function completeAccountSetup(prevState: any, formData: FormData) {
+export async function completeAccountSetup(prevState: unknown, formData: FormData) {
   const supabase = createServerActionClient({ cookies });
 
   const schema = z
@@ -171,7 +171,7 @@ export async function completeAccountSetup(prevState: any, formData: FormData) {
 }
 
 // --- NEW: Permanently delete account (requires typing "delete") ---
-export async function deleteAccount(formData: FormData) {
+export async function deleteAccount(prevState: unknown, formData: FormData) {
   const supabase = createServerActionClient({ cookies });
   const schema = z.object({ confirm: z.literal('delete') });
   const validated = schema.safeParse(Object.fromEntries(formData.entries()));

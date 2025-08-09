@@ -19,7 +19,7 @@ interface EditDisplayNameModalProps {
 export function EditDisplayNameModal({ currentName }: EditDisplayNameModalProps) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(currentName || '');
-  const [state, formAction] = useActionState(updateProfileName as any, { message: '' });
+  const [state, formAction] = useActionState(updateProfileName, { message: '' });
   const router = useRouter();
 
   useEffect(() => {

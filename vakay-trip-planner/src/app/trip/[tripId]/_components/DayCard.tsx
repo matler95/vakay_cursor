@@ -58,9 +58,9 @@ export function DayCard({ date, dayData, locations, isEditingCalendar, isSelecte
   }, [dayData?.location_2_id]);
 
   // Unified color logic:
-  let dayStyle: React.CSSProperties = {};
-  let cardBgClass = '';
-  let textColor = 'text-gray-900';
+  const dayStyle: React.CSSProperties = {};
+  const cardBgClass = '';
+  const textColor = 'text-gray-900';
   if (location1 && isTransfer && location2) {
     // Pastel gradient with opacity
     dayStyle.background = `linear-gradient(135deg, ${location1.color}33 0%, ${location2.color}33 100%)`;
@@ -70,9 +70,7 @@ export function DayCard({ date, dayData, locations, isEditingCalendar, isSelecte
   }
 
   const dateStr = date.toISOString().split('T')[0];
-  const isOnlySelected = isEditingCalendar && isSelected && selectionCount === 1;
   const showEditOptions = isEditingCalendar; // Always show edit options when in edit mode
-  const isMultiSelected = isEditingCalendar && isSelected && selectionCount > 1;
   const isDisabled = isEditingCalendar && isSelected && selectionCount > 1; // Disable when multi-selected
 
   return (

@@ -11,12 +11,7 @@ import { Database} from '@/types/database.types';
 export async function createTrip(prevState: { message: string }, formData: FormData) {
   const supabase = createServerActionClient<Database>({ cookies });
 
-  const { data: { user }, error: authError, } = await supabase.auth.getUser();
-  // ---- ADD THESE TWO LINES ----
-  console.log('--- Checking Auth in createTrip Action ---');
-  console.log('USER:', user);
-  console.log('AUTH ERROR:', authError);
-  // -----------------------------
+    const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
     return { message: 'You must be logged in to create a trip.' };

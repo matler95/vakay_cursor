@@ -4,13 +4,12 @@
 import { useRouter } from 'next/navigation';
 import { Database } from '@/types/database.types';
 import { deleteTrip } from '../actions';
-import { EditTripModal } from './EditTripModal';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { Spinner } from '@/components/ui/spinner';
+
 import Lottie from 'lottie-react';
 import flightAnimation from '@/../public/Flight.json';
 
@@ -46,7 +45,7 @@ export function TripList({ trips }: TripListProps) {
   if (trips.length === 0) {
     return (
       <div className="py-8 text-center text-gray-500">
-        You haven't created any trips yet.
+        You haven&apos;t created any trips yet.
       </div>
     );
   }
@@ -82,7 +81,6 @@ export function TripList({ trips }: TripListProps) {
 
               {trip.user_role === 'admin' && (
                 <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                  <EditTripModal trip={trip} userRole={trip.user_role} />
                   <form id={`delete-form-${trip.id}`} action={deleteTrip.bind(null, trip.id)}>
                     <Tooltip>
                       <TooltipTrigger asChild>

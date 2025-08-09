@@ -1,7 +1,7 @@
 // src/app/trip/[tripId]/_components/ParticipantManager.tsx
 'use client';
 
-import { Database } from '@/types/database.types';
+
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { removeParticipant, removeMultipleParticipants } from '../actions';
@@ -66,14 +66,14 @@ export function ParticipantManager({ tripId, participants, currentUserRole }: Pa
       if (participantToDelete.profiles.id === '-1') {
         const result = await removeMultipleParticipants(Array.from(selectedParticipants), tripId);
         if (result?.message) {
-          console.log(result.message);
+          // Success message handled by server action
         }
         setSelectedParticipants(new Set());
         setIsDeleteMode(false);
       } else {
         const result = await removeParticipant(participantToDelete.profiles.id, tripId);
         if (result?.message) {
-          console.log(result.message);
+          // Success message handled by server action
         }
       }
     } catch (error) {

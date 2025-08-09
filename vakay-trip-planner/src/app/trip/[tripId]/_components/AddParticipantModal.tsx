@@ -1,8 +1,7 @@
 'use client';
 
-import { Database } from '@/types/database.types';
+
 import { useState, useEffect } from 'react';
-import { useActionState } from 'react';
 import { inviteUser } from '../actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,13 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { X, Plus, Trash2, User, Crown } from 'lucide-react';
 
-type Participant = {
-  role: string | null;
-  profiles: {
-    id: string;
-    full_name: string | null;
-  };
-}
+
 
 interface AddParticipantModalProps {
   tripId: string;
@@ -37,11 +30,11 @@ const roles = [
 ];
 
 export function AddParticipantModal({ tripId, isOpen, onClose, onParticipantAdded }: AddParticipantModalProps) {
-  const [state, formAction] = useActionState(inviteUser, { message: '' });
   const [participants, setParticipants] = useState<ParticipantEntry[]>([
     { id: '1', email: '', role: 'traveler' }
   ]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [message, setMessage] = useState<string>('');
 
   const addParticipantEntry = () => {
     const newId = (participants.length + 1).toString();
@@ -62,38 +55,42 @@ export function AddParticipantModal({ tripId, isOpen, onClose, onParticipantAdde
 
   const handleSubmit = async (formData: FormData) => {
     setIsSubmitting(true);
+    setMessage('');
     
     // Filter out empty emails
     const validParticipants = participants.filter(p => p.email.trim() !== '');
     
     if (validParticipants.length === 0) {
       setIsSubmitting(false);
+      setMessage('Please add at least one email address.');
       return;
     }
 
-    // Submit each participant
-    for (const participant of validParticipants) {
-      const participantFormData = new FormData();
-      participantFormData.append('email', participant.email.trim());
-      participantFormData.append('trip_id', tripId);
+    try {
+      // Submit each participant
+      for (const participant of validParticipants) {
+        const participantFormData = new FormData();
+        participantFormData.append('email', participant.email.trim());
+        participantFormData.append('trip_id', tripId);
+        
+        const result = await inviteUser(null, participantFormData);
+        if (result.message && result.message.includes('error')) {
+          throw new Error(result.message);
+        }
+      }
       
-      await formAction(participantFormData);
+      setIsSubmitting(false);
+      onParticipantAdded();
+      onClose();
+      // Reset form
+      setParticipants([{ id: '1', email: '', role: 'traveler' }]);
+    } catch (error) {
+      setIsSubmitting(false);
+      setMessage(error instanceof Error ? error.message : 'Failed to send invitations');
     }
-
-    setIsSubmitting(false);
-    onParticipantAdded();
-    onClose();
-    // Reset form
-    setParticipants([{ id: '1', email: '', role: 'traveler' }]);
   };
 
-  // Watch for successful state changes
-  useEffect(() => {
-    if (state?.message && !state.message.includes('error')) {
-      // Success - refresh participants
-      onParticipantAdded();
-    }
-  }, [state, onParticipantAdded]);
+
 
   if (!isOpen) return null;
 
@@ -194,9 +191,9 @@ export function AddParticipantModal({ tripId, isOpen, onClose, onParticipantAdde
             Add Another Participant
           </Button>
 
-          {state?.message && (
-            <p className={`text-sm ${state.message.includes('error') ? 'text-red-600' : 'text-green-600'}`}>
-              {state.message}
+          {message && (
+            <p className={`text-sm ${message.includes('error') ? 'text-red-600' : 'text-green-600'}`}>
+              {message}
             </p>
           )}
 

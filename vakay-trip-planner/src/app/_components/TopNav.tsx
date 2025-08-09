@@ -7,7 +7,7 @@ import LogoutButton from '../(app)/_components/LogoutButton';
 import Lottie from 'lottie-react';
 import flightAnimation from '@/../public/Flight.json';
 
-export default function TopNav({ user }: { user?: any }) {
+export default function TopNav({ user }: { user?: { id: string; email?: string } }) {
   const router = useRouter();
   const pathname = usePathname();
   const [loading, setLoading] = useState(false);

@@ -23,7 +23,7 @@ export default async function RootLayout({
     <html lang="en">
       {/* Apply the font class to the body */}
       <body className={GeistSans.className}>
-        <TopNav user={user} />
+        <TopNav user={user || undefined} />
         {children}
       </body>
     </html>

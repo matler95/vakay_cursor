@@ -4,8 +4,6 @@ import { Button } from '@/components/ui/button';
 import { 
   Calendar, 
   MapPin, 
-  Clock, 
-  ArrowRight, 
   Copy, 
   RotateCcw 
 } from 'lucide-react';
@@ -91,7 +89,7 @@ export function QuickActions({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Copy previous day's itinerary</p>
+                <p>Copy previous day&apos;s itinerary</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
