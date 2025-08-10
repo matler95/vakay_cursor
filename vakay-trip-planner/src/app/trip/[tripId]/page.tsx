@@ -1,7 +1,6 @@
-// src/app/trip/[tripId]/page.tsx
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
-import { notFound } from 'next/navigation';
+'use client';
+
+import { supabase } from '@/lib/supabaseClient';
 import { Database } from '@/types/database.types';
 import { ItineraryView } from './_components/ItineraryView';
 import { LocationManager } from './_components/LocationManager';
@@ -9,9 +8,15 @@ import { ParticipantManager } from './_components/ParticipantManager';
 import { EditTripInline } from './_components/EditTripInline';
 import { TripNavigation } from './_components/TripNavigation';
 import { type Participant } from './_components/ParticipantManager';
-import { Calendar, MapPin } from 'lucide-react';
+import { Calendar, MapPin, Users } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useState, useEffect } from 'react';
+import { AddLocationModal } from './_components/AddLocationModal';
+import { AddParticipantModal } from './_components/AddParticipantModal';
+import { useRouter } from 'next/navigation';
 
-export const dynamic = 'force-dynamic';
+
 
 interface TripPageProps {
   params: Promise<{
@@ -19,76 +24,121 @@ interface TripPageProps {
   }>;
 }
 
-export default async function TripPage({ params }: TripPageProps) {
-  // Await the params to get the tripId
-  const { tripId } = await params;
+export default function TripPage({ params }: TripPageProps) {
+  const router = useRouter();
+  const [trip, setTrip] = useState<Database['public']['Tables']['trips']['Row'] | null>(null);
+  const [itineraryDays, setItineraryDays] = useState<Database['public']['Tables']['itinerary_days']['Row'][]>([]);
+  const [locations, setLocations] = useState<Database['public']['Tables']['locations']['Row'][]>([]);
+  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [participantRole, setParticipantRole] = useState<{ role: string } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   
-  const supabase = createServerComponentClient<Database>({ cookies });
+  // Modal state
+  const [isAddLocationModalOpen, setIsAddLocationModalOpen] = useState(false);
+  const [isAddParticipantModalOpen, setIsAddParticipantModalOpen] = useState(false);
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) { notFound(); }
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const { tripId: id } = await params;
+        
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { 
+          router.push('/auth/callback');
+          return;
+        }
 
-  const { count } = await supabase
-    .from('trip_participants')
-    .select('*', { count: 'exact', head: true })
-    .eq('trip_id', tripId)
-    .eq('user_id', user.id);
-  if (count === 0) { notFound(); }
+        const { count } = await supabase
+          .from('trip_participants')
+          .select('*', { count: 'exact', head: true })
+          .eq('trip_id', id)
+          .eq('user_id', user.id);
+        if (count === 0) { 
+          router.push('/dashboard');
+          return;
+        }
 
-  const { data: trip } = await supabase
-    .from('trips')
-    .select('*')
-    .eq('id', tripId)
-    .single();
-  if (!trip) { notFound(); }
+        const { data: tripData } = await supabase
+          .from('trips')
+          .select('*')
+          .eq('id', id)
+          .single();
+        if (!tripData) { 
+          router.push('/dashboard');
+          return;
+        }
+        setTrip(tripData);
 
-  const { data: itineraryDays } = await supabase
-    .from('itinerary_days')
-    .select('*')
-    .eq('trip_id', tripId);
+        const { data: itineraryDaysData } = await supabase
+          .from('itinerary_days')
+          .select('*')
+          .eq('trip_id', id);
+        setItineraryDays(itineraryDaysData || []);
 
-  const { data: locations } = await supabase
-    .from('locations')
-    .select('*')
-    .eq('trip_id', tripId)
-    .order('name');
+        const { data: locationsData } = await supabase
+          .from('locations')
+          .select('*')
+          .eq('trip_id', id)
+          .order('name');
+        setLocations(locationsData || []);
 
-  // FIX: Fetch participants and their profiles in two steps to avoid join issues
-  const { data: participantRows } = await supabase
-    .from('trip_participants')
-    .select('user_id, role')
-    .eq('trip_id', tripId);
+        // Fetch participants and their profiles
+        const { data: participantRows } = await supabase
+          .from('trip_participants')
+          .select('user_id, role')
+          .eq('trip_id', id);
 
-  let participants: Participant[] = [];
-  if (participantRows && participantRows.length > 0) {
-    const userIds = participantRows.map((p) => p.user_id);
-    const { data: profiles } = await supabase
-      .from('profiles')
-      .select('id, full_name')
-      .in('id', userIds);
+        if (participantRows && participantRows.length > 0) {
+          const userIds = participantRows.map((p: { user_id: string; role: string }) => p.user_id);
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, full_name')
+            .in('id', userIds);
 
-    const profileMap = new Map((profiles || []).map((p) => [p.id, p.full_name]));
-    participants = participantRows.map((p) => ({
-      role: p.role,
-      profiles: {
-        id: p.user_id,
-        full_name: profileMap.get(p.user_id) ?? null,
-      },
-    }));
-  }
-  
-  const { data: participantRole } = await supabase
-    .from('trip_participants')
-    .select('role')
-    .eq('trip_id', tripId)
-    .eq('user_id', user.id)
-    .single();
+          const profileMap = new Map((profiles || []).map((p: { id: string; full_name: string | null }) => [p.id, p.full_name]));
+          const participantsData = participantRows.map((p: { user_id: string; role: string }) => ({
+            role: p.role,
+            profiles: {
+              id: p.user_id,
+              full_name: profileMap.get(p.user_id) ?? null,
+            },
+          }));
+          setParticipants(participantsData);
+        }
+        
+        const { data: participantRoleData } = await supabase
+          .from('trip_participants')
+          .select('role')
+          .eq('trip_id', id)
+          .eq('user_id', user.id)
+          .single();
+        setParticipantRole(participantRoleData);
+        
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error fetching trip data:', error);
+        router.push('/dashboard');
+      }
+    };
+
+    fetchData();
+  }, [params, router]);
 
   // Calculate total days
-  const startDate = trip.start_date ? new Date(trip.start_date) : null;
-  const endDate = trip.end_date ? new Date(trip.end_date) : null;
+  const startDate = trip?.start_date ? new Date(trip.start_date) : null;
+  const endDate = trip?.end_date ? new Date(trip.end_date) : null;
   const totalDays = startDate && endDate ? Math.max(1, Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1) : 0;
   const dateRange = startDate && endDate ? `${startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : '';
+
+  if (isLoading || !trip) {
+    return (
+      <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-8 py-4 sm:py-8 bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-8 py-4 sm:py-8 bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
@@ -137,7 +187,6 @@ export default async function TripPage({ params }: TripPageProps) {
               {trip.destination && (
                 <span className="flex items-center gap-1">
                   <MapPin className="h-5 w-5 text-pink-500" />
-                  {trip.destination}
                 </span>
               )}
               <span className="flex items-center gap-1 bg-blue-100 text-blue-700 font-semibold px-3 py-1 rounded-full text-sm">
@@ -154,6 +203,60 @@ export default async function TripPage({ params }: TripPageProps) {
       {/* Trip Navigation */}
       <TripNavigation tripId={trip.id} />
 
+      {/* Secondary Header - Trip Plan */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            Trip Plan
+          </h2>
+          <p className="text-gray-600 mt-1">
+            Plan your daily itinerary and manage trip details
+          </p>
+        </div>
+        
+        <div className="flex gap-3">
+          {/* Add Location Button */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={() => setIsAddLocationModalOpen(true)}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  <MapPin className="h-4 w-4" />
+                  <span className="hidden sm:inline">Add Location</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Add new locations</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          {/* Add Participant Button */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={() => setIsAddParticipantModalOpen(true)}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  <Users className="h-4 w-4" />
+                  <span className="hidden sm:inline">Add Participant</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Invite participants</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+      </div>
+
       {/* Calendar Container */}
       <div className="mb-4 sm:mb-8 rounded-xl sm:rounded-2xl bg-white shadow p-3 sm:p-6">
         <ItineraryView trip={trip} itineraryDays={itineraryDays || []} locations={locations || []} />
@@ -168,6 +271,33 @@ export default async function TripPage({ params }: TripPageProps) {
           <ParticipantManager tripId={trip.id} participants={participants || []} currentUserRole={participantRole?.role || null} />
         </div>
       </div>
+
+      {/* Modals */}
+      {isAddLocationModalOpen && (
+        <AddLocationModal
+          tripId={trip.id}
+          isOpen={isAddLocationModalOpen}
+          onClose={() => setIsAddLocationModalOpen(false)}
+          onLocationAdded={() => {
+            setIsAddLocationModalOpen(false);
+            // Refresh the page to get updated data
+            window.location.reload();
+          }}
+        />
+      )}
+
+      {isAddParticipantModalOpen && (
+        <AddParticipantModal
+          tripId={trip.id}
+          isOpen={isAddParticipantModalOpen}
+          onClose={() => setIsAddParticipantModalOpen(false)}
+          onParticipantAdded={() => {
+            setIsAddParticipantModalOpen(false);
+            // Refresh the page to get updated data
+            window.location.reload();
+          }}
+        />
+      )}
     </div>
   );
 }

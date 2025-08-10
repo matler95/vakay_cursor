@@ -50,7 +50,7 @@ export function CurrencySettingsModal({
       } else {
         setMessage(result.message || 'An error occurred');
       }
-    } catch (error) {
+    } catch {
       setMessage('An unexpected error occurred');
     } finally {
       setIsSubmitting(false);

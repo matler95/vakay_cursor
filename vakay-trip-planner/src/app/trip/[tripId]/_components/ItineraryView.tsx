@@ -32,6 +32,8 @@ export function ItineraryView({ trip, itineraryDays, locations }: ItineraryViewP
   const [state, formAction] = useActionState(saveItineraryChanges, { message: '' });
   const [showMessage, setShowMessage] = useState(false);
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('list'); // Default to list on mobile
+  
+
 
   useEffect(() => {
     const initialMap = new Map(itineraryDays.map(day => [day.date, day]));
@@ -149,6 +151,8 @@ export function ItineraryView({ trip, itineraryDays, locations }: ItineraryViewP
     });
   };
 
+
+
   if (!trip.start_date || !trip.end_date) {
     return <p>Please set a start and end date for this trip.</p>;
   }
@@ -181,13 +185,8 @@ export function ItineraryView({ trip, itineraryDays, locations }: ItineraryViewP
   return (
     <div className="mt-8">
       {/* Header with Trip Info and Actions */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-xl font-bold text-gray-800">Trip plan</h2>
-          {/* <p className="text-gray-600">Plan your daily activities and locations</p> */}
-        </div>
-        
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div className="flex gap-3">
           {/* View Toggle Button */}
           <TooltipProvider>
             <Tooltip>
@@ -339,6 +338,8 @@ export function ItineraryView({ trip, itineraryDays, locations }: ItineraryViewP
           onClearSelection={handleClearSelection}
         />
       )}
+
+
     </div>
   );
 }

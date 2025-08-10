@@ -3,8 +3,9 @@
 
 import { useState } from 'react';
 import { Database } from '@/types/database.types';
-import { Plus, Settings } from 'lucide-react';
+import { Plus, Settings, Edit3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { EditTripModal } from '../../_components/EditTripModal';
 import { ExpenseOverview } from './ExpenseOverview';
 import { ExpensesList } from './ExpensesList';
 import { AddExpenseModal } from './AddExpenseModal';
@@ -61,6 +62,7 @@ export function ExpenseView({
 }: ExpenseViewProps) {
   const [isAddExpenseModalOpen, setIsAddExpenseModalOpen] = useState(false);
   const [isCurrencySettingsModalOpen, setIsCurrencySettingsModalOpen] = useState(false);
+  const [isEditTripModalOpen, setIsEditTripModalOpen] = useState(false);
 
   const refreshData = () => {
     // This will be handled by Next.js revalidation from server actions
@@ -69,27 +71,38 @@ export function ExpenseView({
 
   return (
     <div className="space-y-6">
-      {/* Header with Actions */}
+      {/* Secondary Header - Expense Tracking */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
             Expense Tracking
-          </h1>
+          </h2>
           <p className="text-gray-600 mt-1">
             Track and manage trip expenses with multi-currency support
           </p>
         </div>
         <div className="flex gap-3">
           {userRole === 'admin' && (
-            <Button
-              onClick={() => setIsCurrencySettingsModalOpen(true)}
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2"
-            >
-              <Settings className="h-4 w-4" />
-              <span className="hidden sm:inline">Currency Settings</span>
-            </Button>
+            <>
+              <Button
+                onClick={() => setIsEditTripModalOpen(true)}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <Edit3 className="h-4 w-4" />
+                <span className="hidden sm:inline">Edit Trip</span>
+              </Button>
+              <Button
+                onClick={() => setIsCurrencySettingsModalOpen(true)}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <Settings className="h-4 w-4" />
+                <span className="hidden sm:inline">Currency Settings</span>
+              </Button>
+            </>
           )}
           <Button
             onClick={() => setIsAddExpenseModalOpen(true)}
@@ -145,6 +158,15 @@ export function ExpenseView({
           trip={trip}
           onSettingsUpdated={refreshData}
           updateTripMainCurrencyAction={updateTripMainCurrencyAction}
+        />
+      )}
+
+      {isEditTripModalOpen && userRole === 'admin' && (
+        <EditTripModal
+          trip={trip}
+          isOpen={isEditTripModalOpen}
+          onClose={() => setIsEditTripModalOpen(false)}
+          onTripUpdated={refreshData}
         />
       )}
     </div>

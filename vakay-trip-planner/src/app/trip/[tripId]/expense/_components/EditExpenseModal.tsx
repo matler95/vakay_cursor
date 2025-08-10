@@ -23,19 +23,11 @@ type Expense = Database['public']['Tables']['expenses']['Row'] & {
 
 type Category = Database['public']['Tables']['expense_categories']['Row'];
 
-type TripParticipant = {
-  user_id: string;
-  role: string;
-  profiles: {
-    id: string;
-    full_name: string | null;
-  };
-};
+
 
 interface EditExpenseModalProps {
   expense: Expense;
   categories: Category[];
-  tripParticipants: TripParticipant[];
   onClose: () => void;
   onUpdated: () => void;
   updateExpenseAction: (prevState: unknown, formData: FormData) => Promise<{ message?: string }>;
@@ -44,7 +36,6 @@ interface EditExpenseModalProps {
 export function EditExpenseModal({ 
   expense, 
   categories, 
-  tripParticipants, 
   onClose, 
   onUpdated,
   updateExpenseAction
@@ -74,7 +65,7 @@ export function EditExpenseModal({
       } else {
         setMessage(result.message || 'An error occurred');
       }
-    } catch (error) {
+    } catch {
       setMessage('An unexpected error occurred');
     } finally {
       setIsSubmitting(false);

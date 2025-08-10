@@ -54,7 +54,7 @@ export function DeleteExpenseModal({ expense, onClose, onDeleted, deleteExpenseA
       } else {
         setMessage(result.message || 'An error occurred');
       }
-    } catch (error) {
+    } catch {
       setMessage('An unexpected error occurred');
     } finally {
       setIsSubmitting(false);

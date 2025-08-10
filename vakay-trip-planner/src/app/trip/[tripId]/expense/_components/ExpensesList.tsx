@@ -465,7 +465,6 @@ export function ExpensesList({
         <EditExpenseModal
           expense={editExpense}
           categories={categories}
-          tripParticipants={tripParticipants}
           onClose={() => setEditExpense(null)}
           onUpdated={() => {
             setEditExpense(null);

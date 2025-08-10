@@ -96,7 +96,7 @@ export function formatCurrency(amount: number, currency: string): string {
       style: 'currency',
       currency: currency,
     }).format(amount);
-  } catch (error) {
+  } catch {
     // Fallback if currency is not supported by Intl
     const symbol = currencyInfo?.symbol || currency;
     return `${symbol}${amount.toFixed(2)}`;
