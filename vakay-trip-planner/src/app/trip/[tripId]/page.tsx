@@ -8,7 +8,7 @@ import { ParticipantManager } from './_components/ParticipantManager';
 import { EditTripInline } from './_components/EditTripInline';
 import { TripNavigation } from './_components/TripNavigation';
 import { type Participant } from './_components/ParticipantManager';
-import { Calendar, MapPin, Users } from 'lucide-react';
+import { Calendar, MapPin, MapPinPlus, UserRoundPlus, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useState, useEffect } from 'react';
@@ -17,7 +17,6 @@ import { AddParticipantModal } from './_components/AddParticipantModal';
 import { useRouter } from 'next/navigation';
 import Lottie from 'lottie-react';
 import flightAnimation from '@/../public/Flight.json';
-
 
 
 interface TripPageProps {
@@ -207,13 +206,13 @@ export default function TripPage({ params }: TripPageProps) {
       <TripNavigation tripId={trip.id} />
 
       {/* Secondary Header - Trip Plan */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+      <div className="flex justify-between items-center gap-4 mb-6">
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
             Trip Plan
           </h2>
           <p className="text-gray-600 mt-1">
-            Plan your daily itinerary and manage trip details
+            Add locations and participants to start planning your trip
           </p>
         </div>
         
@@ -228,8 +227,7 @@ export default function TripPage({ params }: TripPageProps) {
                   size="sm"
                   className="flex items-center gap-2"
                 >
-                  <MapPin className="h-4 w-4" />
-                  <span className="hidden sm:inline">Add Location</span>
+                  <MapPinPlus className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
@@ -248,8 +246,7 @@ export default function TripPage({ params }: TripPageProps) {
                   size="sm"
                   className="flex items-center gap-2"
                 >
-                  <Users className="h-4 w-4" />
-                  <span className="hidden sm:inline">Add Participant</span>
+                  <UserRoundPlus className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>

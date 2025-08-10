@@ -10,6 +10,7 @@ import { ExpenseOverview } from './ExpenseOverview';
 import { ExpensesList } from './ExpensesList';
 import { AddExpenseModal } from './AddExpenseModal';
 import { CurrencySettingsModal } from './CurrencySettingsModal';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 type Expense = Database['public']['Tables']['expenses']['Row'] & {
   expense_categories: {
@@ -72,7 +73,7 @@ export function ExpenseView({
   return (
     <div className="space-y-6">
       {/* Secondary Header - Expense Tracking */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex justify-between items-center gap-4 mb-6">
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
             Expense Tracking
@@ -84,34 +85,42 @@ export function ExpenseView({
         <div className="flex gap-3">
           {userRole === 'admin' && (
             <>
-              <Button
-                onClick={() => setIsEditTripModalOpen(true)}
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2"
-              >
-                <Edit3 className="h-4 w-4" />
-                <span className="hidden sm:inline">Edit Trip</span>
-              </Button>
-              <Button
-                onClick={() => setIsCurrencySettingsModalOpen(true)}
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2"
-              >
-                <Settings className="h-4 w-4" />
-                <span className="hidden sm:inline">Currency Settings</span>
-              </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={() => setIsCurrencySettingsModalOpen(true)}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Currency settings</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
             </>
           )}
-          <Button
-            onClick={() => setIsAddExpenseModalOpen(true)}
-            size="sm"
-            className="flex items-center gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            Add Expense
-          </Button>
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={() => setIsAddExpenseModalOpen(true)}
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Add new expense</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
 

@@ -183,10 +183,10 @@ export function ItineraryView({ trip, itineraryDays, locations }: ItineraryViewP
   const emptyCells = (firstDay + 6) % 7;
 
   return (
-    <div className="mt-8">
+    <div>
       {/* Header with Trip Info and Actions */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <div className="flex gap-3">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-3">
+        <div className="flex gap-3 ml-auto">
           {/* View Toggle Button */}
           <TooltipProvider>
             <Tooltip>
