@@ -46,9 +46,15 @@ export function AddExpenseModal({
 }: AddExpenseModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState('');
-  const [selectedCurrency, setSelectedCurrency] = useState(mainCurrency);
-  const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
-  const [paymentStatus, setPaymentStatus] = useState<'pending' | 'paid'>('pending');
+  const [selectedCurrency, setSelectedCurrency] = useState(() => {
+    const lastCurrency = localStorage.getItem('lastUsedCurrency');
+    if (lastCurrency && CURRENCIES.find(c => c.code === lastCurrency)) {
+      return lastCurrency;
+    }
+    return mainCurrency;
+  });
+    const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
+  const [paymentStatus, setPaymentStatus] = useState<'pending' | 'paid'>('paid');
 
   // Get last used currency from localStorage
   useEffect(() => {
@@ -80,8 +86,12 @@ export function AddExpenseModal({
       if (result.message?.includes('success')) {
         // Save currency preference
         localStorage.setItem('lastUsedCurrency', selectedCurrency);
-        onExpenseAdded();
-        onClose();
+        setMessage('Expense added!');
+        setTimeout(() => {
+          onExpenseAdded();
+          onClose();
+          setMessage('');
+        }, 1500);
       } else {
         setMessage(result.message || 'An error occurred');
       }
@@ -189,23 +199,23 @@ export function AddExpenseModal({
                 <input
                   type="radio"
                   name="payment_status_radio"
-                  checked={paymentStatus === 'pending'}
-                  onChange={() => setPaymentStatus('pending')}
-                  disabled={isSubmitting}
-                  className="text-orange-600"
-                />
-                <span className="text-orange-600">Pending</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="payment_status_radio"
                   checked={paymentStatus === 'paid'}
                   onChange={() => setPaymentStatus('paid')}
                   disabled={isSubmitting}
                   className="text-green-600"
                 />
                 <span className="text-green-600">Paid</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="payment_status_radio"
+                  checked={paymentStatus === 'pending'}
+                  onChange={() => setPaymentStatus('pending')}
+                  disabled={isSubmitting}
+                  className="text-orange-600"
+                />
+                <span className="text-orange-600">Pending</span>
               </label>
             </div>
           </div>

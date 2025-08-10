@@ -20,6 +20,7 @@ interface EditTripModalProps {
 export function EditTripModal({ trip, isOpen, onClose, onTripUpdated }: EditTripModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string>('');
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -36,8 +37,12 @@ export function EditTripModal({ trip, isOpen, onClose, onTripUpdated }: EditTrip
       const result = await updateTripDetails(null, formData);
       
       if (result.status === 'success') {
-        onClose();
-        onTripUpdated();
+        setMessage('Details updated!');
+        setTimeout(() => {
+          onClose();
+          onTripUpdated();
+          setMessage('');
+        }, 1500);
       } else {
         setError(result.message || 'Failed to update trip');
       }
@@ -125,6 +130,12 @@ export function EditTripModal({ trip, isOpen, onClose, onTripUpdated }: EditTrip
           {error && (
             <p className="text-sm text-red-600">
               {error}
+            </p>
+          )}
+          
+          {message && (
+            <p className={`text-sm ${message.includes('error') ? 'text-red-600' : 'text-green-600'}`}>
+              {message}
             </p>
           )}
 

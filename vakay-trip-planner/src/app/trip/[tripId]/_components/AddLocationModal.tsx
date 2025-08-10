@@ -94,8 +94,14 @@ export function AddLocationModal({ tripId, isOpen, onClose, onLocationAdded }: A
       }
       
       setIsSubmitting(false);
-      onLocationAdded();
-      onClose();
+      setMessage('Locations added!');
+      setTimeout(() => {
+        onLocationAdded();
+        onClose();
+        // Reset form
+        setLocations([{ id: '1', name: '', color: presetColors[7].hex }]);
+        setMessage('');
+      }, 1500);
       // Reset form
       setLocations([{ id: '1', name: '', color: presetColors[7].hex }]);
     } catch (error) {

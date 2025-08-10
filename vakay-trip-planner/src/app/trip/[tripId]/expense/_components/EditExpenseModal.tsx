@@ -61,7 +61,11 @@ export function EditExpenseModal({
     try {
       const result = await updateExpenseAction(null, formData);
       if (result.message?.includes('success')) {
-        onUpdated();
+        setMessage('Expense updated!');
+        setTimeout(() => {
+          onUpdated();
+          setMessage('');
+        }, 1500);
       } else {
         setMessage(result.message || 'An error occurred');
       }

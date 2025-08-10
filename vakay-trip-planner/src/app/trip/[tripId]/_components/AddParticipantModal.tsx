@@ -80,10 +80,14 @@ export function AddParticipantModal({ tripId, isOpen, onClose, onParticipantAdde
       }
       
       setIsSubmitting(false);
-      onParticipantAdded();
-      onClose();
-      // Reset form
-      setParticipants([{ id: '1', email: '', role: 'traveler' }]);
+      setMessage('Invitation sent!');
+      setTimeout(() => {
+        onParticipantAdded();
+        onClose();
+        // Reset form
+        setParticipants([{ id: '1', email: '', role: 'traveler' }]);
+        setMessage('');
+      }, 1500);
     } catch (error) {
       setIsSubmitting(false);
       setMessage(error instanceof Error ? error.message : 'Failed to send invitations');

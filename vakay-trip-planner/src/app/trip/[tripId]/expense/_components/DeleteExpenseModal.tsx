@@ -50,7 +50,11 @@ export function DeleteExpenseModal({ expense, onClose, onDeleted, deleteExpenseA
     try {
       const result = await deleteExpenseAction(null, formData);
       if (result.message?.includes('success')) {
-        onDeleted();
+        setMessage('Expense deleted!');
+        setTimeout(() => {
+          onDeleted();
+          setMessage('');
+        }, 1500);
       } else {
         setMessage(result.message || 'An error occurred');
       }

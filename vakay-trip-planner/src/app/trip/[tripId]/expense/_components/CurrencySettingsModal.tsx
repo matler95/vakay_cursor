@@ -45,9 +45,13 @@ export function CurrencySettingsModal({
     try {
       const result = await updateTripMainCurrencyAction(null, formData);
       if (result.message?.includes('success')) {
+        setMessage('Main currency updated!');
+        setTimeout(() => {
         onSettingsUpdated();
         onClose();
-      } else {
+        setMessage('');
+      }, 1500);
+    } else {
         setMessage(result.message || 'An error occurred');
       }
     } catch {
@@ -188,7 +192,6 @@ export function CurrencySettingsModal({
                 </>
               ) : (
                 <>
-                  <Settings className="h-4 w-4 mr-2" />
                   Update Currency
                 </>
               )}

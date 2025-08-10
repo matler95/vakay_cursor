@@ -56,7 +56,7 @@ export function TripList({ trips }: TripListProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
           <div className="flex flex-col items-center">
             <Lottie animationData={flightAnimation} loop style={{ width: 96, height: 96 }} />
-            <span className="mt-4 text-lg text-white font-semibold">Loading trip...</span>
+            <span className="mt-4 text-lg text-white font-semibold">Loading...</span>
           </div>
         </div>
       )}

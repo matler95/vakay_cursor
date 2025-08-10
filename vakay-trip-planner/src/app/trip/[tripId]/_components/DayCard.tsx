@@ -79,7 +79,6 @@ export function DayCard({ date, dayData, locations, isEditingCalendar, isSelecte
       className={`relative flex flex-col ${isListView ? 'p-3 sm:p-4 min-h-0' : 'p-2 sm:p-3 min-h-32 sm:min-h-40'} rounded-lg sm:rounded-xl transition-all duration-200 shadow-none border border-gray-100
         ${cardBgClass}
         ${isEditingCalendar ? 'cursor-pointer hover:scale-[1.02] hover:shadow-md hover:border-gray-200' : ''}
-        ${isSelected ? 'ring-2 ring-blue-400 border-blue-200 shadow-lg' : ''}
       `}
       style={dayStyle}
     >
@@ -89,7 +88,7 @@ export function DayCard({ date, dayData, locations, isEditingCalendar, isSelecte
           <Checkbox 
             checked={isSelected} 
             onCheckedChange={onSelectDate}
-            className="data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500 scale-75 sm:scale-100"
+            className="data-[state=checked]:bg-gray-500 data-[state=checked]:border-gray-500 border-gray-500 scale-75 sm:scale-100"
           />
         </div>
       )}
