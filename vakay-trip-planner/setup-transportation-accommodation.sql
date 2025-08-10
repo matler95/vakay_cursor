@@ -199,3 +199,9 @@ CREATE POLICY "Users can manage transportation participants for their trips" ON 
       AND tp.user_id = auth.uid()
     )
   );
+
+-- 7. Link expenses to accommodations for cascade deletion and deep integration
+ALTER TABLE IF EXISTS expenses
+  ADD COLUMN IF NOT EXISTS accommodation_id bigint REFERENCES accommodations(id) ON DELETE CASCADE;
+
+CREATE INDEX IF NOT EXISTS idx_expenses_accommodation_id ON expenses(accommodation_id);

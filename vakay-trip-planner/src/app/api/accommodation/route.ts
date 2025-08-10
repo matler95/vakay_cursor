@@ -145,6 +145,7 @@ export async function POST(request: NextRequest) {
           exchange_rate: exchangeRate,
           description: `${name}`,
           payment_status: expense.payment_status || 'pending',
+          accommodation_id: accommodation.id,
         })
         .select()
         .single();

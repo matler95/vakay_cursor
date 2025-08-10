@@ -123,7 +123,7 @@ export function AddAccommodationModal({
         if (data?.name && !finalName) finalName = data.name as string;
         if (data?.address_line && !finalAddress) finalAddress = data.address_line as string;
         if (!(finalName || finalAddress)) {
-          setFetchMessage(`Retrying... (${attempt})`);
+          // setFetchMessage(`Retrying... (${attempt})`);
           await new Promise(r => setTimeout(r, 350));
         }
       }
@@ -228,7 +228,14 @@ export function AddAccommodationModal({
               </div>
               <div>
                 <Button type="button" onClick={handleFetchDetails} disabled={fetchingDetails || !formData.booking_url} className="w-full">
-                  {fetchingDetails ? 'Fetching...' : 'Fetch details'}
+                  {fetchingDetails ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                      Fetching...
+                    </>
+                  ) : (
+                    'Fetch details'
+                  )}
                 </Button>
               </div>
             </div>
@@ -449,7 +456,14 @@ export function AddAccommodationModal({
               disabled={isLoading}
               className="flex items-center gap-2"
             >
-              {isLoading ? 'Adding...' : 'Add Accommodation'}
+              {isLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                  Saving...
+                </>
+              ) : (
+                'Add Accommodation'
+              )}
             </Button>
           </div>
         </form>

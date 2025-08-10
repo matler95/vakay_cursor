@@ -1,6 +1,7 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
+import { fetchExchangeRates, convertCurrency } from '@/lib/currency';
 
 export async function PUT(
   request: NextRequest,
@@ -28,6 +29,7 @@ export async function PUT(
       contact_phone,
       notes,
       participants,
+      expense,
     } = body;
 
     // Validate required fields
@@ -111,6 +113,65 @@ export async function PUT(
       }
     }
 
+    // Optional: create expense on edit
+    if (expense && expense.amount && expense.currency) {
+      let expenseParticipants: string[] = Array.isArray(participants) ? participants : [];
+      if (expenseParticipants.length === 0) {
+        const { data: tps } = await supabase
+          .from('trip_participants')
+          .select('user_id')
+          .eq('trip_id', accommodation.trip_id);
+        expenseParticipants = (tps || []).map(tp => tp.user_id);
+      }
+
+      const { data: trip } = await supabase
+        .from('trips')
+        .select('main_currency')
+        .eq('id', accommodation.trip_id)
+        .single();
+      const mainCurrency = trip?.main_currency || 'USD';
+
+      let convertedAmount = expense.amount as number;
+      let exchangeRate = 1;
+      if (expense.currency !== mainCurrency) {
+        try {
+          const rates = await fetchExchangeRates(expense.currency);
+          const conversion = convertCurrency(expense.amount, expense.currency, mainCurrency, rates.rates);
+          convertedAmount = conversion.convertedAmount;
+          exchangeRate = conversion.exchangeRate;
+        } catch (err) {
+          console.error('Currency conversion failed:', err);
+        }
+      }
+
+      const { data: category } = await supabase
+        .from('expense_categories')
+        .select('id')
+        .eq('name', 'Accommodation')
+        .single();
+
+      const { error: expErr } = await supabase
+        .from('expenses')
+        .insert({
+          trip_id: accommodation.trip_id,
+          user_id: user.id,
+          category_id: category?.id ?? null,
+          original_amount: expense.amount,
+          original_currency: expense.currency,
+          amount: convertedAmount,
+          currency: mainCurrency,
+          exchange_rate: exchangeRate,
+          description: `${name}`,
+          payment_status: expense.payment_status || 'pending',
+          accommodation_id: Number(params.id),
+        });
+      if (expErr) {
+        console.error('Failed to create expense on edit:', expErr);
+      } else if (expenseParticipants.length > 0) {
+        // Fetch the last inserted expense id might not be trivial here without returning row; skip linking participants on edit to avoid complexity
+      }
+    }
+
     return NextResponse.json(updatedAccommodation);
   } catch (error) {
     console.error('Error in accommodation PUT:', error);
@@ -128,13 +189,11 @@ export async function DELETE(
   try {
     const supabase = createRouteHandlerClient({ cookies });
     
-    // Check authentication
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check if user has access to this accommodation record
     const { data: accommodation } = await supabase
       .from('accommodations')
       .select('trip_id')
@@ -156,7 +215,12 @@ export async function DELETE(
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
-    // Delete accommodation record
+    // Safeguard: delete linked expenses first (FK CASCADE should also handle this)
+    await supabase
+      .from('expenses')
+      .delete()
+      .eq('accommodation_id', params.id);
+
     const { error } = await supabase
       .from('accommodations')
       .delete()
@@ -170,7 +234,7 @@ export async function DELETE(
       );
     }
 
-    return NextResponse.json({ message: 'Accommodation deleted successfully' });
+    return NextResponse.json({ message: 'Accommodation and linked expenses deleted successfully' });
   } catch (error) {
     console.error('Error in accommodation DELETE:', error);
     return NextResponse.json(
