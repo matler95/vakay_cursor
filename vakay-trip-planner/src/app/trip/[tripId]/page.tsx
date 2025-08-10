@@ -188,7 +188,8 @@ export default function TripPage({ params }: TripPageProps) {
               </span>
               {trip.destination && (
                 <span className="flex items-center gap-1">
-                  <MapPin className="h-5 w-5 text-pink-500" />
+                  <MapPin className="h-4 w-4 text-pink-500" />
+                  {trip.destination}
                 </span>
               )}
               <span className="flex items-center gap-1 bg-blue-100 text-blue-700 font-semibold px-3 py-1 rounded-full text-sm">
