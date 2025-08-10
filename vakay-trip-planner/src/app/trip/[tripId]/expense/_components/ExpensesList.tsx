@@ -6,7 +6,7 @@ import { Database } from '@/types/database.types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Trash2, Edit, MapPin, CreditCard, Clock, Search } from 'lucide-react';
+import { Trash2, Edit, MapPin, CreditCard, Clock, Search, Filter, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { formatCurrency, getCurrencySymbol } from '@/lib/currency';
 // Server actions will be passed as props
 import { DeleteExpenseModal } from './DeleteExpenseModal';
@@ -155,13 +155,13 @@ export function ExpensesList({
         <h3 className="text-lg font-semibold text-gray-900">Expense History</h3>
       </div>
 
-      {/* Filters and Search */}
-      <div className="mb-6 space-y-4">
-        <div className="flex flex-col sm:flex-row gap-4">
-          {/* Search */}
-          <div className="flex-1">
+      {/* Filters, Search, Sorting */}
+      <div className="mb-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-6 md:justify-between">
+          {/* Search (constrained width on desktop) */}
+          <div className="w-full ">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
                 placeholder="Search expenses..."
                 value={searchTerm}
@@ -171,62 +171,79 @@ export function ExpensesList({
             </div>
           </div>
 
-          {/* Category Filter */}
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-full sm:w-48">
-              <SelectValue placeholder="All categories" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All categories</SelectItem>
-              {categories.map((category) => (
-                <SelectItem key={category.id} value={category.id.toString()}>
+          {/* Right controls: Filters + Sorting */}
+          <div className="flex flex-col items-center gap-3 md:flex-row md:items-center md:gap-4 md:justify-end">
+            {/* Filters group */}
+            <div className="flex w-full items-center gap-2">
+              <Filter className="h-5 w-5 text-gray-500 flex-shrink-0" />
+              <div className="flex flex-grow gap-2">
+                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="All" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All categories</SelectItem>
+                    {categories.map((category) => (
+                      <SelectItem key={category.id} value={category.id.toString()}>
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: category.color }} />
+                          {category.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="All" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All status</SelectItem>
+                    <SelectItem value="paid">Paid</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Sorting group */}
+            <div className="flex w-full items-center gap-2">
+              <ArrowUpDown className="h-5 w-5 text-gray-500 flex-shrink-0" />
+              <Select value={sortBy} onValueChange={(value) => setSortBy(value as 'created_at' | 'amount' | 'description')}>
+                <SelectTrigger className="w-full">
                   <div className="flex items-center gap-2">
-                    <div
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: category.color }}
-                    />
-                    {category.name}
+                    {/* <ArrowUpDown className="h-4 w-4 text-gray-500" /> */}
+                    <SelectValue placeholder="Sort by" />
                   </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="created_at">Date Created</SelectItem>
+                  <SelectItem value="amount">Amount</SelectItem>
+                  <SelectItem value="description">Description</SelectItem>
+                </SelectContent>
+              </Select>
 
-          {/* Status Filter */}
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-32">
-              <SelectValue placeholder="All status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All status</SelectItem>
-              <SelectItem value="paid">Paid</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Sort Options */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          <Select value={sortBy} onValueChange={(value) => setSortBy(value as 'created_at' | 'amount' | 'description')}>
-            <SelectTrigger className="w-full sm:w-48">
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="created_at">Date Created</SelectItem>
-              <SelectItem value="amount">Amount</SelectItem>
-              <SelectItem value="description">Description</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as 'asc' | 'desc')}>
-            <SelectTrigger className="w-full sm:w-32">
-              <SelectValue placeholder="Order" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="desc">Descending</SelectItem>
-              <SelectItem value="asc">Ascending</SelectItem>
-            </SelectContent>
-          </Select>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))}
+                aria-pressed={sortOrder === 'desc'}
+                title={sortOrder === 'asc' ? 'Ascending' : 'Descending'}
+                className="flex items-center gap-2"
+              >
+                {sortOrder === 'asc' ? (
+                  <>
+                    <ArrowUp className="h-4 w-4" />
+                  </>
+                ) : (
+                  <>
+                    <ArrowDown className="h-4 w-4" />
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -302,14 +319,14 @@ export function ExpensesList({
                   {canEditExpense(expense) && (
                     <>
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         onClick={() => setEditExpense(expense)}
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         onClick={() => setDeleteExpense(expense)}
                       >
@@ -389,9 +406,9 @@ export function ExpensesList({
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                        {/* <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
                           {getParticipantName(expense.user_id).charAt(0).toUpperCase()}
-                        </div>
+                        </div> */}
                         <span className="text-sm">{getParticipantName(expense.user_id)}</span>
                       </div>
                     </td>
@@ -423,15 +440,17 @@ export function ExpensesList({
                         {canEditExpense(expense) && (
                           <>
                             <Button
-                              variant="outline"
+                              variant="ghost"
                               size="sm"
+                              className="h-7 w-7 sm:h-8 sm:w-8 p-0 text-gray-400"
                               onClick={() => setEditExpense(expense)}
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
                             <Button
-                              variant="outline"
+                              variant="ghost"
                               size="sm"
+                              className="h-7 w-7 sm:h-8 sm:w-8 p-0 text-gray-400 hover:text-red-500 hover:bg-red-50"
                               onClick={() => setDeleteExpense(expense)}
                             >
                               <Trash2 className="h-4 w-4" />

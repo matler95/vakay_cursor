@@ -128,9 +128,9 @@ export function ExpenseOverview({ expenses, tripParticipants, mainCurrency }: Ex
             {participantExpenses.map(({ participant, totalAmount, paidAmount, pendingAmount, expenseCount }) => (
               <div key={participant.user_id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
+                  {/* <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
                     {(participant.profiles.full_name || 'Unknown').charAt(0).toUpperCase()}
-                  </div>
+                  </div> */}
                   <div>
                     <p className="font-medium text-gray-900">
                       {participant.profiles.full_name || 'Unknown User'}
