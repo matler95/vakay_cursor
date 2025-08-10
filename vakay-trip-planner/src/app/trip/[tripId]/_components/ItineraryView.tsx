@@ -22,10 +22,12 @@ interface ItineraryViewProps {
   trip: Trip;
   itineraryDays: ItineraryDay[];
   locations: Location[];
+  isEditing: boolean;
+  setIsEditing: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export function ItineraryView({ trip, itineraryDays, locations }: ItineraryViewProps) {
-  const [isEditing, setIsEditing] = useState(false);
+
+export function ItineraryView({ trip, itineraryDays, locations, isEditing, setIsEditing }: ItineraryViewProps) {
   const [selectedDates, setSelectedDates] = useState<Set<string>>(new Set());
   const [draftItinerary, setDraftItinerary] = useState<Map<string, ItineraryDay>>(new Map());
   const [isPending, startTransition] = useTransition();
@@ -319,15 +321,6 @@ export function ItineraryView({ trip, itineraryDays, locations }: ItineraryViewP
           onUpdateDraft={handleUpdateDraft}
         />
       )}
-
-      {/* Info area under calendar */}
-      <div className="w-full flex flex-col justify-center">
-        {isEditing && selectedDates.size === 0 ? (
-          <div className="mb-2 p-2 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
-            💡 <strong>Edit Mode:</strong> Edit individual days below, or click on multiple days to use bulk editing.
-          </div>
-        ) : null}
-      </div>
 
       {/* Floating Bulk Action Panel */}
       {isEditing && selectedDates.size > 1 && (

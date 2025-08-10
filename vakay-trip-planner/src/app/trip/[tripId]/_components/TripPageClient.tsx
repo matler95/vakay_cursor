@@ -35,6 +35,8 @@ export function TripPageClient({
 }: TripPageClientProps) {
   const [isAddLocationModalOpen, setIsAddLocationModalOpen] = useState(false);
   const [isAddParticipantModalOpen, setIsAddParticipantModalOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [selectedDates, setSelectedDates] = useState(new Set());
 
   const startDate = trip?.start_date ? new Date(trip.start_date) : null;
   const endDate = trip?.end_date ? new Date(trip.end_date) : null;
@@ -113,7 +115,15 @@ export function TripPageClient({
       <div className="flex justify-between items-center gap-4 mb-6">
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Trip Plan</h2>
-          <p className="text-gray-600 mt-1">Add locations and participants to start planning your trip</p>
+          {isEditing ? (
+          <div className="text-gray-600 mt-1">
+            <strong>Edit Mode:</strong> Edit days individually or select multiple to update locations
+          </div>
+        ) : (
+          <p className="text-gray-600 mt-1">
+            Add locations and participants to start planning your trip
+          </p>
+      )}
         </div>
 
         <div className="flex gap-3">
@@ -149,7 +159,13 @@ export function TripPageClient({
 
       {/* Calendar Container */}
       <div className="mb-4 sm:mb-8 rounded-xl sm:rounded-2xl bg-white shadow p-3 sm:p-6">
-        <ItineraryView trip={trip} itineraryDays={itineraryDays || []} locations={locations || []} />
+        <ItineraryView
+        trip={trip}
+        itineraryDays={itineraryDays || []}
+        locations={locations || []}
+        isEditing={isEditing}
+        setIsEditing={setIsEditing}
+        />
       </div>
 
       {/* Locations & Participants Side-by-Side */}
