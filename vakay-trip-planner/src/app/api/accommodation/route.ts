@@ -28,6 +28,8 @@ export async function POST(request: NextRequest) {
       notes,
       participants,
       expense,
+      latitude,
+      longitude,
     } = body;
 
     // Validate required fields
@@ -57,6 +59,8 @@ export async function POST(request: NextRequest) {
         trip_id,
         name,
         address,
+        latitude: typeof latitude === 'number' ? latitude : null,
+        longitude: typeof longitude === 'number' ? longitude : null,
         check_in_date,
         check_out_date,
         check_in_time: check_in_time || null,

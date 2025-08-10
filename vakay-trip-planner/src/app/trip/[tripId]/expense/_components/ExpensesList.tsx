@@ -321,6 +321,7 @@ export function ExpensesList({
                       <Button
                         variant="ghost"
                         size="sm"
+                        className="h-7 w-7 sm:h-8 sm:w-8 p-0 text-gray-400"
                         onClick={() => setEditExpense(expense)}
                       >
                         <Edit className="h-4 w-4" />
@@ -328,6 +329,7 @@ export function ExpensesList({
                       <Button
                         variant="ghost"
                         size="sm"
+                        className="h-7 w-7 sm:h-8 sm:w-8 p-0 text-gray-400 hover:text-red-500 hover:bg-red-50"
                         onClick={() => setDeleteExpense(expense)}
                       >
                         <Trash2 className="h-4 w-4" />

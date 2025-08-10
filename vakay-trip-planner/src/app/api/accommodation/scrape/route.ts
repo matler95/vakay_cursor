@@ -5,11 +5,13 @@ interface StructuredAddress {
   name?: string;
   display_name?: string;
   address_line?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 // Lightweight in-memory cache for repeated URLs in a warm runtime
 // Avoid unbounded growth
-const CACHE = new Map<string, { name?: string; address_line?: string; cachedAt: number }>();
+const CACHE = new Map<string, { name?: string; address_line?: string; latitude?: number; longitude?: number; cachedAt: number }>();
 const MAX_CACHE = 100;
 
 async function fetchWithRetry(url: string, init: RequestInit, attempts = 3): Promise<Response> {
@@ -63,12 +65,11 @@ function extractFromJsonLd($: cheerio.CheerioAPI): { name?: string; addressLine?
 
 function parseNameCity(rawTitle: string, rawDesc: string): { name?: string; city?: string } {
   const title = (rawTitle || '').replace(/\s+/g, ' ').trim();
-  const parts = title.split(/\s*[–—\-|]\s*/); // split on dash/pipe variants
+  const parts = title.split(/\s*[–—\-|]\s*/);
   const name = parts[0]?.trim();
   const cityCandidate = parts[1]?.trim();
 
   let city: string | undefined = cityCandidate;
-  // try extract from description: " in City" or "located in City"
   const desc = (rawDesc || '').replace(/\s+/g, ' ');
   const inMatch = desc.match(/\bin\s+([^,\.\-]+)/i);
   if (inMatch && inMatch[1]) {
@@ -85,13 +86,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid url' }, { status: 400 });
     }
 
-    // Serve cached
     const hit = CACHE.get(url);
     if (hit) {
-      return NextResponse.json({ name: hit.name || null, address_line: hit.address_line || null }, { status: 200 });
+      return NextResponse.json({ name: hit.name || null, address_line: hit.address_line || null, latitude: hit.latitude, longitude: hit.longitude }, { status: 200 });
     }
 
-    // 1) Fetch page HTML
     const resp = await fetchWithRetry(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
@@ -100,7 +99,6 @@ export async function POST(request: NextRequest) {
     });
     const html = await resp.text();
 
-    // 2) Parse for best-effort name and possible address via JSON-LD
     const $ = cheerio.load(html);
     const ogTitle = $('meta[property="og:title"]').attr('content');
     const metaTitle = $('meta[name="title"]').attr('content');
@@ -114,7 +112,6 @@ export async function POST(request: NextRequest) {
     const jsonLd = extractFromJsonLd($);
     if (jsonLd && (jsonLd.name || jsonLd.addressLine)) {
       const payload = { name: jsonLd.name || rawTitle || null, address_line: jsonLd.addressLine || null };
-      // cache
       if (CACHE.size >= MAX_CACHE) CACHE.delete(CACHE.keys().next().value);
       CACHE.set(url, { ...payload, cachedAt: Date.now() });
       return NextResponse.json(payload, { status: 200 });
@@ -124,7 +121,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ name: null, address: null }, { status: 200 });
     }
 
-    // 3) Build prioritized Nominatim queries
     const { name: parsedName, city: parsedCity } = parseNameCity(rawTitle, rawDesc);
     const queries = Array.from(new Set([
       parsedName && parsedCity ? `${parsedName} ${parsedCity}` : undefined,
@@ -160,7 +156,9 @@ export async function POST(request: NextRequest) {
             const idx = disp.indexOf(',');
             addressLine = idx > -1 ? disp.slice(idx + 1).trim() : disp;
           }
-          const payload = { name: result.name || parsedName || rawTitle || null, address_line: addressLine };
+          const lat = parseFloat(result.lat);
+          const lon = parseFloat(result.lon);
+          const payload: StructuredAddress = { name: result.name || parsedName || rawTitle || null, address_line: addressLine, latitude: isNaN(lat) ? undefined : lat, longitude: isNaN(lon) ? undefined : lon };
           if (CACHE.size >= MAX_CACHE) CACHE.delete(CACHE.keys().next().value);
           CACHE.set(url, { ...payload, cachedAt: Date.now() });
           return NextResponse.json(payload, { status: 200 });
@@ -170,7 +168,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Nothing found
     const payload = { name: parsedName || rawTitle || null, address: null } as any;
     if (CACHE.size >= MAX_CACHE) CACHE.delete(CACHE.keys().next().value);
     CACHE.set(url, { name: payload.name, address_line: null, cachedAt: Date.now() });

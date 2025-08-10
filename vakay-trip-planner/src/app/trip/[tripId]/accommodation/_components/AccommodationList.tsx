@@ -2,7 +2,7 @@
 'use client';
 
 import { Database } from '@/types/database.types';
-import { Bed, MapPin, Calendar, Phone, FileText, Copy, ExternalLink, Edit, Trash2 } from 'lucide-react';
+import { Bed, MapPin, Calendar, Phone, FileText, Copy, ExternalLink, Edit, Trash2, MapPinned, ExternalLinkIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { EditAccommodationModal } from './EditAccommodationModal';
@@ -66,27 +66,30 @@ export function AccommodationList({
   return (
     <div className="divide-y divide-gray-200">
       {accommodations.map((accommodation) => (
-        <div key={accommodation.id} className="p-6">
-          <div className="flex items-start justify-between">
+        <div key={accommodation.id} className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            {/* Left: Info */}
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
+              {/* Header */}
+              <div className="flex items-start sm:items-center gap-3 mb-3">
+                <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
                   <Bed className="h-5 w-5 text-blue-600" />
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">
+                <div className="min-w-0">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
                     {accommodation.name}
                   </h3>
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <MapPin className="h-4 w-4" />
+                  <div className="flex items-start sm:items-center gap-2 text-xs sm:text-sm text-gray-600">
+                    <MapPin className="h-4 w-4 flex-shrink-0" />
                     <span className="truncate">{accommodation.address}</span>
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              {/* Dates & details */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3 sm:mb-4">
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm">
+                  <div className="flex items-center gap-2 text-xs sm:text-sm">
                     <Calendar className="h-4 w-4 text-gray-400" />
                     <span className="font-medium text-gray-700">Check-in:</span>
                     <span className="text-gray-600">
@@ -98,7 +101,7 @@ export function AccommodationList({
                       )}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 text-sm">
+                  <div className="flex items-center gap-2 text-xs sm:text-sm">
                     <Calendar className="h-4 w-4 text-gray-400" />
                     <span className="font-medium text-gray-700">Check-out:</span>
                     <span className="text-gray-600">
@@ -110,7 +113,7 @@ export function AccommodationList({
                       )}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 text-sm">
+                  <div className="flex items-center gap-2 text-xs sm:text-sm">
                     <span className="font-medium text-gray-700">Duration:</span>
                     <span className="text-gray-600">
                       {calculateNights(accommodation.check_in_date, accommodation.check_out_date)} nights
@@ -119,86 +122,97 @@ export function AccommodationList({
                 </div>
 
                 <div className="space-y-2">
-                  {accommodation.booking_confirmation && (
-                    <div className="flex items-center gap-2 text-sm">
+                  {(accommodation as any).booking_confirmation && (
+                    <div className="flex items-center gap-2 text-xs sm:text-sm">
                       <FileText className="h-4 w-4 text-gray-400" />
                       <span className="font-medium text-gray-700">Confirmation:</span>
-                      <span className="text-gray-600 font-mono">
-                        {accommodation.booking_confirmation}
+                      <span className="text-gray-600 font-mono truncate">
+                        {(accommodation as any).booking_confirmation}
                       </span>
                     </div>
                   )}
-                  {Boolean((accommodation as any).booking_url) && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <ExternalLink className="h-4 w-4 text-gray-400" />
-                      <span className="font-medium text-gray-700">Booking Link:</span>
-                      <a
-                        href={(accommodation as any).booking_url as string}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline truncate max-w-[200px]"
-                        title={(accommodation as any).booking_url as string}
-                      >
-                        {(accommodation as any).booking_url as string}
-                      </a>
-                    </div>
-                  )}
-                  {accommodation.contact_phone && (
-                    <div className="flex items-center gap-2 text-sm">
+                  {(accommodation as any).contact_phone && (
+                    <div className="flex items-center gap-2 text-xs sm:text-sm">
                       <Phone className="h-4 w-4 text-gray-400" />
                       <span className="font-medium text-gray-700">Phone:</span>
-                      <span className="text-gray-600">{accommodation.contact_phone}</span>
+                      <span className="text-gray-600">{(accommodation as any).contact_phone}</span>
                     </div>
                   )}
                 </div>
               </div>
 
-              {accommodation.notes && (
-                <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-700">{accommodation.notes}</p>
+              {(accommodation as any).notes && (
+                <div className="mb-2 sm:mb-4 p-3 bg-gray-50 rounded-lg">
+                  <p className="text-xs sm:text-sm text-gray-700">{(accommodation as any).notes}</p>
                 </div>
               )}
             </div>
 
-            <div className="flex flex-col gap-2 ml-4">
-              <div className="flex gap-2">
-                <Button
+            {/* Right: Actions - grid on mobile, vertical on desktop */}
+            <div className="sm:ml-4">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-1 sm:gap-2 sm:flex sm:flex-col">
+              {/* <Button
                   variant="outline"
                   size="sm"
                   onClick={() => onCopyAddress(accommodation.address)}
-                  className="flex items-center gap-1"
+                  className="flex items-center gap-1 w-full sm:w-auto"
+                  aria-label="Copy address"
                 >
                   <Copy className="h-3 w-3" />
-                  Address
-                </Button>
+                  <span className="hidden xs:inline">Address</span>
+                  <span className="sm:inline">Address</span>
+                </Button> */}
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
-                  onClick={() => onOpenInMaps(accommodation.address)}
-                  className="flex items-center gap-1"
+                  onClick={() => window.open((accommodation as any).booking_url as string, '_blank')}
+                  className="flex items-center gap-1 w-full sm:w-auto"
                 >
-                  <ExternalLink className="h-3 w-3" />
-                  Maps
+                  <span className="hidden xs:inline">Details </span>
+                  <span className="sm:inline">Details </span>
+                  <ExternalLink className="h-4 w-4" />
                 </Button>
-              </div>
-              <div className="flex gap-2">
                 <Button
-                  variant="outline"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    const lat = (accommodation as any).latitude as number | undefined;
+                    const lon = (accommodation as any).longitude as number | undefined;
+                    if (typeof lat === 'number' && typeof lon === 'number') {
+                      window.open(`https://www.google.com/maps?q=${lat},${lon}`, '_blank');
+                    } else {
+                      onOpenInMaps(accommodation.address);
+                    }
+                  }}
+                  className="flex items-center gap-1 w-full sm:w-auto"
+                  >
+                  <span className="hidden xs:inline">Maps </span>
+                  <span className="sm:inline">Maps </span>
+                  <MapPinned className="h-4 w-4" />
+                  {/* <span className="hidden xs:inline">Maps</span>
+                  <span className="sm:inline">Maps</span> */}
+                </Button>
+                <Button
+                  variant="ghost"
                   size="sm"
                   onClick={() => setEditingAccommodation(accommodation)}
-                  className="flex items-center gap-1"
+                  className="flex items-center gap-1 w-full sm:w-auto"
+                  aria-label="Edit accommodation"
                 >
-                  <Edit className="h-3 w-3" />
-                  Edit
+                  <Edit className="h-4 w-4" />
+                  {/* <span className="hidden xs:inline">Edit</span>
+                  <span className="sm:inline">Edit</span> */}
                 </Button>
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
                   onClick={() => setDeletingAccommodation(accommodation)}
-                  className="flex items-center gap-1 text-red-600 hover:text-red-700"
+                  className="h-8 w-8 p-0 text-gray-400 hover:text-red-500 hover:bg-red-50"
+                  aria-label="Delete accommodation"
                 >
-                  <Trash2 className="h-3 w-3" />
-                  Delete
+                  <Trash2 className="h-4 w-4" />
+                  {/* <span className="hidden xs:inline">Delete</span>
+                  <span className="sm:inline">Delete</span> */}
                 </Button>
               </div>
             </div>

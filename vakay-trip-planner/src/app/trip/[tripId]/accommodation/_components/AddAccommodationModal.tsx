@@ -40,7 +40,9 @@ export function AddAccommodationModal({
     booking_confirmation: '',
     booking_url: '',
     contact_phone: '',
-    notes: ''
+    notes: '',
+    latitude: undefined as number | undefined,
+    longitude: undefined as number | undefined,
   });
   const [fetchingDetails, setFetchingDetails] = useState(false);
   const [fetchMessage, setFetchMessage] = useState('');
@@ -122,6 +124,9 @@ export function AddAccommodationModal({
         const data = await resp.json();
         if (data?.name && !finalName) finalName = data.name as string;
         if (data?.address_line && !finalAddress) finalAddress = data.address_line as string;
+        if (typeof data?.latitude === 'number' && typeof data?.longitude === 'number') {
+          setFormData(prev => ({ ...prev, latitude: data.latitude, longitude: data.longitude }));
+        }
         if (!(finalName || finalAddress)) {
           // setFetchMessage(`Retrying... (${attempt})`);
           await new Promise(r => setTimeout(r, 350));
@@ -241,6 +246,17 @@ export function AddAccommodationModal({
             </div>
             {fetchMessage && (
               <p className="text-sm text-gray-600">{fetchMessage}</p>
+            )}
+            {(formData.latitude && formData.longitude) && (
+              <div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => window.open(`https://www.google.com/maps?q=${formData.latitude},${formData.longitude}`, '_blank')}
+                >
+                  Open in Google Maps
+                </Button>
+              </div>
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

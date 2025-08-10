@@ -38,12 +38,6 @@ export function TripNavigation({ tripId }: TripNavigationProps) {
       current: pathname === `/trip/${tripId}`,
     },
     {
-      name: 'Expenses',
-      href: `/trip/${tripId}/expense`,
-      icon: DollarSign,
-      current: pathname === `/trip/${tripId}/expense`,
-    },
-    {
       name: 'Accommodation',
       href: `/trip/${tripId}/accommodation`,
       icon: Bed,
@@ -55,6 +49,13 @@ export function TripNavigation({ tripId }: TripNavigationProps) {
       icon: Plane,
       current: pathname === `/trip/${tripId}/transportation`,
     },
+    {
+      name: 'Expenses',
+      href: `/trip/${tripId}/expense`,
+      icon: DollarSign,
+      current: pathname === `/trip/${tripId}/expense`,
+    },
+
   ];
 
   return (

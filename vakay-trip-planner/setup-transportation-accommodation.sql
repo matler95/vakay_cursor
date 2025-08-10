@@ -7,6 +7,8 @@ CREATE TABLE accommodations (
   trip_id uuid REFERENCES trips(id) ON DELETE CASCADE NOT NULL,
   name text NOT NULL,
   address text NOT NULL,
+  latitude decimal(10,7),
+  longitude decimal(10,7),
   check_in_date date NOT NULL,
   check_in_time time,
   check_out_date date NOT NULL,
@@ -205,3 +207,10 @@ ALTER TABLE IF EXISTS expenses
   ADD COLUMN IF NOT EXISTS accommodation_id bigint REFERENCES accommodations(id) ON DELETE CASCADE;
 
 CREATE INDEX IF NOT EXISTS idx_expenses_accommodation_id ON expenses(accommodation_id);
+
+-- Backfill/alter for existing deployments
+ALTER TABLE IF EXISTS accommodations
+  ADD COLUMN IF NOT EXISTS latitude decimal(10,7),
+  ADD COLUMN IF NOT EXISTS longitude decimal(10,7);
+
+CREATE INDEX IF NOT EXISTS idx_accommodations_lat_lon ON accommodations(latitude, longitude);
