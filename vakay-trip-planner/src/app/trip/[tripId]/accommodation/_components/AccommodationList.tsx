@@ -1,7 +1,7 @@
 // Accommodation list component
 'use client';
 
-import { Bed, MapPin, Calendar, FileText, Copy, ExternalLink, Edit, Trash2 } from 'lucide-react';
+import { Bed, MapPin, Calendar, FileText, Copy, ExternalLink, Edit, Trash2, LucideMapPinned } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { EditAccommodationModal } from './EditAccommodationModal';
@@ -163,8 +163,8 @@ export function AccommodationList({
               <tr className="border-b border-gray-200">
                 <th className="text-left py-3 px-4 font-medium text-gray-700">Stay</th>
                 <th className="text-left py-3 px-4 font-medium text-gray-700">Dates</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">Nights</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">Confirmation</th>
+                <th className="text-left py-3 px-4 font-medium text-gray-700">Details</th>
+                <th className="text-left py-3 px-4 font-medium text-gray-700">Maps</th>
                 <th className="text-right py-3 px-4 font-medium text-gray-700">Actions</th>
               </tr>
             </thead>
@@ -199,20 +199,14 @@ export function AccommodationList({
                         {accommodation.check_out_time && (<span className="ml-1 text-gray-500">{formatTime(accommodation.check_out_time)}</span>)}
                       </div>
                     </td>
-                    <td className="py-3 px-4">
-                      <div className="text-sm text-gray-700">{calculateNights(accommodation.check_in_date, accommodation.check_out_date)}</div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="text-sm text-gray-700 font-mono truncate max-w-[200px]">{(accommodation as any).booking_confirmation || '-'}</div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center justify-end gap-2">
-                        {Boolean((accommodation as any).booking_url) && (
-                          <Button variant="ghost" size="sm" onClick={() => window.open((accommodation as any).booking_url as string, '_blank')} aria-label="Open booking" className="h-8 w-8 p-0 text-gray-500">
+                    <td className="py-4 px-4">
+                        <Button variant="ghost" size="sm" onClick={() => window.open((accommodation as any).booking_url as string, '_blank')} aria-label="Open booking" className="h-8 w-8 p-0 text-gray-500">
                             <ExternalLink className="h-4 w-4" />
                           </Button>
-                        )}
-                        <Button
+
+                    </td>
+                    <td className="py-4 px-4">
+                    <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => {
@@ -227,11 +221,11 @@ export function AccommodationList({
                           aria-label="Open in maps"
                           className="h-8 w-8 p-0 text-gray-500"
                         >
-                          <ExternalLink className="h-4 w-4" />
+                          <LucideMapPinned className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => onCopyAddress(accommodation.address)} aria-label="Copy address" className="h-8 w-8 p-0 text-gray-500">
-                          <Copy className="h-4 w-4" />
-                        </Button>
+</td>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center justify-end gap-2">
                         <Button variant="ghost" size="sm" onClick={() => setEditingAccommodation(accommodation)} aria-label="Edit" className="h-8 w-8 p-0 text-gray-500">
                           <Edit className="h-4 w-4" />
                         </Button>
