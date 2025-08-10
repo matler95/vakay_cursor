@@ -15,6 +15,8 @@ import { useState, useEffect } from 'react';
 import { AddLocationModal } from './_components/AddLocationModal';
 import { AddParticipantModal } from './_components/AddParticipantModal';
 import { useRouter } from 'next/navigation';
+import Lottie from 'lottie-react';
+import flightAnimation from '@/../public/Flight.json';
 
 
 
@@ -132,9 +134,10 @@ export default function TripPage({ params }: TripPageProps) {
 
   if (isLoading || !trip) {
     return (
-      <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-8 py-4 sm:py-8 bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+        <div className="flex flex-col items-center">
+          <Lottie animationData={flightAnimation} loop style={{ width: 96, height: 96 }} />
+          <span className="mt-4 text-lg text-white font-semibold">Loading...</span>
         </div>
       </div>
     );
