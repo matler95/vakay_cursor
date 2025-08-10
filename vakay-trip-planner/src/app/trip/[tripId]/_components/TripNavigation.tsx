@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Calendar, DollarSign } from 'lucide-react';
+import { Calendar, DollarSign, Bed, Plane } from 'lucide-react';
 import Lottie from 'lottie-react';
 import flightAnimation from '@/../public/Flight.json';
 
@@ -42,6 +42,18 @@ export function TripNavigation({ tripId }: TripNavigationProps) {
       href: `/trip/${tripId}/expense`,
       icon: DollarSign,
       current: pathname === `/trip/${tripId}/expense`,
+    },
+    {
+      name: 'Accommodation',
+      href: `/trip/${tripId}/accommodation`,
+      icon: Bed,
+      current: pathname === `/trip/${tripId}/accommodation`,
+    },
+    {
+      name: 'Transportation',
+      href: `/trip/${tripId}/transportation`,
+      icon: Plane,
+      current: pathname === `/trip/${tripId}/transportation`,
     },
   ];
 
