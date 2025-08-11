@@ -1,9 +1,10 @@
 // Accommodation list component
 'use client';
 
-import { Bed, MapPin, Calendar, FileText, Copy, ExternalLink, Edit, Trash2, LucideMapPinned } from 'lucide-react';
+import { Bed, MapPin, Calendar, FileText, Copy, ExternalLink, Edit, Trash2, Search, MapPinned, BedDoubleIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { Input } from '@/components/ui/input';
+import { useMemo, useState } from 'react';
 import { EditAccommodationModal } from './EditAccommodationModal';
 import { DeleteAccommodationModal } from './DeleteAccommodationModal';
 import { Database } from '@/types/database.types';
@@ -23,6 +24,8 @@ export function AccommodationList({
 }: AccommodationListProps) {
   const [editingAccommodation, setEditingAccommodation] = useState<Accommodation | null>(null);
   const [deletingAccommodation, setDeletingAccommodation] = useState<Accommodation | null>(null);
+
+  const [searchTerm, setSearchTerm] = useState('');
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -52,10 +55,35 @@ export function AccommodationList({
     const now = new Date();
     const ci = new Date(checkIn);
     const co = new Date(checkOut);
-    if (now < ci) return { label: 'Upcoming', className: 'bg-blue-50 text-blue-700' };
-    if (now > co) return { label: 'Past', className: 'bg-gray-50 text-gray-700' };
-    return { label: 'Current', className: 'bg-green-50 text-green-700' };
+    if (now < ci) return 'upcoming';
+    if (now > co) return 'past';
+    return 'current';
   };
+
+  const getStatusChip = (status: 'upcoming' | 'current' | 'past') => {
+    switch (status) {
+      case 'upcoming':
+        return { label: 'Upcoming', className: 'bg-blue-50 text-blue-700' };
+      case 'past':
+        return { label: 'Past', className: 'bg-gray-50 text-gray-700' };
+      default:
+        return { label: 'Current', className: 'bg-green-50 text-green-700' };
+    }
+  };
+
+  const filteredSorted = useMemo(() => {
+    const term = searchTerm.toLowerCase().trim();
+    const filtered = accommodations.filter((a) => {
+      if (!term) return true;
+      return (
+        a.name.toLowerCase().includes(term) ||
+        a.address.toLowerCase().includes(term) ||
+        (a as any).booking_confirmation?.toLowerCase?.().includes(term)
+      );
+    });
+    // Always sort by check-in date ascending
+    return filtered.sort((a, b) => new Date(a.check_in_date as string).getTime() - new Date(b.check_in_date as string).getTime());
+  }, [accommodations, searchTerm]);
 
   if (accommodations.length === 0) {
     return (
@@ -64,89 +92,106 @@ export function AccommodationList({
           <Bed className="h-8 w-8 text-gray-400" />
         </div>
         <h3 className="text-lg font-medium text-gray-900 mb-2">No accommodations yet</h3>
-        <p className="text-gray-500 mb-4">
-          Add your first accommodation to start planning your stay
-        </p>
+        <p className="text-gray-500 mb-4">Add your first accommodation to start planning your stay</p>
       </div>
     );
   }
 
   return (
-    <div className="w-full">
+    <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+        <div className="flex items-center gap-3 mb-6">
+        <div className="p-2 bg-green-100 rounded-full">
+          <BedDoubleIcon className="h-6 w-6 text-green-600" />
+        </div>
+        <h3 className="text-lg font-semibold text-gray-900">Accommodations</h3>
+      </div>
+
+      {/* Search only (align with expenses bar) */}
+      <div className="mb-4">
+        <div className="w-full sm:max-w-sm">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder="Search accommodations..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </div>
+      </div>
+
       {/* Mobile cards */}
-      <div className="sm:hidden divide-y divide-gray-100">
-        {accommodations.map((accommodation) => {
-          const status = getStatus(accommodation.check_in_date as string, accommodation.check_out_date as string);
+      <div className="sm:hidden space-y-4">
+        {filteredSorted.map((a) => {
+          const st = getStatus(a.check_in_date as string, a.check_out_date as string);
+          const chip = getStatusChip(st as any);
           return (
-            <div key={accommodation.id} className="p-3 hover:bg-gray-50 transition-colors">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-start gap-2">
-                    <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
-                      <Bed className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-start gap-2">
-                        <h3 className="text-sm font-semibold text-gray-900 truncate flex-1">{accommodation.name}</h3>
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${status.className}`}>{status.label}</span>
-                      </div>
-                      <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-gray-700">
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2 py-1">
-                          <Calendar className="h-3.5 w-3.5 text-gray-500" />
-                          {formatDate(accommodation.check_in_date)}
-                          {accommodation.check_in_time && (<span className="ml-1 text-gray-500">{formatTime(accommodation.check_in_time)}</span>)}
-                          <span className="mx-1 text-gray-400">–</span>
-                          {formatDate(accommodation.check_out_date)}
-                          {accommodation.check_out_time && (<span className="ml-1 text-gray-500">{formatTime(accommodation.check_out_time)}</span>)}
-                        </span>
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2 py-1">
-                          {calculateNights(accommodation.check_in_date, accommodation.check_out_date)} nights
-                        </span>
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2 py-1 max-w-full">
-                          <MapPin className="h-3.5 w-3.5 text-gray-500" />
-                          <span className="truncate">{accommodation.address}</span>
-                        </span>
-                        {(accommodation as any).booking_confirmation && (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2 py-1 max-w-full">
-                            <FileText className="h-3.5 w-3.5 text-gray-500" />
-                            <span className="text-gray-700 font-mono truncate">{(accommodation as any).booking_confirmation}</span>
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+            <div key={a.id} className="border border-gray-200 rounded-lg p-4 space-y-3">
+              <div className="flex items-start justify-between">
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-medium text-gray-900 truncate">{a.name}</h4>
+                  <p className="text-sm text-gray-500 truncate">{a.address}</p>
                 </div>
-                <div className="flex flex-col gap-2">
-                  {Boolean((accommodation as any).booking_url) && (
-                    <Button variant="outline" size="sm" onClick={() => window.open((accommodation as any).booking_url as string, '_blank')} className="h-8 px-3 rounded-full" aria-label="Open booking">
-                      <ExternalLink className="h-3.5 w-3.5 mr-1" /> Booking
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${chip.className}`}>{chip.label}</span>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 text-xs text-gray-700">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2 py-1">
+                  <Calendar className="h-3.5 w-3.5 text-gray-500" />
+                  {formatDate(a.check_in_date)}
+                  {a.check_in_time && <span className="ml-1 text-gray-500">{formatTime(a.check_in_time)}</span>}
+                  <span className="mx-1 text-gray-400">–</span>
+                  {formatDate(a.check_out_date)}
+                  {a.check_out_time && <span className="ml-1 text-gray-500">{formatTime(a.check_out_time)}</span>}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                <div className="flex gap-2">
+                  {Boolean((a as any).booking_url) && (
+                    <Button 
+                    variant="ghost" 
+                    size="sm" onClick={() => window.open((a as any).booking_url as string, '_blank')} 
+                    className=" p-0 text-gray-500" 
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      Details
                     </Button>
                   )}
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
                     onClick={() => {
-                      const lat = (accommodation as any).latitude as number | undefined;
-                      const lon = (accommodation as any).longitude as number | undefined;
+                      const lat = (a as any).latitude as number | undefined;
+                      const lon = (a as any).longitude as number | undefined;
                       if (typeof lat === 'number' && typeof lon === 'number') {
                         window.open(`https://www.google.com/maps?q=${lat},${lon}`, '_blank');
                       } else {
-                        onOpenInMaps(accommodation.address);
+                        onOpenInMaps(a.address);
                       }
                     }}
-                    className="h-8 px-3 rounded-full"
-                    aria-label="Open in maps"
+                    className="p-0 text-gray-500"
                   >
-                    <ExternalLink className="h-3.5 w-3.5 mr-1" /> Maps
+                    <MapPinned className="h-4 w-4" />
+                    Navigate
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => onCopyAddress(accommodation.address)} className="h-8 px-3 rounded-full" aria-label="Copy address">
-                    <Copy className="h-3.5 w-3.5 mr-1" /> Copy
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="ghost" 
+                  size="sm" 
+                  onClick={() => setEditingAccommodation(a)} 
+                  className="h-7 w-7 sm:h-8 sm:w-8 p-0 text-gray-400" 
+                  aria-label="Edit">
+                    <Edit className="h-4 w-4" />
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => setEditingAccommodation(accommodation)} className="h-8 px-3 rounded-full" aria-label="Edit accommodation">
-                    <Edit className="h-3.5 w-3.5 mr-1" /> Edit
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => setDeletingAccommodation(accommodation)} className="h-8 px-3 rounded-full text-red-600 hover:text-red-700" aria-label="Delete accommodation">
-                    <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete
+                  <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setDeletingAccommodation(a)} 
+                  className="h-7 w-7 sm:h-8 sm:w-8 p-0 text-gray-400 hover:text-red-500 hover:bg-red-50" 
+                  >
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
@@ -161,75 +206,74 @@ export function AccommodationList({
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-200">
-                <th className="text-left py-3 px-4 font-medium text-gray-700">Stay</th>
+                <th className="text-left py-3 px-4 font-medium text-gray-700">Name</th>
                 <th className="text-left py-3 px-4 font-medium text-gray-700">Dates</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">Details</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">Maps</th>
+                {/* <th className="text-left py-3 px-4 font-medium text-gray-700">Details</th>
+                <th className="text-left py-3 px-4 font-medium text-gray-700">Map</th> */}
                 <th className="text-right py-3 px-4 font-medium text-gray-700">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {accommodations.map((accommodation) => {
-                const status = getStatus(accommodation.check_in_date as string, accommodation.check_out_date as string);
+              {filteredSorted.map((a) => {
+                const st = getStatus(a.check_in_date as string, a.check_out_date as string);
+                const chip = getStatusChip(st as any);
                 return (
-                  <tr key={accommodation.id} className="border-b border-gray-100 hover:bg-gray-50">
+                  <tr key={a.id} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="py-3 px-4">
                       <div className="flex items-start gap-2">
-                        <div className="p-2 bg-blue-100 rounded-lg">
-                          <Bed className="h-4 w-4 text-blue-600" />
-                        </div>
                         <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-gray-900 truncate max-w-[360px]">{accommodation.name}</span>
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${status.className}`}>{status.label}</span>
+                            <div className="flex items-center gap-2">
+                            <div
+                            onClick={() => {window.open((a as any).booking_url as string, '_blank')}}
+                            className="flex items-center gap-1  text-gray-600 mt-1 max-w-[520px] truncate cursor-pointer hover:text-blue-600"
+                            >
+                            <ExternalLink className="h-3.5 w-3.5" />
+                            <span className="font-medium text-gray-900 truncate max-w-[360px]">{a.name}</span>
+                            </div>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${chip.className}`}>{chip.label}</span>
                           </div>
-                          <div className="flex items-center gap-1 text-sm text-gray-600 mt-1 max-w-[520px] truncate">
-                            <MapPin className="h-3.5 w-3.5" />
-                            <span className="truncate">{accommodation.address}</span>
+                          <div
+                            onClick={() => {
+                              const lat = (a as any).latitude as number | undefined;
+                              const lon = (a as any).longitude as number | undefined;
+                              if (typeof lat === 'number' && typeof lon === 'number') {
+                                window.open(`https://www.google.com/maps?q=${lat},${lon}`, '_blank');
+                              } else {
+                                onOpenInMaps(a.address);
+                              }
+                            }}
+                            className="flex items-center gap-1 text-sm text-gray-500 mt-1.5 cursor-pointer hover:text-blue-600"
+                          >
+                            <MapPin className="h-3 w-3" />
+                            <span className="truncate">{a.address}</span>
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="py-3 px-4">
                       <div className="text-sm text-gray-700">
-                        {formatDate(accommodation.check_in_date)}
-                        {accommodation.check_in_time && (<span className="ml-1 text-gray-500">{formatTime(accommodation.check_in_time)}</span>)}
+                        {formatDate(a.check_in_date)}
+                        {a.check_in_time && (<span className="ml-1 text-gray-500">{formatTime(a.check_in_time)}</span>)}
                         <span className="mx-1 text-gray-400">–</span>
-                        {formatDate(accommodation.check_out_date)}
-                        {accommodation.check_out_time && (<span className="ml-1 text-gray-500">{formatTime(accommodation.check_out_time)}</span>)}
+                        {formatDate(a.check_out_date)}
+                        {a.check_out_time && (<span className="ml-1 text-gray-500">{formatTime(a.check_out_time)}</span>)}
                       </div>
                     </td>
-                    <td className="py-4 px-4">
-                        <Button variant="ghost" size="sm" onClick={() => window.open((accommodation as any).booking_url as string, '_blank')} aria-label="Open booking" className="h-8 w-8 p-0 text-gray-500">
-                            <ExternalLink className="h-4 w-4" />
-                          </Button>
-
-                    </td>
-                    <td className="py-4 px-4">
-                    <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            const lat = (accommodation as any).latitude as number | undefined;
-                            const lon = (accommodation as any).longitude as number | undefined;
-                            if (typeof lat === 'number' && typeof lon === 'number') {
-                              window.open(`https://www.google.com/maps?q=${lat},${lon}`, '_blank');
-                            } else {
-                              onOpenInMaps(accommodation.address);
-                            }
-                          }}
-                          aria-label="Open in maps"
-                          className="h-8 w-8 p-0 text-gray-500"
-                        >
-                          <LucideMapPinned className="h-4 w-4" />
-                        </Button>
-</td>
-                    <td className="py-3 px-4">
+                    <td className="py-3 px-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => setEditingAccommodation(accommodation)} aria-label="Edit" className="h-8 w-8 p-0 text-gray-500">
+
+                        <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => setEditingAccommodation(a)} 
+                        className="h-7 w-7 sm:h-8 sm:w-8 p-0 text-gray-400">
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => setDeletingAccommodation(accommodation)} aria-label="Delete" className="h-8 w-8 p-0 text-gray-500 hover:text-red-600">
+                        <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => setDeletingAccommodation(a)} 
+                        className="h-7 w-7 sm:h-8 sm:w-8 p-0 text-gray-400 hover:text-red-500 hover:bg-red-50">
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
