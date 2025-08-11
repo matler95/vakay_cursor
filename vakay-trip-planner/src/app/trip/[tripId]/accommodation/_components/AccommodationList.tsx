@@ -162,15 +162,7 @@ export function AccommodationList({
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => {
-                      const lat = (a as any).latitude as number | undefined;
-                      const lon = (a as any).longitude as number | undefined;
-                      if (typeof lat === 'number' && typeof lon === 'number') {
-                        window.open(`https://www.google.com/maps?q=${lat},${lon}`, '_blank');
-                      } else {
-                        onOpenInMaps(a.address);
-                      }
-                    }}
+                    onClick={() => onOpenInMaps(a.address)}
                     className="p-0 text-gray-500"
                   >
                     <MapPinned className="h-4 w-4" />
@@ -233,15 +225,7 @@ export function AccommodationList({
                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${chip.className}`}>{chip.label}</span>
                           </div>
                           <div
-                            onClick={() => {
-                              const lat = (a as any).latitude as number | undefined;
-                              const lon = (a as any).longitude as number | undefined;
-                              if (typeof lat === 'number' && typeof lon === 'number') {
-                                window.open(`https://www.google.com/maps?q=${lat},${lon}`, '_blank');
-                              } else {
-                                onOpenInMaps(a.address);
-                              }
-                            }}
+                            onClick={() => onOpenInMaps(a.address)}
                             className="flex items-center gap-1 text-sm text-gray-500 mt-1.5 cursor-pointer hover:text-blue-600"
                           >
                             <MapPin className="h-3 w-3" />

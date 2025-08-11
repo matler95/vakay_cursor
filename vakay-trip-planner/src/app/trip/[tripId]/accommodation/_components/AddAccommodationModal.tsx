@@ -41,11 +41,8 @@ export function AddAccommodationModal({
     booking_url: '',
     contact_phone: '',
     notes: '',
-    latitude: undefined as number | undefined,
-    longitude: undefined as number | undefined,
   });
-  const [fetchingDetails, setFetchingDetails] = useState(false);
-  const [fetchMessage, setFetchMessage] = useState('');
+
 
   const [participantOptions, setParticipantOptions] = useState<ParticipantOption[]>([]);
   const [selectedParticipants, setSelectedParticipants] = useState<Set<string>>(new Set());
@@ -106,52 +103,7 @@ export function AddAccommodationModal({
     });
   };
 
-  const handleFetchDetails = async () => {
-    if (fetchingDetails || !formData.booking_url) return;
-    setFetchingDetails(true);
-    setFetchMessage('');
-    try {
-      let finalName: string | undefined;
-      let finalAddress: string | undefined;
-      let attempt = 0;
-      while (attempt < 3 && !(finalName || finalAddress)) {
-        attempt++;
-        const resp = await fetch('/api/accommodation/scrape', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
-          body: JSON.stringify({ url: formData.booking_url })
-        });
-        const data = await resp.json();
-        if (data?.name && !finalName) finalName = data.name as string;
-        if (data?.address_line && !finalAddress) finalAddress = data.address_line as string;
-        if (typeof data?.latitude === 'number' && typeof data?.longitude === 'number') {
-          setFormData(prev => ({ ...prev, latitude: data.latitude, longitude: data.longitude }));
-        }
-        if (!(finalName || finalAddress)) {
-          // setFetchMessage(`Retrying... (${attempt})`);
-          await new Promise(r => setTimeout(r, 350));
-        }
-      }
 
-      if (finalName) {
-        setFormData(prev => ({ ...prev, name: prev.name || finalName! }));
-      }
-      if (finalAddress) {
-        setFormData(prev => ({ ...prev, address: prev.address || finalAddress! }));
-      }
-
-      if (!(finalName || finalAddress)) {
-        setFetchMessage('Could not auto-detect details. Please fill manually.');
-      } else {
-        setFetchMessage('Details fetched. Please review and complete.');
-        try { (document.getElementById('name') as HTMLInputElement)?.focus(); } catch {}
-      }
-    } catch {
-      setFetchMessage('Failed to fetch details. Please fill manually.');
-    } finally {
-      setFetchingDetails(false);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -219,45 +171,17 @@ export function AddAccommodationModal({
               Basic Information
             </h3>
 
-            {/* Booking URL first */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
-              <div className="md:col-span-2">
-                <Label htmlFor="booking_url">Booking URL</Label>
-                <Input
-                  id="booking_url"
-                  type="url"
-                  value={formData.booking_url || ''}
-                  onChange={(e) => handleInputChange('booking_url', e.target.value)}
-                  placeholder="https://www.booking.com/..."
-                />
-              </div>
-              <div>
-                <Button type="button" onClick={handleFetchDetails} disabled={fetchingDetails || !formData.booking_url} className="w-full">
-                  {fetchingDetails ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                      Fetching...
-                    </>
-                  ) : (
-                    'Fetch details'
-                  )}
-                </Button>
-              </div>
+            {/* Booking URL */}
+            <div>
+              <Label htmlFor="booking_url">Booking URL</Label>
+              <Input
+                id="booking_url"
+                type="url"
+                value={formData.booking_url || ''}
+                onChange={(e) => handleInputChange('booking_url', e.target.value)}
+                placeholder="https://www.booking.com/..."
+              />
             </div>
-            {fetchMessage && (
-              <p className="text-sm text-gray-600">{fetchMessage}</p>
-            )}
-            {(formData.latitude && formData.longitude) && (
-              <div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => window.open(`https://www.google.com/maps?q=${formData.latitude},${formData.longitude}`, '_blank')}
-                >
-                  Open in Google Maps
-                </Button>
-              </div>
-            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
