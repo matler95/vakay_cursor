@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Database } from '@/types/database.types';
-import { X, Bed, MapPin, Calendar, FileText, Phone, FileEdit, Users, DollarSign } from 'lucide-react';
+import { X, Bed, MapPin, Calendar, FileText, Phone, FileEdit, Users, DollarSign, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,6 +19,7 @@ interface AddAccommodationModalProps {
 }
 
 type ParticipantOption = { id: string; name: string };
+type TripLocation = Database['public']['Tables']['locations']['Row'];
 
 export function AddAccommodationModal({
   tripId,
@@ -43,15 +44,20 @@ export function AddAccommodationModal({
     notes: '',
   });
 
-
   const [participantOptions, setParticipantOptions] = useState<ParticipantOption[]>([]);
   const [selectedParticipants, setSelectedParticipants] = useState<Set<string>>(new Set());
+  const [tripLocations, setTripLocations] = useState<TripLocation[]>([]);
 
   const [expenseEnabled, setExpenseEnabled] = useState(false);
   const [expenseAmount, setExpenseAmount] = useState('');
   const [expenseCurrency, setExpenseCurrency] = useState('USD');
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'paid'>('paid');
   const [mainCurrency, setMainCurrency] = useState('USD');
+
+  // Address autocomplete state
+  const [addressSuggestions, setAddressSuggestions] = useState<TripLocation[]>([]);
+  const [showAddressSuggestions, setShowAddressSuggestions] = useState(false);
+  const [highlightedSuggestionIndex, setHighlightedSuggestionIndex] = useState(-1);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -84,8 +90,17 @@ export function AddAccommodationModal({
         setExpenseCurrency(mc);
       }
     };
+    const loadTripLocations = async () => {
+      const { data: locations } = await supabase
+        .from('locations')
+        .select('*')
+        .eq('trip_id', tripId)
+        .order('name');
+      setTripLocations(locations || []);
+    };
     loadParticipants();
     loadMainCurrency();
+    loadTripLocations();
   }, [isOpen, supabase, tripId]);
 
   const handleInputChange = (field: string, value: string) => {
@@ -93,6 +108,75 @@ export function AddAccommodationModal({
       ...prev,
       [field]: value
     }));
+
+    // Handle address field specifically for autocomplete
+    if (field === 'address') {
+      if (value.trim() === '') {
+        setAddressSuggestions([]);
+        setShowAddressSuggestions(false);
+        return;
+      }
+
+      const filtered = tripLocations.filter(location =>
+        location.name.toLowerCase().includes(value.toLowerCase()) ||
+        (location.description && location.description.toLowerCase().includes(value.toLowerCase()))
+      );
+      
+      setAddressSuggestions(filtered);
+      setShowAddressSuggestions(filtered.length > 0);
+      setHighlightedSuggestionIndex(-1);
+    }
+  };
+
+  const handleAddressSelect = (location: TripLocation) => {
+    setFormData(prev => ({
+      ...prev,
+      address: location.name
+    }));
+    setAddressSuggestions([]);
+    setShowAddressSuggestions(false);
+    setHighlightedSuggestionIndex(-1);
+  };
+
+  const handleAddressKeyDown = (e: React.KeyboardEvent) => {
+    if (!showAddressSuggestions || addressSuggestions.length === 0) return;
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setHighlightedSuggestionIndex(prev => 
+          prev < addressSuggestions.length - 1 ? prev + 1 : prev
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setHighlightedSuggestionIndex(prev => prev > 0 ? prev - 1 : -1);
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (highlightedSuggestionIndex >= 0) {
+          handleAddressSelect(addressSuggestions[highlightedSuggestionIndex]);
+        }
+        break;
+      case 'Escape':
+        setShowAddressSuggestions(false);
+        setHighlightedSuggestionIndex(-1);
+        break;
+    }
+  };
+
+  const handleAddressFocus = () => {
+    if (formData.address.trim() !== '' && addressSuggestions.length > 0) {
+      setShowAddressSuggestions(true);
+    }
+  };
+
+  const handleAddressBlur = () => {
+    // Delay closing to allow click events on suggestions
+    setTimeout(() => {
+      setShowAddressSuggestions(false);
+      setHighlightedSuggestionIndex(-1);
+    }, 150);
   };
 
   const toggleParticipant = (id: string) => {
@@ -102,8 +186,6 @@ export function AddAccommodationModal({
       return next;
     });
   };
-
-
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -195,15 +277,61 @@ export function AddAccommodationModal({
                 />
               </div>
               
-              <div>
-                <Label htmlFor="address">Address *</Label>
-                <Input
-                  id="address"
-                  value={formData.address}
-                  onChange={(e) => handleInputChange('address', e.target.value)}
-                  placeholder="Full address"
-                  required
-                />
+              <div className="relative">
+                <Label htmlFor="address">Location *</Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="address"
+                    value={formData.address}
+                    onChange={(e) => handleInputChange('address', e.target.value)}
+                    onFocus={handleAddressFocus}
+                    onBlur={handleAddressBlur}
+                    onKeyDown={handleAddressKeyDown}
+                    placeholder="Search trip locations or enter address"
+                    required
+                    className="pl-10 pr-4"
+                  />
+                </div>
+                
+                {/* Address Suggestions Dropdown */}
+                {showAddressSuggestions && addressSuggestions.length > 0 && (
+                  <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    <div className="py-2">
+                      {addressSuggestions.map((location, index) => (
+                        <button
+                          key={location.id}
+                          type="button"
+                          onClick={() => handleAddressSelect(location)}
+                          className={`w-full px-4 py-3 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none transition-colors ${
+                            highlightedSuggestionIndex === index ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="flex-shrink-0 mt-1">
+                              <MapPin className="h-4 w-4 text-blue-600" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium text-gray-900 truncate">
+                                  {location.name}
+                                </span>
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                  Trip Location
+                                </span>
+                              </div>
+                              {location.description && (
+                                <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+                                  {location.description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -373,7 +501,7 @@ export function AddAccommodationModal({
               <Label htmlFor="notes">Notes</Label>
               <Textarea
                 id="notes"
-                value={formData.notes || ''}
+                value={formData.notes}
                 onChange={(e) => handleInputChange('notes', e.target.value)}
                 placeholder="Additional notes, special requests, etc."
                 rows={3}
