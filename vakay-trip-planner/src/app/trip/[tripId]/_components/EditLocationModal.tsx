@@ -3,10 +3,9 @@
 import { useState } from 'react';
 import { updateLocation } from '../actions';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Autocomplete, AutocompleteOption } from '@/components/ui/autocomplete';
 import { X, Save } from 'lucide-react';
 import { Database } from '@/types/database.types';
 
@@ -38,10 +37,13 @@ const presetColors = [
 
 export function EditLocationModal({ location, isOpen, onClose, onLocationUpdated }: EditLocationModalProps) {
   const [name, setName] = useState(location.name);
-  const [description, setDescription] = useState(location.description || '');
   const [color, setColor] = useState(location.color);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<string>('');
+
+  const handleNameSelect = (option: AutocompleteOption) => {
+    setName(option.name);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,7 +60,7 @@ export function EditLocationModal({ location, isOpen, onClose, onLocationUpdated
       const formData = new FormData();
       formData.append('location_id', location.id.toString());
       formData.append('name', name.trim());
-      formData.append('description', description.trim());
+      formData.append('description', location.description || ''); // Keep original description
       formData.append('color', color);
       formData.append('trip_id', location.trip_id || '');
       
@@ -107,66 +109,64 @@ export function EditLocationModal({ location, isOpen, onClose, onLocationUpdated
           </button>
         </div>
 
+        {/* Consistent header with color chip + name, matching multi-edit cards */}
+        <div className="flex items-center gap-3 mb-4">
+          <div
+            className="w-4 h-4 rounded-full border border-gray-300"
+            style={{ backgroundColor: color }}
+          />
+          <span className="text-sm font-medium text-gray-700">{location.name}</span>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Location Name</Label>
-            <Input
-              id="name"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Enter location name"
-              disabled={isSubmitting}
-              className="w-full"
-            />
-          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Location Name</Label>
+              <Autocomplete
+                value={name}
+                onChange={setName}
+                onSelect={handleNameSelect}
+                placeholder="Search destinations..."
+                className="w-full"
+                disabled={isSubmitting}
+              />
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="description">Description (Optional)</Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Add a description for this location..."
-              disabled={isSubmitting}
-              className="w-full min-h-[80px]"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Color</Label>
-            <Select
-              value={color}
-              onValueChange={setColor}
-              disabled={isSubmitting}
-            >
-              <SelectTrigger>
-                <SelectValue>
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="w-4 h-4 rounded-full border border-gray-300"
-                      style={{ backgroundColor: color }}
-                    />
-                    <span>
-                      {presetColors.find(c => c.hex === color)?.name || 'Custom'}
-                    </span>
-                  </div>
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {presetColors.map((colorOption) => (
-                  <SelectItem key={colorOption.hex} value={colorOption.hex}>
+            <div className="space-y-2">
+              <Label>Color</Label>
+              <Select
+                value={color}
+                onValueChange={setColor}
+                disabled={isSubmitting}
+              >
+                <SelectTrigger>
+                  <SelectValue>
                     <div className="flex items-center gap-2">
                       <div
                         className="w-4 h-4 rounded-full border border-gray-300"
-                        style={{ backgroundColor: colorOption.hex }}
+                        style={{ backgroundColor: color }}
                       />
-                      <span>{colorOption.name}</span>
+                      <span>
+                        {presetColors.find(c => c.hex === color)?.name || 'Custom'}
+                      </span>
                     </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {presetColors.map((colorOption) => (
+                    <SelectItem key={colorOption.hex} value={colorOption.hex}>
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-4 h-4 rounded-full border border-gray-300"
+                          style={{ backgroundColor: colorOption.hex }}
+                        />
+                        <span>{colorOption.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {message && (
