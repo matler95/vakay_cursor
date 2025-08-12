@@ -305,6 +305,7 @@ export async function updateTripDetails(prevState: unknown, formData: FormData) 
     destination: z.string().optional(),
     start_date: z.string().date(),
     end_date: z.string().date(),
+    main_currency: z.string().min(3, { message: 'Main currency is required.' }),
   });
 
   const validatedFields = schema.safeParse(Object.fromEntries(formData.entries()));

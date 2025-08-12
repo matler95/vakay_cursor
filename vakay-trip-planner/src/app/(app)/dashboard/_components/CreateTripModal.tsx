@@ -10,6 +10,8 @@ import { useActionState } from 'react';
 import { createTrip } from '../actions';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { CURRENCIES } from '@/lib/currency';
 
 export function CreateTripModal() {
   const [open, setOpen] = useState(false);
@@ -47,6 +49,25 @@ export function CreateTripModal() {
               <Label htmlFor="end_date">End Date</Label>
               <Input id="end_date" name="end_date" type="date" required />
             </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="main_currency">Main Currency</Label>
+            <Select name="main_currency" defaultValue="USD">
+              <SelectTrigger>
+                <SelectValue placeholder="Select currency" />
+              </SelectTrigger>
+              <SelectContent>
+                {CURRENCIES.map((currency) => (
+                  <SelectItem key={currency.code} value={currency.code}>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-sm">{currency.symbol}</span>
+                      <span>{currency.code}</span>
+                      <span className="text-gray-500">- {currency.name}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           {state.message && <p className="text-sm text-gray-600">{state.message}</p>}
           <div className="mt-4 flex gap-3">

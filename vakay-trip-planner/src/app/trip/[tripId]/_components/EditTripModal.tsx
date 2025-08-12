@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { X } from 'lucide-react';
 import Lottie from 'lottie-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { CURRENCIES } from '@/lib/currency';
 
 type Trip = Database['public']['Tables']['trips']['Row'];
 
@@ -178,6 +180,26 @@ export function EditTripModal({ trip, isOpen, onClose, onTripUpdated }: EditTrip
                   disabled={isSubmitting}
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="main_currency">Main Currency</Label>
+              <Select name="main_currency" defaultValue={trip.main_currency || 'USD'}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select currency" />
+                </SelectTrigger>
+                <SelectContent>
+                  {CURRENCIES.map((currency) => (
+                    <SelectItem key={currency.code} value={currency.code}>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-sm">{currency.symbol}</span>
+                        <span>{currency.code}</span>
+                        <span className="text-gray-500">- {currency.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {error && (

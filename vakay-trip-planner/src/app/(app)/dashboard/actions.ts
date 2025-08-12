@@ -22,6 +22,7 @@ export async function createTrip(prevState: { message: string }, formData: FormD
     destination: z.string().min(2, { message: 'Destination is required.' }),
     start_date: z.string().date(),
     end_date: z.string().date(),
+    main_currency: z.string().min(3, { message: 'Main currency is required.' }),
   });
 
   const validatedFields = schema.safeParse({
@@ -29,6 +30,7 @@ export async function createTrip(prevState: { message: string }, formData: FormD
     destination: formData.get('destination'),
     start_date: formData.get('start_date'),
     end_date: formData.get('end_date'),
+    main_currency: formData.get('main_currency'),
   });
 
   if (!validatedFields.success) {
@@ -36,16 +38,17 @@ export async function createTrip(prevState: { message: string }, formData: FormD
       message:
         validatedFields.error.flatten().fieldErrors.name?.[0] ||
         validatedFields.error.flatten().fieldErrors.destination?.[0] ||
+        validatedFields.error.flatten().fieldErrors.main_currency?.[0] ||
         'Invalid data provided.',
     };
   }
   
-  const { name, destination, start_date, end_date } = validatedFields.data;
+  const { name, destination, start_date, end_date, main_currency } = validatedFields.data;
 
   // 1. Insert the new trip into the 'trips' table
   const { data: trip, error: tripError } = await supabase
     .from('trips')
-    .insert({ name, destination, start_date, end_date })
+    .insert({ name, destination, start_date, end_date, main_currency })
     .select('id')
     .single();
 
@@ -72,7 +75,7 @@ export async function createTrip(prevState: { message: string }, formData: FormD
 
 // --- ADD THIS NEW FUNCTION ---
 export async function deleteTrip(tripId: string) {
-  const supabase = createServerActionClient({ cookies });
+  const supabase = createServerActionClient<Database>({ cookies });
   
   // RLS policy ensures only an admin can perform this delete.
   // The ON DELETE CASCADE rule in our database will automatically delete

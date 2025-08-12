@@ -32,19 +32,19 @@ export function TripNavigation({ tripId }: TripNavigationProps) {
   
   const tabs = [
     {
-      name: 'Itinerary',
+      name: 'Plan',
       href: `/trip/${tripId}`,
       icon: Calendar,
       current: pathname === `/trip/${tripId}`,
     },
     {
-      name: 'Accommodation',
+      name: 'Accomodation',
       href: `/trip/${tripId}/accommodation`,
       icon: Bed,
       current: pathname === `/trip/${tripId}/accommodation`,
     },
     {
-      name: 'Transportation',
+      name: 'Travel',
       href: `/trip/${tripId}/transportation`,
       icon: Plane,
       current: pathname === `/trip/${tripId}/transportation`,
