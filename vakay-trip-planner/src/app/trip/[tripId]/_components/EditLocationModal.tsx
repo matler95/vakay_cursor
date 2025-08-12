@@ -119,8 +119,8 @@ export function EditLocationModal({ location, isOpen, onClose, onLocationUpdated
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div className="space-y-2 md:col-span-4">
               <Label htmlFor="name">Location Name</Label>
               <Autocomplete
                 value={name}
@@ -132,7 +132,7 @@ export function EditLocationModal({ location, isOpen, onClose, onLocationUpdated
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 md:col-span-1">
               <Label>Color</Label>
               <Select
                 value={color}
@@ -146,9 +146,9 @@ export function EditLocationModal({ location, isOpen, onClose, onLocationUpdated
                         className="w-4 h-4 rounded-full border border-gray-300"
                         style={{ backgroundColor: color }}
                       />
-                      <span>
+                      {/* <span>
                         {presetColors.find(c => c.hex === color)?.name || 'Custom'}
-                      </span>
+                      </span> */}
                     </div>
                   </SelectValue>
                 </SelectTrigger>

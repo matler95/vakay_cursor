@@ -136,7 +136,7 @@ export function AddLocationModal({ tripId, isOpen, onClose, onLocationAdded }: A
         >
           <div className="space-y-4">
             {locations.map((location, index) => (
-              <div key={location.id} className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 border border-gray-200 rounded-lg bg-gray-50">
+              <div key={location.id} className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4">
                 <div className="flex-grow space-y-2 sm:space-y-3">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-gray-600">Location {index + 1}</span>
@@ -153,28 +153,17 @@ export function AddLocationModal({ tripId, isOpen, onClose, onLocationAdded }: A
                     )}
                   </div>
                   
-                  <div className="space-y-2">
-                    <Label htmlFor={`name-${location.id}`}>Location Name</Label>
-                    <Autocomplete
-                      value={location.name}
-                      onChange={(value) => updateLocationEntry(location.id, 'name', value)}
-                      onSelect={(destination) => handleDestinationSelect(location.id, destination)}
-                      placeholder="Search destinations (e.g., Paris, Angkor Wat, Bali)"
-                      className="w-full"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor={`description-${location.id}`}>Description (Optional)</Label>
-                    <textarea
-                      id={`description-${location.id}`}
-                      value={location.description}
-                      onChange={(e) => updateLocationEntry(location.id, 'description', e.target.value)}
-                      placeholder="Add notes about this location..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                      rows={2}
-                    />
-                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <div className="space-y-2 md:col-span-4">
+                      <Label htmlFor={`name-${location.id}`}>Location Name</Label>
+                      <Autocomplete
+                        value={location.name}
+                        onChange={(value) => updateLocationEntry(location.id, 'name', value)}
+                        onSelect={(destination) => handleDestinationSelect(location.id, destination)}
+                        placeholder="Search destinations (e.g., Paris, Angkor Wat, Bali)"
+                        className="w-full"
+                      />
+                    </div>
 
                   {location.selectedDestination && (
                     <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
@@ -206,40 +195,42 @@ export function AddLocationModal({ tripId, isOpen, onClose, onLocationAdded }: A
                     </div>
                   )}
 
-                  <div className="space-y-2">
-                    <Label>Color</Label>
-                    <Select
-                      value={location.color}
-                      onValueChange={(value) => updateLocationEntry(location.id, 'color', value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue>
-                          <div className="flex items-center gap-2">
-                            <div
-                              className="w-4 h-4 rounded-full border border-gray-300"
-                              style={{ backgroundColor: location.color }}
-                            />
-                            <span>
-                              {presetColors.find(c => c.hex === location.color)?.name || 'Custom'}
-                            </span>
-                          </div>
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {presetColors.map((color) => (
-                          <SelectItem key={color.hex} value={color.hex}>
+                    <div className="space-y-2 md:col-span-1">
+                      <Label>Color</Label>
+                      <Select
+                        value={location.color}
+                        onValueChange={(value) => updateLocationEntry(location.id, 'color', value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue>
                             <div className="flex items-center gap-2">
                               <div
                                 className="w-4 h-4 rounded-full border border-gray-300"
-                                style={{ backgroundColor: color.hex }}
+                                style={{ backgroundColor: location.color }}
                               />
-                              <span>{color.name}</span>
+                              {/* <span>
+                                {presetColors.find(c => c.hex === location.color)?.name || 'Custom'}
+                              </span> */}
                             </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {presetColors.map((color) => (
+                            <SelectItem key={color.hex} value={color.hex}>
+                              <div className="flex items-center gap-2">
+                                <div
+                                  className="w-4 h-4 rounded-full border border-gray-300"
+                                  style={{ backgroundColor: color.hex }}
+                                />
+                                <span>{color.name}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
+
                 </div>
               </div>
             ))}

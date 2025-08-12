@@ -171,7 +171,7 @@ export function MultiEditLocationsModal({
                 color: location.color || ''
               };
               return (
-                <div key={location.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                <div key={location.id}>
                   <div className="flex items-center gap-3 mb-4">
                     <div
                       className="w-4 h-4 rounded-full border border-gray-300"
@@ -182,9 +182,9 @@ export function MultiEditLocationsModal({
                     </span>
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                     {/* Name */}
-                    <div className="space-y-2">
+                    <div className="space-y-2 md:col-span-4">
                       <Label htmlFor={`name-${location.id}`}>Location Name</Label>
                       <Autocomplete
                         value={edit.name}
@@ -212,9 +212,9 @@ export function MultiEditLocationsModal({
                                   className="w-4 h-4 rounded-full border border-gray-300"
                                   style={{ backgroundColor: edit.color }}
                                 />
-                                <span>
+                                {/* <span>
                                   {presetColors.find(c => c.hex === edit.color)?.name || 'Custom'}
-                                </span>
+                                </span> */}
                               </div>
                             ) : (
                               <span className="text-gray-500">Select color</span>
