@@ -17,41 +17,51 @@ export async function GET(request: NextRequest) {
 
     const cleanQuery = query.trim().toLowerCase();
 
-    // Build queries for the two priority levels - ONLY search in name field
-    let fullMatchQuery = supabase
+    // Build queries for the three priority levels with bidirectional search
+    let exactMatchQuery = supabase
       .from('popular_destinations')
-      .select('place_id, name, display_name, category, type, country, region, city, lat, lon, importance, place_rank, boundingbox')
-      .ilike('name', cleanQuery) // Exact full match
-      .order('name', { ascending: true }) // Alphabetical within full matches
+      .select('place_id, name, name_normalized, display_name, category, type, country, region, city, lat, lon, importance, place_rank, boundingbox')
+      .or(`name.ilike.${cleanQuery},name_normalized.ilike.${cleanQuery}`) // Exact match in both fields
+      .order('name', { ascending: true }) // Alphabetical within exact matches
       .limit(limit);
 
     let startsWithQuery = supabase
       .from('popular_destinations')
-      .select('place_id, name, display_name, category, type, country, region, city, lat, lon, importance, place_rank, boundingbox')
-      .ilike('name', `${cleanQuery}%`) // Starts with query
+      .select('place_id, name, name_normalized, display_name, category, type, country, region, city, lat, lon, importance, place_rank, boundingbox')
+      .or(`name.ilike.${cleanQuery}%,name_normalized.ilike.${cleanQuery}%`) // Starts with in both fields
       .order('name', { ascending: true }) // Alphabetical within starts-with matches
+      .limit(limit);
+
+    let containsQuery = supabase
+      .from('popular_destinations')
+      .select('place_id, name, name_normalized, display_name, category, type, country, region, city, lat, lon, importance, place_rank, boundingbox')
+      .or(`name.ilike.%${cleanQuery}%,name_normalized.ilike.%${cleanQuery}%`) // Contains anywhere in both fields
+      .order('name', { ascending: true }) // Alphabetical within contains matches
       .limit(limit);
 
     // Add category filter if provided
     if (category) {
-      fullMatchQuery = fullMatchQuery.eq('category', category);
+      exactMatchQuery = exactMatchQuery.eq('category', category);
       startsWithQuery = startsWithQuery.eq('category', category);
+      containsQuery = containsQuery.eq('category', category);
     }
 
     // Add type filter if provided
     if (type) {
-      fullMatchQuery = fullMatchQuery.eq('type', type);
+      exactMatchQuery = exactMatchQuery.eq('type', type);
       startsWithQuery = startsWithQuery.eq('type', type);
+      containsQuery = containsQuery.eq('type', type);
     }
 
     // Execute queries in order of priority
-    const [fullMatchResults, startsWithResults] = await Promise.all([
-      fullMatchQuery,
-      startsWithQuery
+    const [exactMatchResults, startsWithResults, containsResults] = await Promise.all([
+      exactMatchQuery,
+      startsWithQuery,
+      containsQuery
     ]);
 
-    if (fullMatchResults.error || startsWithResults.error) {
-      console.error('Supabase error:', { fullMatch: fullMatchResults.error, startsWith: startsWithResults.error });
+    if (exactMatchResults.error || startsWithResults.error || containsResults.error) {
+      console.error('Supabase error:', { exactMatch: exactMatchResults.error, startsWith: startsWithResults.error, contains: containsResults.error });
       return NextResponse.json({ 
         error: 'Failed to search destinations' 
       }, { status: 500 });
@@ -60,17 +70,25 @@ export async function GET(request: NextRequest) {
     // Combine results in priority order
     const allResults: any[] = [];
     
-    // 1. Full matches first (highest priority)
-    if (fullMatchResults.data) {
-      allResults.push(...fullMatchResults.data.map(item => ({ ...item, priority: 1 })));
+    // 1. Exact matches first (highest priority)
+    if (exactMatchResults.data) {
+      allResults.push(...exactMatchResults.data.map((item: any) => ({ ...item, priority: 1 })));
     }
 
     // 2. Starts with matches second (medium priority)
     if (startsWithResults.data) {
-      // Filter out items that are already in full matches
-      const fullMatchIds = new Set(fullMatchResults.data?.map(item => item.place_id) || []);
-      const uniqueStartsWithResults = startsWithResults.data.filter(item => !fullMatchIds.has(item.place_id));
-      allResults.push(...uniqueStartsWithResults.map(item => ({ ...item, priority: 2 })));
+      // Filter out items that are already in exact matches
+      const exactMatchIds = new Set(exactMatchResults.data?.map((item: any) => item.place_id) || []);
+      const uniqueStartsWithResults = startsWithResults.data.filter((item: any) => !exactMatchIds.has(item.place_id));
+      allResults.push(...uniqueStartsWithResults.map((item: any) => ({ ...item, priority: 2 })));
+    }
+
+    // 3. Contains matches third (lowest priority)
+    if (containsResults.data) {
+      // Filter out items that are already in higher priority results
+      const higherPriorityIds = new Set(allResults.map((item: any) => item.place_id));
+      const uniqueContainsResults = containsResults.data.filter((item: any) => !higherPriorityIds.has(item.place_id));
+      allResults.push(...uniqueContainsResults.map((item: any) => ({ ...item, priority: 3 })));
     }
 
     // Take only the requested limit
@@ -80,6 +98,7 @@ export async function GET(request: NextRequest) {
     const transformedData = limitedResults.map(destination => ({
       place_id: destination.place_id,
       name: destination.name,
+      name_normalized: destination.name_normalized,
       display_name: destination.display_name,
       category: destination.category,
       type: destination.type,
@@ -100,9 +119,9 @@ export async function GET(request: NextRequest) {
       count: transformedData.length
     });
 
-    // Add cache headers for better performance
-    response.headers.set('Cache-Control', 'public, max-age=300'); // 5 minutes
-    response.headers.set('ETag', `"${cleanQuery}-${limit}-${transformedData.length}"`);
+        // Add cache headers for better performance
+    response.headers.set('Cache-Control', 'public, max-age=300'); // 5 minutes      
+    response.headers.set('ETag', `"${encodeURIComponent(cleanQuery)}-${limit}-${transformedData.length}"`);
 
     return response;
 
@@ -126,22 +145,23 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Transform the data to match our schema
-    const transformedDestinations = destinations.map((dest: any) => ({
-      place_id: dest.place_id,
-      name: dest.name,
-      display_name: dest.display_name,
-      category: dest.category,
-      type: dest.type,
-      country: dest.country || null,
-      region: dest.region || null,
-      city: dest.city || null,
-      lat: parseFloat(dest.lat),
-      lon: parseFloat(dest.lon),
-      importance: parseFloat(dest.importance),
-      place_rank: parseInt(dest.place_rank),
-      boundingbox: dest.boundingbox || null
-    }));
+               // Transform the data to match our schema
+           const transformedDestinations = destinations.map((dest: any) => ({
+             place_id: dest.place_id,
+             name: dest.name,
+             name_normalized: dest.name_normalized || dest.name, // Use provided or fallback to name
+             display_name: dest.display_name,
+             category: dest.category,
+             type: dest.type,
+             country: dest.country || null,
+             region: dest.region || null,
+             city: dest.city || null,
+             lat: parseFloat(dest.lat),
+             lon: parseFloat(dest.lon),
+             importance: parseFloat(dest.importance),
+             place_rank: parseInt(dest.place_rank),
+             boundingbox: dest.boundingbox || null
+           }));
 
     const { data, error } = await supabase
       .from('popular_destinations')

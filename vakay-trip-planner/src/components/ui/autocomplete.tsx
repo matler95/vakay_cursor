@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 export interface AutocompleteOption {
   place_id: number;
   name: string;
+  name_normalized?: string;
   display_name: string;
   category: string;
   type: string;
@@ -161,6 +162,16 @@ export function Autocomplete({
     };
   }, [value, searchDestinations, debounceMs, minQueryLength]);
 
+  // Memoized selection handler - define this BEFORE handleKeyDown
+  const handleSelect = useCallback((option: AutocompleteOption) => {
+    onSelect(option);
+    onChange(option.name);
+    setIsOpen(false);
+    setHighlightedIndex(-1);
+    setOptions([]);
+    setError(null);
+  }, [onSelect, onChange]);
+
   // Memoized keyboard navigation handler
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (!isOpen || options.length === 0) return;
@@ -188,17 +199,9 @@ export function Autocomplete({
         inputRef.current?.blur();
         break;
     }
-  }, [isOpen, options, highlightedIndex]);
+  }, [isOpen, options, highlightedIndex, handleSelect]);
 
-  // Memoized selection handler
-  const handleSelect = useCallback((option: AutocompleteOption) => {
-    onSelect(option);
-    onChange(option.name);
-    setIsOpen(false);
-    setHighlightedIndex(-1);
-    setOptions([]);
-    setError(null);
-  }, [onSelect, onChange]);
+
 
   // Memoized input change handler
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
