@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabaseServer';
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,11 +14,11 @@ export async function GET(request: NextRequest) {
 
     const cleanQuery = query.trim().toLowerCase();
 
-    // Debug: Show all results that contain the query anywhere in the NAME field only
+    // Debug: Show all results that contain the query anywhere in both name and name_normalized fields
     const debugResults = await supabase
       .from('popular_destinations')
-      .select('*')
-      .or(`name.ilike.%${cleanQuery}%`)
+      .select('place_id, name, name_normalized, display_name, category, type, country, region, city, lat, lon, importance, place_rank, boundingbox')
+      .or(`name.ilike.%${cleanQuery}%,name_normalized.ilike.%${cleanQuery}%`)
       .order('importance', { ascending: false })
       .limit(20);
 
@@ -32,13 +32,15 @@ export async function GET(request: NextRequest) {
     // Show what's being matched
     const matchedResults = debugResults.data?.map(item => ({
       name: item.name,
+      name_normalized: item.name_normalized,
       display_name: item.display_name,
       category: item.category,
       type: item.type,
       importance: item.importance,
       place_rank: item.place_rank,
-      // Show where the match occurred in name only
+      // Show where the match occurred in both fields
       nameMatch: item.name.toLowerCase().includes(cleanQuery),
+      nameNormalizedMatch: item.name_normalized.toLowerCase().includes(cleanQuery),
       matchPosition: item.name.toLowerCase().indexOf(cleanQuery)
     })) || [];
 
@@ -47,7 +49,7 @@ export async function GET(request: NextRequest) {
       query: cleanQuery,
       totalResults: matchedResults.length,
       results: matchedResults,
-      explanation: `Showing all destinations where the NAME contains "${cleanQuery}" (not searching in display_name)`
+      explanation: `Showing all destinations where the NAME or NAME_NORMALIZED contains "${cleanQuery}"`
     });
 
   } catch (error) {

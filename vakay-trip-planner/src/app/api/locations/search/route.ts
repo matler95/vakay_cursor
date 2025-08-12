@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabaseServer';
 
 export async function GET(request: NextRequest) {
   try {
@@ -41,16 +41,16 @@ export async function GET(request: NextRequest) {
 
     // Add category filter if provided
     if (category) {
-      exactMatchQuery = exactMatchQuery.eq('category', category);
-      startsWithQuery = startsWithQuery.eq('category', category);
-      containsQuery = containsQuery.eq('category', category);
+      exactMatchQuery = exactMatchQuery.eq('category', category as any);
+      startsWithQuery = startsWithQuery.eq('category', category as any);
+      containsQuery = containsQuery.eq('category', category as any);
     }
 
     // Add type filter if provided
     if (type) {
-      exactMatchQuery = exactMatchQuery.eq('type', type);
-      startsWithQuery = startsWithQuery.eq('type', type);
-      containsQuery = containsQuery.eq('type', type);
+      exactMatchQuery = exactMatchQuery.eq('type', type as any);
+      startsWithQuery = startsWithQuery.eq('type', type as any);
+      containsQuery = containsQuery.eq('type', type as any);
     }
 
     // Execute queries in order of priority
@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
 
     const { data, error } = await supabase
       .from('popular_destinations')
-      .upsert(transformedDestinations, { 
+      .upsert(transformedDestinations as any, { 
         onConflict: 'place_id',
         ignoreDuplicates: false 
       })
