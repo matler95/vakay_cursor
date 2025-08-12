@@ -15,35 +15,69 @@ export async function GET(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Build the query with full-text search
-    let supabaseQuery = supabase
+    const cleanQuery = query.trim().toLowerCase();
+
+    // Build queries for the two priority levels - ONLY search in name field
+    let fullMatchQuery = supabase
       .from('popular_destinations')
-      .select('*')
-      .or(`name.ilike.%${query}%,display_name.ilike.%${query}%`)
-      .order('importance', { ascending: false })
+      .select('place_id, name, display_name, category, type, country, region, city, lat, lon, importance, place_rank, boundingbox')
+      .ilike('name', cleanQuery) // Exact full match
+      .order('name', { ascending: true }) // Alphabetical within full matches
+      .limit(limit);
+
+    let startsWithQuery = supabase
+      .from('popular_destinations')
+      .select('place_id, name, display_name, category, type, country, region, city, lat, lon, importance, place_rank, boundingbox')
+      .ilike('name', `${cleanQuery}%`) // Starts with query
+      .order('name', { ascending: true }) // Alphabetical within starts-with matches
       .limit(limit);
 
     // Add category filter if provided
     if (category) {
-      supabaseQuery = supabaseQuery.eq('category', category);
+      fullMatchQuery = fullMatchQuery.eq('category', category);
+      startsWithQuery = startsWithQuery.eq('category', category);
     }
 
     // Add type filter if provided
     if (type) {
-      supabaseQuery = supabaseQuery.eq('type', type);
+      fullMatchQuery = fullMatchQuery.eq('type', type);
+      startsWithQuery = startsWithQuery.eq('type', type);
     }
 
-    const { data, error } = await supabaseQuery;
+    // Execute queries in order of priority
+    const [fullMatchResults, startsWithResults] = await Promise.all([
+      fullMatchQuery,
+      startsWithQuery
+    ]);
 
-    if (error) {
-      console.error('Supabase error:', error);
+    if (fullMatchResults.error || startsWithResults.error) {
+      console.error('Supabase error:', { fullMatch: fullMatchResults.error, startsWith: startsWithResults.error });
       return NextResponse.json({ 
         error: 'Failed to search destinations' 
       }, { status: 500 });
     }
 
+    // Combine results in priority order
+    const allResults: any[] = [];
+    
+    // 1. Full matches first (highest priority)
+    if (fullMatchResults.data) {
+      allResults.push(...fullMatchResults.data.map(item => ({ ...item, priority: 1 })));
+    }
+
+    // 2. Starts with matches second (medium priority)
+    if (startsWithResults.data) {
+      // Filter out items that are already in full matches
+      const fullMatchIds = new Set(fullMatchResults.data?.map(item => item.place_id) || []);
+      const uniqueStartsWithResults = startsWithResults.data.filter(item => !fullMatchIds.has(item.place_id));
+      allResults.push(...uniqueStartsWithResults.map(item => ({ ...item, priority: 2 })));
+    }
+
+    // Take only the requested limit
+    const limitedResults = allResults.slice(0, limit);
+
     // Transform the data to match the expected format
-    const transformedData = data?.map(destination => ({
+    const transformedData = limitedResults.map(destination => ({
       place_id: destination.place_id,
       name: destination.name,
       display_name: destination.display_name,
@@ -57,13 +91,20 @@ export async function GET(request: NextRequest) {
       importance: destination.importance,
       place_rank: destination.place_rank,
       boundingbox: destination.boundingbox
-    })) || [];
+    }));
 
-    return NextResponse.json({
+    // Create response with caching headers for better performance
+    const response = NextResponse.json({
       success: true,
       data: transformedData,
       count: transformedData.length
     });
+
+    // Add cache headers for better performance
+    response.headers.set('Cache-Control', 'public, max-age=300'); // 5 minutes
+    response.headers.set('ETag', `"${cleanQuery}-${limit}-${transformedData.length}"`);
+
+    return response;
 
   } catch (error) {
     console.error('Location search error:', error);

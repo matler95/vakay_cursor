@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Input } from './input';
-import { Button } from './button';
 import { Search, MapPin, Globe, Mountain, Building2, TreePine } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -59,6 +58,10 @@ const getCategoryLabel = (category: string, type: string) => {
   return category;
 };
 
+// Simple in-memory cache for search results
+const searchCache = new Map<string, { data: AutocompleteOption[]; timestamp: number }>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 export function Autocomplete({
   value,
   onChange,
@@ -67,7 +70,7 @@ export function Autocomplete({
   className,
   disabled = false,
   minQueryLength = 2,
-  debounceMs = 300,
+  debounceMs = 150, // Reduced from 300ms to 150ms for better responsiveness
   maxResults = 10
 }: AutocompleteProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -79,43 +82,73 @@ export function Autocomplete({
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const debounceTimeoutRef = useRef<NodeJS.Timeout>();
+  const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Debounced search
+  // Memoized search function to prevent unnecessary re-renders
+  const searchDestinations = useCallback(async (query: string) => {
+    if (query.length < minQueryLength) {
+      setOptions([]);
+      return;
+    }
+
+    // Check cache first
+    const cacheKey = `${query.toLowerCase()}_${maxResults}`;
+    const cached = searchCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      setOptions(cached.data);
+      return;
+    }
+
+    // Cancel previous request if still pending
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Create new abort controller for this request
+    abortControllerRef.current = new AbortController();
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/locations/search?q=${encodeURIComponent(query)}&limit=${maxResults}`, {
+        signal: abortControllerRef.current.signal
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to search destinations');
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        // Cache the result
+        searchCache.set(cacheKey, { data: result.data, timestamp: Date.now() });
+        setOptions(result.data);
+      } else {
+        throw new Error(result.error || 'Search failed');
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        // Request was cancelled, don't show error
+        return;
+      }
+      setError(err instanceof Error ? err.message : 'Search failed');
+      setOptions([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [minQueryLength, maxResults]);
+
+  // Optimized debounced search with request cancellation
   useEffect(() => {
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current);
     }
 
     if (value.length >= minQueryLength) {
-      debounceTimeoutRef.current = setTimeout(async () => {
-        if (value.length < minQueryLength) {
-          setOptions([]);
-          return;
-        }
-
-        setIsLoading(true);
-        setError(null);
-
-        try {
-          const response = await fetch(`/api/locations/search?q=${encodeURIComponent(value)}&limit=${maxResults}`);
-          
-          if (!response.ok) {
-            throw new Error('Failed to search destinations');
-          }
-
-          const result = await response.json();
-          
-          if (result.success) {
-            setOptions(result.data);
-          } else {
-            throw new Error(result.error || 'Search failed');
-          }
-        } catch (err) {
-          setError(err instanceof Error ? err.message : 'Search failed');
-          setOptions([]);
-        } finally {
-          setIsLoading(false);
-        }
+      debounceTimeoutRef.current = setTimeout(() => {
+        searchDestinations(value);
       }, debounceMs);
     } else {
       setOptions([]);
@@ -126,10 +159,10 @@ export function Autocomplete({
         clearTimeout(debounceTimeoutRef.current);
       }
     };
-  }, [value, debounceMs, minQueryLength, maxResults]);
+  }, [value, searchDestinations, debounceMs, minQueryLength]);
 
-  // Handle keyboard navigation
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  // Memoized keyboard navigation handler
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (!isOpen || options.length === 0) return;
 
     switch (e.key) {
@@ -155,39 +188,43 @@ export function Autocomplete({
         inputRef.current?.blur();
         break;
     }
-  };
+  }, [isOpen, options, highlightedIndex]);
 
-  const handleSelect = (option: AutocompleteOption) => {
+  // Memoized selection handler
+  const handleSelect = useCallback((option: AutocompleteOption) => {
     onSelect(option);
     onChange(option.name);
     setIsOpen(false);
     setHighlightedIndex(-1);
     setOptions([]);
     setError(null);
-  };
+  }, [onSelect, onChange]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Memoized input change handler
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     onChange(newValue);
     setIsOpen(true);
     setHighlightedIndex(-1);
-  };
+  }, [onChange]);
 
-  const handleInputFocus = () => {
+  // Memoized focus handler
+  const handleInputFocus = useCallback(() => {
     if (value.length >= minQueryLength && options.length > 0) {
       setIsOpen(true);
     }
-  };
+  }, [value, minQueryLength, options.length]);
 
-  const handleInputBlur = () => {
+  // Memoized blur handler
+  const handleInputBlur = useCallback(() => {
     // Delay closing to allow click events on dropdown
     setTimeout(() => {
       setIsOpen(false);
       setHighlightedIndex(-1);
     }, 150);
-  };
+  }, []);
 
-  // Close dropdown when clicking outside
+  // Memoized click outside handler
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -203,6 +240,88 @@ export function Autocomplete({
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Memoized dropdown content to prevent unnecessary re-renders
+  const dropdownContent = useMemo(() => {
+    if (!isOpen) return null;
+
+    return (
+      <div
+        ref={dropdownRef}
+        className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-80 overflow-y-auto"
+      >
+        {isLoading && (
+          <div className="p-4 text-center text-gray-500">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-2">Searching destinations...</p>
+          </div>
+        )}
+
+        {error && (
+          <div className="p-4 text-center text-red-500">
+            <p>{error}</p>
+          </div>
+        )}
+
+        {!isLoading && !error && options.length === 0 && value.length >= minQueryLength && (
+          <div className="p-4 text-center text-gray-500">
+            <p>No destinations found</p>
+          </div>
+        )}
+
+        {!isLoading && !error && options.length > 0 && (
+          <div className="py-2">
+            {options.map((option, index) => (
+              <button
+                key={option.place_id}
+                type="button"
+                onClick={() => handleSelect(option)}
+                className={cn(
+                  "w-full px-4 py-3 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none transition-colors",
+                  highlightedIndex === index && "bg-blue-50 border-l-4 border-l-blue-500"
+                )}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 mt-1">
+                    {getCategoryIcon(option.category, option.type)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-gray-900 truncate">
+                        {option.name}
+                      </span>
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                        {getCategoryLabel(option.category, option.type)}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+                      {option.display_name}
+                    </p>
+                    {option.country && (
+                      <p className="text-xs text-gray-400 mt-1">
+                        {option.country}
+                        {option.region && `, ${option.region}`}
+                        {option.city && `, ${option.city}`}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }, [isOpen, isLoading, error, options, value, minQueryLength, highlightedIndex, handleSelect]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, []);
 
   return (
@@ -223,74 +342,7 @@ export function Autocomplete({
         />
       </div>
 
-      {/* Dropdown */}
-      {isOpen && (
-        <div
-          ref={dropdownRef}
-          className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-80 overflow-y-auto"
-        >
-          {isLoading && (
-            <div className="p-4 text-center text-gray-500">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-2">Searching destinations...</p>
-            </div>
-          )}
-
-          {error && (
-            <div className="p-4 text-center text-red-500">
-              <p>{error}</p>
-            </div>
-          )}
-
-          {!isLoading && !error && options.length === 0 && value.length >= minQueryLength && (
-            <div className="p-4 text-center text-gray-500">
-              <p>No destinations found</p>
-            </div>
-          )}
-
-          {!isLoading && !error && options.length > 0 && (
-            <div className="py-2">
-              {options.map((option, index) => (
-                <button
-                  key={option.place_id}
-                  type="button"
-                  onClick={() => handleSelect(option)}
-                  className={cn(
-                    "w-full px-4 py-3 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none transition-colors",
-                    highlightedIndex === index && "bg-blue-50 border-l-4 border-l-blue-500"
-                  )}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 mt-1">
-                      {getCategoryIcon(option.category, option.type)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-gray-900 truncate">
-                          {option.name}
-                        </span>
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                          {getCategoryLabel(option.category, option.type)}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-500 mt-1 line-clamp-2">
-                        {option.display_name}
-                      </p>
-                      {option.country && (
-                        <p className="text-xs text-gray-400 mt-1">
-                          {option.country}
-                          {option.region && `, ${option.region}`}
-                          {option.city && `, ${option.city}`}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      {dropdownContent}
     </div>
   );
 }
