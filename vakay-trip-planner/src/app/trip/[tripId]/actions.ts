@@ -139,6 +139,7 @@ export async function addLocation(prevState: unknown, formData: FormData) {
   const schema = z.object({
     trip_id: z.string().uuid(),
     name: z.string().min(1, { message: 'Location name cannot be empty.' }),
+    description: z.string().optional(),
     color: z.string(),
   });
 
@@ -148,7 +149,10 @@ export async function addLocation(prevState: unknown, formData: FormData) {
     return { message: 'Invalid data.' };
   }
   
-  const { error } = await supabase.from('locations').insert(validatedFields.data);
+  const { error } = await supabase.from('locations').insert({
+    ...validatedFields.data,
+    description: validatedFields.data.description || null
+  });
 
   if (error) {
     return { message: `Failed to add location: ${error.message}` };
@@ -158,6 +162,57 @@ export async function addLocation(prevState: unknown, formData: FormData) {
   return { message: 'Location added!' };
 }
 
+
+export async function updateLocation(prevState: unknown, formData: FormData) {
+  const supabase = createServerActionClient({ cookies });
+
+  const schema = z.object({
+    location_id: z.string().transform(val => parseInt(val)),
+    trip_id: z.string().uuid(),
+    name: z.string().min(1, { message: 'Location name cannot be empty.' }),
+    description: z.string().optional(),
+    color: z.string(),
+  });
+
+  const validatedFields = schema.safeParse(Object.fromEntries(formData.entries()));
+
+  if (!validatedFields.success) {
+    return { message: 'Invalid data.' };
+  }
+
+  // Check if user has access to this trip
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { message: 'You must be logged in to update locations.' };
+  }
+
+  const { count } = await supabase
+    .from('trip_participants')
+    .select('*', { count: 'exact', head: true })
+    .eq('trip_id', validatedFields.data.trip_id)
+    .eq('user_id', user.id);
+
+  if (count === 0) {
+    return { message: 'You do not have permission to edit this trip.' };
+  }
+
+  const { error } = await supabase
+    .from('locations')
+    .update({
+      name: validatedFields.data.name,
+      description: validatedFields.data.description || null,
+      color: validatedFields.data.color,
+    })
+    .eq('id', validatedFields.data.location_id)
+    .eq('trip_id', validatedFields.data.trip_id);
+
+  if (error) {
+    return { message: `Failed to update location: ${error.message}` };
+  }
+
+  revalidatePath(`/trip/${validatedFields.data.trip_id}`);
+  return { message: 'Location updated successfully!' };
+}
 
 export async function deleteLocation(locationId: number, tripId: string) {
   const supabase = createServerActionClient({ cookies });

@@ -7,8 +7,10 @@ import { useRouter } from 'next/navigation';
 import { deleteLocation } from '../actions';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Plus, Trash2, AlertTriangle, CopyCheck, X, MapPin } from 'lucide-react';
+import { Plus, Trash2, AlertTriangle, CopyCheck, X, MapPin, Edit } from 'lucide-react';
 import { AddLocationModal } from './AddLocationModal';
+import { EditLocationModal } from './EditLocationModal';
+import { MultiEditLocationsModal } from './MultiEditLocationsModal';
 
 type Location = Database['public']['Tables']['locations']['Row'];
 
@@ -20,6 +22,9 @@ interface LocationManagerProps {
 
 export function LocationManager({ tripId, locations, onLocationsChange }: LocationManagerProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [locationToEdit, setLocationToEdit] = useState<Location | null>(null);
+  const [isMultiEditModalOpen, setIsMultiEditModalOpen] = useState(false);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
   const [selectedLocations, setSelectedLocations] = useState<Set<string>>(new Set());
   const [locationToDelete, setLocationToDelete] = useState<Location | null>(null);
@@ -34,6 +39,28 @@ export function LocationManager({ tripId, locations, onLocationsChange }: Locati
     if (onLocationsChange) {
       // We'll need to fetch the updated locations here
       // For now, just refresh the page
+    }
+  };
+
+  const handleEditClick = (location: Location) => {
+    setLocationToEdit(location);
+    setIsEditModalOpen(true);
+  };
+
+  const handleLocationUpdated = () => {
+    // Refresh the page to get updated locations
+    router.refresh();
+    
+    // Also notify parent component if callback is provided
+    if (onLocationsChange) {
+      // We'll need to fetch the updated locations here
+      // For now, just refresh the page
+    }
+  };
+
+  const handleMultiEditClick = () => {
+    if (selectedLocations.size > 0) {
+      setIsMultiEditModalOpen(true);
     }
   };
 
@@ -170,6 +197,14 @@ export function LocationManager({ tripId, locations, onLocationsChange }: Locati
                 Clear
               </Button>
               <Button
+                onClick={handleMultiEditClick}
+                size="sm"
+                variant="outline"
+                className="h-6 sm:h-7 px-2 sm:px-3 text-xs"
+              >
+                Edit
+              </Button>
+              <Button
                 onClick={handleBulkDeleteClick}
                 size="sm"
                 variant="destructive"
@@ -208,26 +243,49 @@ export function LocationManager({ tripId, locations, onLocationsChange }: Locati
                     className="h-5 w-5 sm:h-6 sm:w-6 rounded-full border border-gray-200"
                     style={{ backgroundColor: location.color }}
                   />
-                  <span className="font-medium text-gray-900 text-sm sm:text-base">{location.name}</span>
+                  <div className="flex flex-col">
+                    <span className="font-medium text-gray-900 text-sm sm:text-base">{location.name}</span>
+                    {location.description && (
+                      <span className="text-xs text-gray-500 mt-1">{location.description}</span>
+                    )}
+                  </div>
                 </div>
 
                 {!isDeleteMode && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        onClick={() => handleDeleteClick(location)}
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 text-gray-400 hover:text-red-500 hover:bg-red-50"
-                        aria-label={`Delete ${location.name}`}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Delete {location.name}</p>
-                    </TooltipContent>
-                  </Tooltip>
+                  <div className="flex items-center gap-1">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          onClick={() => handleEditClick(location)}
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-gray-400 hover:text-blue-500 hover:bg-blue-50"
+                          aria-label={`Edit ${location.name}`}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Edit {location.name}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          onClick={() => handleDeleteClick(location)}
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-gray-400 hover:text-red-500 hover:bg-red-50"
+                          aria-label={`Delete ${location.name}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Delete {location.name}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
                 )}
               </div>
             ))}
@@ -247,6 +305,34 @@ export function LocationManager({ tripId, locations, onLocationsChange }: Locati
         onClose={() => setIsModalOpen(false)}
         onLocationAdded={handleLocationAdded}
       />
+
+      {/* Edit Location Modal */}
+      {locationToEdit && (
+        <EditLocationModal
+          location={locationToEdit}
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setLocationToEdit(null);
+          }}
+          onLocationUpdated={handleLocationUpdated}
+        />
+      )}
+
+      {/* Multi-Edit Locations Modal */}
+      {isMultiEditModalOpen && (
+        <MultiEditLocationsModal
+          tripId={tripId}
+          selectedLocationIds={Array.from(selectedLocations)}
+          locations={locations}
+          isOpen={isMultiEditModalOpen}
+          onClose={() => {
+            setIsMultiEditModalOpen(false);
+            setSelectedLocations(new Set());
+          }}
+          onLocationsUpdated={handleLocationUpdated}
+        />
+      )}
 
       {/* Delete Confirmation Modal */}
       {locationToDelete && (

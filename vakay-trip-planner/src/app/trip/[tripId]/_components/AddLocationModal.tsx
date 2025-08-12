@@ -3,17 +3,24 @@
 import { useState } from 'react';
 import { addLocation } from '../actions';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Plus, X, Trash2, MapPin } from 'lucide-react';
 import { Autocomplete, AutocompleteOption } from '@/components/ui/autocomplete';
-import { X, Plus, Trash2, MapPin } from 'lucide-react';
 
 interface AddLocationModalProps {
   tripId: string;
   isOpen: boolean;
   onClose: () => void;
   onLocationAdded: () => void;
+}
+
+interface LocationEntry {
+  id: string;
+  name: string;
+  description: string;
+  color: string;
+  selectedDestination?: AutocompleteOption | null;
 }
 
 // Preset colors for the dropdown
@@ -33,23 +40,22 @@ const presetColors = [
   { name: 'Gray', hex: '#8E8E93' }
 ];
 
-interface LocationEntry {
-  id: string;
-  name: string;
-  color: string;
-  selectedDestination?: AutocompleteOption | null;
-}
-
 export function AddLocationModal({ tripId, isOpen, onClose, onLocationAdded }: AddLocationModalProps) {
   const [locations, setLocations] = useState<LocationEntry[]>([
-    { id: '1', name: '', color: presetColors[7].hex, selectedDestination: null }
+    { id: '1', name: '', description: '', color: presetColors[7].hex, selectedDestination: null }
   ]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<string>('');
 
+  const updateLocationEntry = (id: string, field: 'name' | 'description' | 'color', value: string) => {
+    setLocations(locations.map(loc => 
+      loc.id === id ? { ...loc, [field]: value } : loc
+    ));
+  };
+
   const addLocationEntry = () => {
     const newId = (locations.length + 1).toString();
-    setLocations([...locations, { id: newId, name: '', color: presetColors[7].hex, selectedDestination: null }]);
+    setLocations([...locations, { id: newId, name: '', description: '', color: presetColors[7].hex, selectedDestination: null }]);
   };
 
   const removeLocationEntry = (id: string) => {
@@ -58,52 +64,46 @@ export function AddLocationModal({ tripId, isOpen, onClose, onLocationAdded }: A
     }
   };
 
-  const updateLocationEntry = (id: string, field: 'name' | 'color', value: string) => {
+  const handleDestinationSelect = (locationId: string, destination: AutocompleteOption) => {
     setLocations(locations.map(loc => 
-      loc.id === id ? { ...loc, [field]: value } : loc
-    ));
-  };
-
-  const handleDestinationSelect = (id: string, destination: AutocompleteOption) => {
-    setLocations(locations.map(loc => 
-      loc.id === id ? { ...loc, selectedDestination: destination, name: destination.name } : loc
+      loc.id === locationId ? { ...loc, name: destination.name, selectedDestination: destination } : loc
     ));
   };
 
   const handleSubmit = async () => {
-    setIsSubmitting(true);
-    setMessage('');
-    
-    // Filter out empty locations
     const validLocations = locations.filter(loc => loc.name.trim() !== '');
     
     if (validLocations.length === 0) {
-      setIsSubmitting(false);
       setMessage('Please add at least one location.');
       return;
     }
 
+    setIsSubmitting(true);
+    setMessage('');
+
     try {
-      // Submit each location
       for (const location of validLocations) {
-        const locationFormData = new FormData();
-        locationFormData.append('name', location.name.trim());
-        locationFormData.append('color', location.color);
-        locationFormData.append('trip_id', tripId);
+        const formData = new FormData();
+        formData.append('trip_id', tripId);
+        formData.append('name', location.name.trim());
+        formData.append('description', location.description.trim());
+        formData.append('color', location.color);
         
-        const result = await addLocation(null, locationFormData);
-        if (result.message && result.message.includes('error')) {
+        const result = await addLocation(null, formData);
+        
+        if (result?.message && result.message.includes('error')) {
           throw new Error(result.message);
         }
       }
       
       setIsSubmitting(false);
-      setMessage('Locations added!');
+      setMessage(`Successfully added ${validLocations.length} location${validLocations.length !== 1 ? 's' : ''}!`);
+      
       setTimeout(() => {
         onLocationAdded();
         onClose();
         // Reset form
-        setLocations([{ id: '1', name: '', color: presetColors[7].hex, selectedDestination: null }]);
+        setLocations([{ id: '1', name: '', description: '', color: presetColors[7].hex, selectedDestination: null }]);
         setMessage('');
       }, 1500);
     } catch (error) {
@@ -115,7 +115,7 @@ export function AddLocationModal({ tripId, isOpen, onClose, onLocationAdded }: A
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl p-4 sm:p-6 border border-gray-200 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4 sm:mb-6">
           <h2 className="text-lg sm:text-xl font-semibold">Add Locations</h2>
@@ -162,8 +162,23 @@ export function AddLocationModal({ tripId, isOpen, onClose, onLocationAdded }: A
                       placeholder="Search destinations (e.g., Paris, Angkor Wat, Bali)"
                       className="w-full"
                     />
-                    {location.selectedDestination && (
-                      <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor={`description-${location.id}`}>Description (Optional)</Label>
+                    <textarea
+                      id={`description-${location.id}`}
+                      value={location.description}
+                      onChange={(e) => updateLocationEntry(location.id, 'description', e.target.value)}
+                      placeholder="Add notes about this location..."
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                      rows={2}
+                    />
+                  </div>
+
+                  {location.selectedDestination && (
+                    <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
+                      <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 text-sm text-blue-800">
                           <MapPin className="h-4 w-4" />
                           <span className="font-medium">{location.selectedDestination.name}</span>
@@ -171,12 +186,25 @@ export function AddLocationModal({ tripId, isOpen, onClose, onLocationAdded }: A
                             ({location.selectedDestination.country})
                           </span>
                         </div>
-                        <p className="text-xs text-blue-600 mt-1">
-                          {location.selectedDestination.display_name}
-                        </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            // Clear the selected destination to allow manual editing
+                            updateLocationEntry(location.id, 'name', location.selectedDestination?.name || '');
+                            setLocations(locations.map(loc => 
+                              loc.id === location.id ? { ...loc, selectedDestination: null } : loc
+                            ));
+                          }}
+                          className="text-blue-600 hover:text-blue-800 text-xs"
+                        >
+                          Edit manually
+                        </button>
                       </div>
-                    )}
-                  </div>
+                      <p className="text-xs text-blue-600 mt-1">
+                        {location.selectedDestination.display_name}
+                      </p>
+                    </div>
+                  )}
 
                   <div className="space-y-2">
                     <Label>Color</Label>
