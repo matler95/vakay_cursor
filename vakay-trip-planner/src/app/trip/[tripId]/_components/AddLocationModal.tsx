@@ -1,16 +1,13 @@
 'use client';
 
-
 import { useState } from 'react';
 import { addLocation } from '../actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { X, Plus, Trash2 } from 'lucide-react';
-
-
-
+import { Autocomplete, AutocompleteOption } from '@/components/ui/autocomplete';
+import { X, Plus, Trash2, MapPin } from 'lucide-react';
 
 interface AddLocationModalProps {
   tripId: string;
@@ -40,18 +37,19 @@ interface LocationEntry {
   id: string;
   name: string;
   color: string;
+  selectedDestination?: AutocompleteOption | null;
 }
 
 export function AddLocationModal({ tripId, isOpen, onClose, onLocationAdded }: AddLocationModalProps) {
   const [locations, setLocations] = useState<LocationEntry[]>([
-    { id: '1', name: '', color: presetColors[7].hex }
+    { id: '1', name: '', color: presetColors[7].hex, selectedDestination: null }
   ]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<string>('');
 
   const addLocationEntry = () => {
     const newId = (locations.length + 1).toString();
-    setLocations([...locations, { id: newId, name: '', color: presetColors[7].hex }]);
+    setLocations([...locations, { id: newId, name: '', color: presetColors[7].hex, selectedDestination: null }]);
   };
 
   const removeLocationEntry = (id: string) => {
@@ -63,6 +61,12 @@ export function AddLocationModal({ tripId, isOpen, onClose, onLocationAdded }: A
   const updateLocationEntry = (id: string, field: 'name' | 'color', value: string) => {
     setLocations(locations.map(loc => 
       loc.id === id ? { ...loc, [field]: value } : loc
+    ));
+  };
+
+  const handleDestinationSelect = (id: string, destination: AutocompleteOption) => {
+    setLocations(locations.map(loc => 
+      loc.id === id ? { ...loc, selectedDestination: destination, name: destination.name } : loc
     ));
   };
 
@@ -99,18 +103,14 @@ export function AddLocationModal({ tripId, isOpen, onClose, onLocationAdded }: A
         onLocationAdded();
         onClose();
         // Reset form
-        setLocations([{ id: '1', name: '', color: presetColors[7].hex }]);
+        setLocations([{ id: '1', name: '', color: presetColors[7].hex, selectedDestination: null }]);
         setMessage('');
       }, 1500);
-      // Reset form
-      setLocations([{ id: '1', name: '', color: presetColors[7].hex }]);
     } catch (error) {
       setIsSubmitting(false);
       setMessage(error instanceof Error ? error.message : 'Failed to add locations');
     }
   };
-
-
 
   if (!isOpen) return null;
 
@@ -155,13 +155,27 @@ export function AddLocationModal({ tripId, isOpen, onClose, onLocationAdded }: A
                   
                   <div className="space-y-2">
                     <Label htmlFor={`name-${location.id}`}>Location Name</Label>
-                    <Input
-                      id={`name-${location.id}`}
-                      name={`name-${location.id}`}
-                      placeholder="e.g., Paris"
+                    <Autocomplete
                       value={location.name}
-                      onChange={(e) => updateLocationEntry(location.id, 'name', e.target.value)}
+                      onChange={(value) => updateLocationEntry(location.id, 'name', value)}
+                      onSelect={(destination) => handleDestinationSelect(location.id, destination)}
+                      placeholder="Search destinations (e.g., Paris, Angkor Wat, Bali)"
+                      className="w-full"
                     />
+                    {location.selectedDestination && (
+                      <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
+                        <div className="flex items-center gap-2 text-sm text-blue-800">
+                          <MapPin className="h-4 w-4" />
+                          <span className="font-medium">{location.selectedDestination.name}</span>
+                          <span className="text-blue-600">
+                            ({location.selectedDestination.country})
+                          </span>
+                        </div>
+                        <p className="text-xs text-blue-600 mt-1">
+                          {location.selectedDestination.display_name}
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-2">
