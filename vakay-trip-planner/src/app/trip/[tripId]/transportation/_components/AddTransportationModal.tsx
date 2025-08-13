@@ -282,95 +282,7 @@ export function AddTransportationModal({
             </div>
           </div>
 
-          {/* Flight-specific fields */}
-          {formData.type === 'flight' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="flight_number">Flight Number</Label>
-                <Input
-                  id="flight_number"
-                  value={formData.flight_number}
-                  onChange={(e) => handleInputChange('flight_number', e.target.value)}
-                  placeholder="e.g., DL1234"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="terminal">Terminal</Label>
-                <Input
-                  id="terminal"
-                  value={formData.terminal}
-                  onChange={(e) => handleInputChange('terminal', e.target.value)}
-                  placeholder="e.g., Terminal 1"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="gate">Gate</Label>
-                <Input
-                  id="gate"
-                  value={formData.gate}
-                  onChange={(e) => handleInputChange('gate', e.target.value)}
-                  placeholder="e.g., A15"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="seat">Seat</Label>
-                <Input
-                  id="seat"
-                  value={formData.seat}
-                  onChange={(e) => handleInputChange('seat', e.target.value)}
-                  placeholder="e.g., 12A"
-                />
-              </div>
-            </div>
-          )}
 
-          {/* Train-specific fields */}
-          {formData.type === 'train' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="vehicle_number">Train Number</Label>
-                <Input
-                  id="vehicle_number"
-                  value={formData.vehicle_number}
-                  onChange={(e) => handleInputChange('vehicle_number', e.target.value)}
-                  placeholder="e.g., 1234"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="carriage_coach">Coach/Carriage</Label>
-                <Input
-                  id="carriage_coach"
-                  value={formData.carriage_coach}
-                  onChange={(e) => handleInputChange('carriage_coach', e.target.value)}
-                  placeholder="e.g., Coach A"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Car rental-specific fields */}
-          {formData.type === 'car_rental' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="pickup_location">Pickup Location</Label>
-                <Input
-                  id="pickup_location"
-                  value={formData.pickup_location}
-                  onChange={(e) => handleInputChange('pickup_location', e.target.value)}
-                  placeholder="e.g., Airport Location"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="dropoff_location">Dropoff Location</Label>
-                <Input
-                  id="dropoff_location"
-                  value={formData.dropoff_location}
-                  onChange={(e) => handleInputChange('dropoff_location', e.target.value)}
-                  placeholder="e.g., Downtown Location"
-                />
-              </div>
-            </div>
-          )}
 
           {/* Participants Selection and Expense Section */}
           <div className="space-y-2">
@@ -474,28 +386,6 @@ export function AddTransportationModal({
             )}
           </div>
 
-          {/* Booking Reference */}
-          <div className="space-y-2">
-            <Label htmlFor="booking_reference">Booking Reference (Optional)</Label>
-            <Input
-              id="booking_reference"
-              value={formData.booking_reference}
-              onChange={(e) => handleInputChange('booking_reference', e.target.value)}
-              placeholder="e.g., ABC123456"
-            />
-          </div>
-
-          {/* Notes */}
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes (Optional)</Label>
-            <Textarea
-              id="notes"
-              value={formData.notes}
-              onChange={(e) => handleInputChange('notes', e.target.value)}
-              placeholder="Additional details, special instructions, etc."
-              rows={3}
-            />
-          </div>
 
           {/* Actions */}
           <div className="flex gap-3 pt-4">
