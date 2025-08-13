@@ -15,6 +15,7 @@ type Trip = Database['public']['Tables']['trips']['Row'];
 interface TransportationViewProps {
   trip: Trip;
   transportation: Transportation[];
+  expenseStatus: Record<string, boolean>;
   userRole: string | null;
   currentUserId: string;
 }
@@ -22,6 +23,7 @@ interface TransportationViewProps {
 export function TransportationView({ 
   trip, 
   transportation, 
+  expenseStatus,
   userRole, 
   currentUserId 
 }: TransportationViewProps) {
@@ -103,7 +105,7 @@ export function TransportationView({
       </div>
 
       {/* Transportation Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="bg-white rounded-xl shadow p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-100 rounded-lg">
@@ -170,6 +172,8 @@ export function TransportationView({
       <div className="bg-white rounded-xl shadow">
         <TransportationList 
           transportation={transportation}
+          tripId={trip.id}
+          expenseStatus={expenseStatus}
           onCopyLocation={copyToClipboard}
           onOpenInMaps={openInMaps}
         />

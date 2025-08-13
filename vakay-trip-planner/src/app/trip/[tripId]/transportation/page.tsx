@@ -55,6 +55,22 @@ export default async function TransportationPage({ params }: TransportationPageP
     .eq('trip_id', tripId)
     .order('departure_date', { ascending: true });
 
+  // Fetch expense status for transportation
+  const expenseStatusMap: Record<string, boolean> = {};
+  if (transportation) {
+    for (const transport of transportation) {
+      const expectedDescription = `${transport.provider} ${transport.departure_location} → ${transport.arrival_location}`;
+      const { data: existingExpense } = await supabase
+        .from('expenses')
+        .select('id')
+        .eq('trip_id', tripId)
+        .eq('description', expectedDescription)
+        .single();
+      
+      expenseStatusMap[transport.id] = !!existingExpense;
+    }
+  }
+
   // Calculate date range and duration
   const formatDateRange = () => {
     if (!trip.start_date || !trip.end_date) return 'No dates set';
@@ -154,6 +170,7 @@ export default async function TransportationPage({ params }: TransportationPageP
       <TransportationView
         trip={trip}
         transportation={transportation || []}
+        expenseStatus={expenseStatusMap}
         userRole={participantRole?.role || null}
         currentUserId={user.id}
       />

@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { Database } from '@/types/database.types';
-import { X, Plane, Train, Bus, Car, Ship, Users } from 'lucide-react';
+import { X, Plane, Train, Bus, Car, Ship, Users, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { CURRENCIES } from '@/lib/currency';
 
 type Transportation = Database['public']['Tables']['transportation']['Row'];
 
@@ -60,6 +61,14 @@ export function EditTransportationModal({
   const [participantOptions, setParticipantOptions] = useState<ParticipantOption[]>([]);
   const [selectedParticipants, setSelectedParticipants] = useState<Set<string>>(new Set());
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Expense-related state
+  const [expenseEnabled, setExpenseEnabled] = useState(false);
+  const [expenseAmount, setExpenseAmount] = useState('');
+  const [expenseCurrency, setExpenseCurrency] = useState('USD');
+  const [paymentStatus, setPaymentStatus] = useState<'pending' | 'paid'>('paid');
+  const [mainCurrency, setMainCurrency] = useState('USD');
+  const [hasExistingExpense, setHasExistingExpense] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -86,13 +95,39 @@ export function EditTransportationModal({
       }
       // Load selected participants for this transportation
       const { data: tps } = await supabase
-        .from('transportation_participants')
+        .from('transportation_participants' as any)
         .select('participant_user_id')
         .eq('transportation_id', transportation.id);
-      setSelectedParticipants(new Set((tps || []).map(r => r.participant_user_id)));
+      setSelectedParticipants(new Set((tps || []).map((r: any) => r.participant_user_id)));
+
+      // Check if transportation already has an expense
+      const { data: trip } = await supabase
+        .from('trips')
+        .select('main_currency')
+        .eq('id', tripRow.trip_id)
+        .single();
+      const mc = trip?.main_currency || 'USD';
+      setMainCurrency(mc);
+      setExpenseCurrency(mc);
+
+      // Check for existing expense by matching description pattern
+      const expectedDescription = `${transportation.provider} ${transportation.departure_location} → ${transportation.arrival_location}`;
+      const { data: existingExpense } = await supabase
+        .from('expenses')
+        .select('id, amount, currency, payment_status')
+        .eq('trip_id', tripRow.trip_id)
+        .eq('description', expectedDescription)
+        .single();
+
+      if (existingExpense) {
+        setHasExistingExpense(true);
+        setExpenseAmount(existingExpense.amount.toString());
+        setExpenseCurrency(existingExpense.currency);
+        setPaymentStatus(existingExpense.payment_status as 'pending' | 'paid' || 'paid');
+      }
     };
     load();
-  }, [isOpen, supabase, transportation.id]);
+  }, [isOpen, supabase, transportation.id, transportation.provider, transportation.departure_location, transportation.arrival_location]);
 
   if (!isOpen) return null;
 
@@ -109,6 +144,9 @@ export function EditTransportationModal({
         body: JSON.stringify({
           ...formData,
           participants: Array.from(selectedParticipants),
+          expense: expenseEnabled && !hasExistingExpense
+            ? { amount: expenseAmount ? parseFloat(expenseAmount) : null, currency: expenseCurrency, payment_status: paymentStatus }
+            : null,
         }),
       });
 
@@ -180,9 +218,9 @@ export function EditTransportationModal({
             </Select>
           </div>
 
-          {/* Provider */}
+          {/* Name */}
           <div className="space-y-2">
-            <Label htmlFor="provider">Provider/Company</Label>
+            <Label htmlFor="provider"> Name </Label>
             <Input
               id="provider"
               value={formData.provider}
@@ -262,28 +300,125 @@ export function EditTransportationModal({
             </div>
           </div>
 
-          {/* Participants Selection */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-gray-500" />
-              <Label>Participants</Label>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {participantOptions.map(p => (
-                <label key={p.id} className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={selectedParticipants.has(p.id)}
-                    onChange={() => toggleParticipant(p.id)}
-                  />
-                  <span>{p.name}</span>
-                </label>
-              ))}
-              {participantOptions.length === 0 && (
-                <p className="text-sm text-gray-500">No participants found</p>
+
+
+
+          {/* Expense Section - Only show if no existing expense */}
+          {!hasExistingExpense && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <DollarSign className="h-4 w-4 text-gray-500" />
+                  <Label>Add as Expense</Label>
+                </div>
+                <Button
+                  type="button"
+                  variant={expenseEnabled ? 'secondary' : 'outline'}
+                  size="sm"
+                  onClick={() => setExpenseEnabled(prev => !prev)}
+                >
+                  {expenseEnabled ? 'Remove Expense' : 'Add as Expense'}
+                </Button>
+              </div>
+
+              {expenseEnabled && (
+                <div className="space-y-4">
+                  {/* Amount/Currency/Status */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                      <Label>Amount</Label>
+                      <Input value={expenseAmount} onChange={(e) => setExpenseAmount(e.target.value)} placeholder="0.00" />
+                    </div>
+                    <div>
+                      <Label>Currency</Label>
+                      <Select value={expenseCurrency} onValueChange={setExpenseCurrency}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {CURRENCIES.map((currency) => (
+                            <SelectItem key={currency.code} value={currency.code}>
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono text-sm">{currency.symbol}</span>
+                                <span>{currency.code}</span>
+                                <span className="text-gray-500">- {currency.name}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {expenseCurrency !== mainCurrency && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          Will be converted to {mainCurrency} (trip currency)
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <Label>Payment Status *</Label>
+                      <div className="flex gap-4 mt-2">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="payment_status_radio"
+                            checked={paymentStatus === 'paid'}
+                            onChange={() => setPaymentStatus('paid')}
+                            className="text-green-600"
+                          />
+                          <span className="text-green-600">Paid</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="payment_status_radio"
+                            checked={paymentStatus === 'pending'}
+                            onChange={() => setPaymentStatus('pending')}
+                            className="text-orange-600"
+                          />
+                          <span className="text-orange-600">Pending</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Participants Selection - Only show when adding expense */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-gray-500" />
+                      <Label>Participants</Label>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {participantOptions.map(p => (
+                        <label key={p.id} className="flex items-center gap-2 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={selectedParticipants.has(p.id)}
+                            onChange={() => toggleParticipant(p.id)}
+                          />
+                          <span>{p.name}</span>
+                        </label>
+                      ))}
+                      {participantOptions.length === 0 && (
+                        <p className="text-sm text-gray-500">No participants found</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
-          </div>
+          )}
+
+          {/* Show existing expense info if it exists */}
+          {hasExistingExpense && (
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-center gap-2 text-green-800">
+                <DollarSign className="h-4 w-4" />
+                <span className="font-medium">Already added as expense</span>
+              </div>
+              <p className="text-sm text-green-700 mt-1">
+                This transportation is already tracked as an expense. You can manage it from the Expenses section.
+              </p>
+            </div>
+          )}
 
           {/* Notes */}
           <div className="space-y-2">
@@ -321,3 +456,4 @@ export function EditTransportationModal({
     </div>
   );
 }
+

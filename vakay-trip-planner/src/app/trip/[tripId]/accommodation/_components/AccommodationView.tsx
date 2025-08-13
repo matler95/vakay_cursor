@@ -15,6 +15,7 @@ type Trip = Database['public']['Tables']['trips']['Row'];
 interface AccommodationViewProps {
   trip: Trip;
   accommodations: Accommodation[];
+  expenseStatus: Record<string, boolean>;
   userRole: string | null;
   currentUserId: string;
 }
@@ -22,6 +23,7 @@ interface AccommodationViewProps {
 export function AccommodationView({ 
   trip, 
   accommodations, 
+  expenseStatus,
   userRole, 
   currentUserId 
 }: AccommodationViewProps) {
@@ -156,6 +158,8 @@ export function AccommodationView({
       <div className="bg-white rounded-xl shadow">
         <AccommodationList 
           accommodations={accommodations}
+          tripId={trip.id}
+          expenseStatus={expenseStatus}
           onCopyAddress={copyToClipboard}
           onOpenInMaps={openInMaps}
         />

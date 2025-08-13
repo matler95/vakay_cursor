@@ -1,7 +1,7 @@
 // Accommodation list component
 'use client';
 
-import { Bed, MapPin, Calendar, FileText, Copy, ExternalLink, Edit, Trash2, Search, MapPinned, BedDoubleIcon } from 'lucide-react';
+import { Bed, MapPin, Calendar, FileText, Copy, ExternalLink, Edit, Trash2, Search, MapPinned, BedDoubleIcon, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useMemo, useState } from 'react';
@@ -9,16 +9,21 @@ import { EditAccommodationModal } from './EditAccommodationModal';
 import { DeleteAccommodationModal } from './DeleteAccommodationModal';
 import { Database } from '@/types/database.types';
 
+
 type Accommodation = Database['public']['Tables']['accommodations']['Row'];
 
 interface AccommodationListProps {
   accommodations: Accommodation[];
+  tripId: string;
+  expenseStatus: Record<string, boolean>;
   onCopyAddress: (text: string) => void;
   onOpenInMaps: (address: string) => void;
 }
 
 export function AccommodationList({ 
   accommodations, 
+  tripId,
+  expenseStatus,
   onCopyAddress, 
   onOpenInMaps 
 }: AccommodationListProps) {
@@ -69,6 +74,13 @@ export function AccommodationList({
       default:
         return { label: 'Current', className: 'bg-green-50 text-green-700' };
     }
+  };
+
+  const getExpenseStatusChip = (hasExpense: boolean) => {
+    if (hasExpense) {
+      return { label: 'Expense', className: 'bg-green-50 text-green-700', icon: DollarSign };
+    }
+    return { label: 'No Expense', className: 'bg-gray-50 text-gray-500', icon: null };
   };
 
   const filteredSorted = useMemo(() => {
@@ -126,6 +138,7 @@ export function AccommodationList({
         {filteredSorted.map((a) => {
           const st = getStatus(a.check_in_date as string, a.check_out_date as string);
           const chip = getStatusChip(st as any);
+          const expenseChip = getExpenseStatusChip(expenseStatus[a.id] || false);
           return (
             <div key={a.id} className="border border-gray-200 rounded-lg p-4 space-y-3">
               <div className="flex items-start justify-between">
@@ -133,7 +146,13 @@ export function AccommodationList({
                   <h4 className="font-medium text-gray-900 truncate">{a.name}</h4>
                   <p className="text-sm text-gray-500 truncate">{a.address}</p>
                 </div>
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${chip.className}`}>{chip.label}</span>
+                <div className="flex flex-col gap-1 items-end">
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${chip.className}`}>{chip.label}</span>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${expenseChip.className} flex items-center gap-1`}>
+                    {expenseChip.icon && <expenseChip.icon className="h-3 w-3" />}
+                    {expenseChip.label}
+                  </span>
+                </div>
               </div>
 
               <div className="flex flex-wrap items-center gap-2 text-xs text-gray-700">
@@ -200,8 +219,7 @@ export function AccommodationList({
               <tr className="border-b border-gray-200">
                 <th className="text-left py-3 px-4 font-medium text-gray-700">Name</th>
                 <th className="text-left py-3 px-4 font-medium text-gray-700">Dates</th>
-                {/* <th className="text-left py-3 px-4 font-medium text-gray-700">Details</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">Map</th> */}
+                <th className="text-left py-3 px-4 font-medium text-gray-700">Expense</th>
                 <th className="text-right py-3 px-4 font-medium text-gray-700">Actions</th>
               </tr>
             </thead>
@@ -242,6 +260,17 @@ export function AccommodationList({
                         {formatDate(a.check_out_date)}
                         {a.check_out_time && (<span className="ml-1 text-gray-500">{formatTime(a.check_out_time)}</span>)}
                       </div>
+                    </td>
+                    <td className="py-3 px-4">
+                      {(() => {
+                        const expenseChip = getExpenseStatusChip(expenseStatus[a.id] || false);
+                        return (
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${expenseChip.className} flex items-center gap-1 w-fit`}>
+                            {expenseChip.icon && <expenseChip.icon className="h-3 w-3" />}
+                            {expenseChip.label}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td className="py-3 px-4 text-right">
                       <div className="flex items-center justify-end gap-2">

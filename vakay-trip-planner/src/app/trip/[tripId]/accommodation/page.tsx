@@ -55,6 +55,22 @@ export default async function AccommodationPage({ params }: AccommodationPagePro
     .eq('trip_id', tripId)
     .order('check_in_date', { ascending: true });
 
+  // Fetch expense status for accommodations
+  const expenseStatusMap: Record<string, boolean> = {};
+  if (accommodations) {
+    for (const accommodation of accommodations) {
+      const expectedDescription = `${accommodation.name} ${accommodation.address}`;
+      const { data: existingExpense } = await supabase
+        .from('expenses')
+        .select('id')
+        .eq('trip_id', tripId)
+        .eq('description', expectedDescription)
+        .single();
+      
+      expenseStatusMap[accommodation.id] = !!existingExpense;
+    }
+  }
+
   // Calculate date range and duration
   const formatDateRange = () => {
     if (!trip.start_date || !trip.end_date) return 'No dates set';
@@ -154,6 +170,7 @@ export default async function AccommodationPage({ params }: AccommodationPagePro
       <AccommodationView
         trip={trip}
         accommodations={accommodations || []}
+        expenseStatus={expenseStatusMap}
         userRole={participantRole?.role || null}
         currentUserId={user.id}
       />

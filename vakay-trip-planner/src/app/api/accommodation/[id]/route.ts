@@ -115,60 +115,83 @@ export async function PUT(
 
     // Optional: create expense on edit
     if (expense && expense.amount && expense.currency) {
-      let expenseParticipants: string[] = Array.isArray(participants) ? participants : [];
-      if (expenseParticipants.length === 0) {
-        const { data: tps } = await supabase
-          .from('trip_participants')
-          .select('user_id')
-          .eq('trip_id', accommodation.trip_id);
-        expenseParticipants = (tps || []).map(tp => tp.user_id);
-      }
-
-      const { data: trip } = await supabase
-        .from('trips')
-        .select('main_currency')
-        .eq('id', accommodation.trip_id)
-        .single();
-      const mainCurrency = trip?.main_currency || 'USD';
-
-      let convertedAmount = expense.amount as number;
-      let exchangeRate = 1;
-      if (expense.currency !== mainCurrency) {
-        try {
-          const rates = await fetchExchangeRates(expense.currency);
-          const conversion = convertCurrency(expense.amount, expense.currency, mainCurrency, rates.rates);
-          convertedAmount = conversion.convertedAmount;
-          exchangeRate = conversion.exchangeRate;
-        } catch (err) {
-          console.error('Currency conversion failed:', err);
-        }
-      }
-
-      const { data: category } = await supabase
-        .from('expense_categories')
-        .select('id')
-        .eq('name', 'Accommodation')
-        .single();
-
-      const { error: expErr } = await supabase
+      // Check if expense already exists for this accommodation
+      const expectedDescription = `${name} ${address}`;
+      const { data: existingExpense } = await supabase
         .from('expenses')
-        .insert({
-          trip_id: accommodation.trip_id,
-          user_id: user.id,
-          category_id: category?.id ?? null,
-          original_amount: expense.amount,
-          original_currency: expense.currency,
-          amount: convertedAmount,
-          currency: mainCurrency,
-          exchange_rate: exchangeRate,
-          description: `${name}`,
-          payment_status: expense.payment_status || 'pending',
-          accommodation_id: Number(params.id),
-        });
-      if (expErr) {
-        console.error('Failed to create expense on edit:', expErr);
-      } else if (expenseParticipants.length > 0) {
-        // Fetch the last inserted expense id might not be trivial here without returning row; skip linking participants on edit to avoid complexity
+        .select('id')
+        .eq('trip_id', accommodation.trip_id)
+        .eq('description', expectedDescription)
+        .single();
+
+      if (!existingExpense) {
+        let expenseParticipants: string[] = Array.isArray(participants) ? participants : [];
+        if (expenseParticipants.length === 0) {
+          const { data: tps } = await supabase
+            .from('trip_participants')
+            .select('user_id')
+            .eq('trip_id', accommodation.trip_id);
+          expenseParticipants = (tps || []).map(tp => tp.user_id);
+        }
+
+        const { data: trip } = await supabase
+          .from('trips')
+          .select('main_currency')
+          .eq('id', accommodation.trip_id)
+          .single();
+        const mainCurrency = trip?.main_currency || 'USD';
+
+        let convertedAmount = expense.amount as number;
+        let exchangeRate = 1;
+        if (expense.currency !== mainCurrency) {
+          try {
+            const rates = await fetchExchangeRates(expense.currency);
+            const conversion = convertCurrency(expense.amount, expense.currency, mainCurrency, rates.rates);
+            convertedAmount = conversion.convertedAmount;
+            exchangeRate = conversion.exchangeRate;
+          } catch (err) {
+            console.error('Currency conversion failed:', err);
+          }
+        }
+
+        const { data: category } = await supabase
+          .from('expense_categories')
+          .select('id')
+          .eq('name', 'Accommodation')
+          .single();
+
+        const { data: expenseRow, error: expErr } = await supabase
+          .from('expenses')
+          .insert({
+            trip_id: accommodation.trip_id,
+            user_id: user.id,
+            category_id: category?.id ?? null,
+            original_amount: expense.amount,
+            original_currency: expense.currency,
+            amount: convertedAmount,
+            currency: mainCurrency,
+            exchange_rate: exchangeRate,
+            description: expectedDescription,
+            payment_status: expense.payment_status || 'pending',
+            accommodation_id: Number(params.id),
+          })
+          .select()
+          .single();
+
+        if (expErr) {
+          console.error('Failed to create expense on edit:', expErr);
+        } else if (expenseRow && expenseParticipants.length > 0) {
+          const expParts = expenseParticipants.map((pid: string) => ({
+            expense_id: expenseRow.id,
+            participant_user_id: pid,
+          }));
+          const { error: expPartErr } = await supabase
+            .from('expense_participants')
+            .insert(expParts);
+          if (expPartErr) {
+            console.error('Failed to add expense participants:', expPartErr);
+          }
+        }
       }
     }
 

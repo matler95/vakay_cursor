@@ -42,6 +42,7 @@ export function EditAccommodationModal({
   const [expenseCurrency, setExpenseCurrency] = useState('USD');
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'paid'>('paid');
   const [mainCurrency, setMainCurrency] = useState('USD');
+  const [hasExistingExpense, setHasExistingExpense] = useState(false);
 
 
 
@@ -112,6 +113,22 @@ export function EditAccommodationModal({
         .select('participant_user_id')
         .eq('accommodation_id', accommodation.id);
       setSelectedParticipants(new Set((aps || []).map(r => r.participant_user_id)));
+
+      // Check if accommodation already has an expense
+      const expectedDescription = `${formData.name || accommodation.name} ${formData.address || accommodation.address}`;
+      const { data: existingExpense } = await supabase
+        .from('expenses')
+        .select('id, amount, currency, payment_status')
+        .eq('trip_id', acc.trip_id)
+        .eq('description', expectedDescription)
+        .single();
+
+      if (existingExpense) {
+        setHasExistingExpense(true);
+        setExpenseAmount(existingExpense.amount.toString());
+        setExpenseCurrency(existingExpense.currency);
+        setPaymentStatus(existingExpense.payment_status as 'pending' | 'paid' || 'paid');
+      }
     };
     load();
   }, [isOpen, supabase, accommodation.id]);
@@ -145,7 +162,7 @@ export function EditAccommodationModal({
         },
         body: JSON.stringify({
           ...formData,
-          ...(expenseEnabled
+          ...(expenseEnabled && !hasExistingExpense
             ? {
                 expense: {
                   amount: expenseAmount ? parseFloat(expenseAmount) : null,
@@ -274,83 +291,101 @@ export function EditAccommodationModal({
             </div>
           </div>
 
-          {/* Expense Section */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-gray-500" />
-                <Label>Add as Expense</Label>
+          {/* Expense Section - Only show if no existing expense */}
+          {!hasExistingExpense && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <DollarSign className="h-4 w-4 text-gray-500" />
+                  <Label>Add as Expense</Label>
+                </div>
+                <Button
+                  type="button"
+                  variant={expenseEnabled ? 'secondary' : 'outline'}
+                  size="sm"
+                  onClick={() => setExpenseEnabled(prev => !prev)}
+                >
+                  {expenseEnabled ? 'Remove Expense' : 'Add as Expense'}
+                </Button>
               </div>
-              <Button
-                type="button"
-                variant={expenseEnabled ? 'secondary' : 'outline'}
-                size="sm"
-                onClick={() => setExpenseEnabled(prev => !prev)}
-              >
-                {expenseEnabled ? 'Remove Expense' : 'Add as Expense'}
-              </Button>
-            </div>
-            {expenseEnabled && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div>
-                  <Label>Amount</Label>
-                  <Input value={expenseAmount} onChange={(e) => setExpenseAmount(e.target.value)} placeholder="0.00" />
-                </div>
-                <div>
-                  <Label>Currency</Label>
-                  <Select value={expenseCurrency} onValueChange={setExpenseCurrency}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CURRENCIES.map((currency) => (
-                        <SelectItem key={currency.code} value={currency.code}>
-                          <div className="flex items-center gap-2">
-                            <span className="font-mono text-sm">{currency.symbol}</span>
-                            <span>{currency.code}</span>
-                            <span className="text-gray-500">- {currency.name}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {expenseCurrency !== mainCurrency && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      Will be converted to {mainCurrency} (trip currency)
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <Label>Payment Status *</Label>
-                  <div className="flex gap-4 mt-2">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="payment_status_radio"
-                        checked={paymentStatus === 'paid'}
-                        onChange={() => setPaymentStatus('paid')}
-                        className="text-green-600"
-                      />
-                      <span className="text-green-600">Paid</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="payment_status_radio"
-                        checked={paymentStatus === 'pending'}
-                        onChange={() => setPaymentStatus('pending')}
-                        className="text-orange-600"
-                      />
-                      <span className="text-orange-600">Pending</span>
-                    </label>
+              {expenseEnabled && (
+                <div className="space-y-4">
+                  {/* Amount/Currency/Status */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                      <Label>Amount</Label>
+                      <Input value={expenseAmount} onChange={(e) => setExpenseAmount(e.target.value)} placeholder="0.00" />
+                    </div>
+                    <div>
+                      <Label>Currency</Label>
+                      <Select value={expenseCurrency} onValueChange={setExpenseCurrency}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {CURRENCIES.map((currency) => (
+                            <SelectItem key={currency.code} value={currency.code}>
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono text-sm">{currency.symbol}</span>
+                                <span>{currency.code}</span>
+                                <span className="text-gray-500">- {currency.name}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {expenseCurrency !== mainCurrency && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          Will be converted to {mainCurrency} (trip currency)
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <Label>Payment Status *</Label>
+                      <div className="flex gap-4 mt-2">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="payment_status_radio"
+                            checked={paymentStatus === 'paid'}
+                            onChange={() => setPaymentStatus('paid')}
+                            className="text-green-600"
+                          />
+                          <span className="text-green-600">Paid</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="payment_status_radio"
+                            checked={paymentStatus === 'pending'}
+                            onChange={() => setPaymentStatus('pending')}
+                            className="text-orange-600"
+                          />
+                          <span className="text-orange-600">Pending</span>
+                        </label>
+                      </div>
+                    </div>
                   </div>
                 </div>
+              )}
+            </div>
+          )}
+
+          {/* Show existing expense info if it exists */}
+          {hasExistingExpense && (
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-center gap-2 text-green-800">
+                <DollarSign className="h-4 w-4" />
+                <span className="font-medium">Already added as expense</span>
               </div>
-            )}
-          </div>
+              <p className="text-sm text-green-700 mt-1">
+                This accommodation is already tracked as an expense. You can manage it from the Expenses section.
+              </p>
+            </div>
+          )}
 
           {/* Participants (only when adding expense) */}
-          {expenseEnabled && (
+          {expenseEnabled && !hasExistingExpense && (
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-gray-500" />

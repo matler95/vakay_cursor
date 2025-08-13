@@ -200,9 +200,9 @@ export function AddTransportationModal({
             </Select>
           </div>
 
-          {/* Provider */}
+          {/* Name */}
           <div className="space-y-2">
-            <Label htmlFor="provider">Provider/Company</Label>
+            <Label htmlFor="provider">Name</Label>
             <Input
               id="provider"
               value={formData.provider}

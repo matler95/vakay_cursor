@@ -36,6 +36,7 @@ export async function PUT(
       booking_reference,
       notes,
       participants,
+      expense,
     } = body;
 
     // Validate required fields
@@ -124,6 +125,93 @@ export async function PUT(
           .insert(inserts);
         if (insErr) {
           console.error('Failed to insert transportation participants:', insErr);
+        }
+      }
+    }
+
+    // Handle expense creation if provided
+    if (expense && expense.amount && expense.currency) {
+      // Check if expense already exists for this transportation
+      const expectedDescription = `${provider} ${departure_location} → ${arrival_location}`;
+      const { data: existingExpense } = await supabase
+        .from('expenses')
+        .select('id')
+        .eq('trip_id', transportation.trip_id)
+        .eq('description', expectedDescription)
+        .single();
+
+      if (!existingExpense) {
+        // Resolve default participants (all trip participants) if none selected
+        let expenseParticipants: string[] = Array.isArray(participants) ? participants : [];
+        if (expenseParticipants.length === 0) {
+          const { data: tps } = await supabase
+            .from('trip_participants')
+            .select('user_id')
+            .eq('trip_id', transportation.trip_id);
+          expenseParticipants = (tps || []).map(tp => tp.user_id);
+        }
+
+        // Fetch trip main currency
+        const { data: trip } = await supabase
+          .from('trips')
+          .select('main_currency')
+          .eq('id', transportation.trip_id)
+          .single();
+        const mainCurrency = trip?.main_currency || 'USD';
+
+        let convertedAmount = expense.amount as number;
+        let exchangeRate = 1;
+
+        if (expense.currency !== mainCurrency) {
+          try {
+            // Import currency conversion functions
+            const { fetchExchangeRates, convertCurrency } = await import('@/lib/currency');
+            const rates = await fetchExchangeRates(expense.currency);
+            const conversion = convertCurrency(expense.amount, expense.currency, mainCurrency, rates.rates);
+            convertedAmount = conversion.convertedAmount;
+            exchangeRate = conversion.exchangeRate;
+          } catch (err) {
+            console.error('Currency conversion failed, falling back to original amount:', err);
+          }
+        }
+
+        // Get Transportation category id
+        const { data: category } = await supabase
+          .from('expense_categories')
+          .select('id')
+          .eq('name', 'Transportation')
+          .single();
+
+        const { data: expenseRow, error: expErr } = await supabase
+          .from('expenses')
+          .insert({
+            trip_id: transportation.trip_id,
+            user_id: user.id,
+            category_id: category?.id ?? null,
+            original_amount: expense.amount,
+            original_currency: expense.currency,
+            amount: convertedAmount,
+            currency: mainCurrency,
+            exchange_rate: exchangeRate,
+            description: expectedDescription,
+            payment_status: expense.payment_status || 'pending',
+          })
+          .select()
+          .single();
+
+        if (expErr) {
+          console.error('Failed to create expense for transportation:', expErr);
+        } else if (expenseRow && expenseParticipants.length > 0) {
+          const expParts = expenseParticipants.map((pid: string) => ({
+            expense_id: expenseRow.id,
+            participant_user_id: pid,
+          }));
+          const { error: expPartErr } = await supabase
+            .from('expense_participants')
+            .insert(expParts);
+          if (expPartErr) {
+            console.error('Failed to add expense participants:', expPartErr);
+          }
         }
       }
     }
