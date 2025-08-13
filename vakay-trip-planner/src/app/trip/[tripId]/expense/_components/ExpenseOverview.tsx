@@ -30,37 +30,51 @@ interface ExpenseOverviewProps {
 }
 
 export function ExpenseOverview({ expenses, tripParticipants, mainCurrency }: ExpenseOverviewProps) {
+  // Ensure props are always arrays/valid values
+  const safeExpenses = expenses || [];
+  const safeTripParticipants = tripParticipants || [];
+  const safeMainCurrency = mainCurrency || 'USD';
+  
   // Calculate total expenses
-  const totalExpenses = expenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
+  const totalExpenses = safeExpenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
   
   // Calculate paid vs pending
-  const paidExpenses = expenses
+  const paidExpenses = safeExpenses
     .filter(expense => expense.payment_status === 'paid')
     .reduce((sum, expense) => sum + Number(expense.amount), 0);
   
-  const pendingExpenses = expenses
+  const pendingExpenses = safeExpenses
     .filter(expense => expense.payment_status === 'pending')
     .reduce((sum, expense) => sum + Number(expense.amount), 0);
 
   // Calculate expenses per participant
-  const participantExpenses = tripParticipants.map(participant => {
-    const userExpenses = expenses.filter(expense => expense.user_id === participant.user_id);
-    const totalAmount = userExpenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
-    const paidAmount = userExpenses
-      .filter(expense => expense.payment_status === 'paid')
-      .reduce((sum, expense) => sum + Number(expense.amount), 0);
-    const pendingAmount = userExpenses
-      .filter(expense => expense.payment_status === 'pending')
-      .reduce((sum, expense) => sum + Number(expense.amount), 0);
+  const participantExpenses = safeTripParticipants
+    .filter(participant => {
+      // Validate participant structure
+      return participant && 
+        participant.user_id && 
+        participant.profiles && 
+        typeof participant.user_id === 'string' &&
+        participant.user_id.length > 0;
+    })
+    .map(participant => {
+      const userExpenses = safeExpenses.filter(expense => expense.user_id === participant.user_id);
+      const totalAmount = userExpenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
+      const paidAmount = userExpenses
+        .filter(expense => expense.payment_status === 'paid')
+        .reduce((sum, expense) => sum + Number(expense.amount), 0);
+      const pendingAmount = userExpenses
+        .filter(expense => expense.payment_status === 'pending')
+        .reduce((sum, expense) => sum + Number(expense.amount), 0);
 
-    return {
-      participant,
-      totalAmount,
-      paidAmount,
-      pendingAmount,
-      expenseCount: userExpenses.length,
-    };
-  }).sort((a, b) => b.totalAmount - a.totalAmount);
+      return {
+        participant,
+        totalAmount,
+        paidAmount,
+        pendingAmount,
+        expenseCount: userExpenses.length,
+      };
+    }).sort((a, b) => b.totalAmount - a.totalAmount);
 
   return (
     <div className="space-y-6">
@@ -75,7 +89,7 @@ export function ExpenseOverview({ expenses, tripParticipants, mainCurrency }: Ex
             <div>
               <h3 className="text-sm font-medium text-gray-600">Total Expenses</h3>
               <p className="text-2xl font-bold text-gray-900">
-                {formatCurrency(totalExpenses, mainCurrency)}
+                {formatCurrency(totalExpenses, safeMainCurrency)}
               </p>
             </div>
           </div>
@@ -90,7 +104,7 @@ export function ExpenseOverview({ expenses, tripParticipants, mainCurrency }: Ex
             <div>
               <h3 className="text-sm font-medium text-gray-600">Paid</h3>
               <p className="text-2xl font-bold text-green-700">
-                {formatCurrency(paidExpenses, mainCurrency)}
+                {formatCurrency(paidExpenses, safeMainCurrency)}
               </p>
             </div>
           </div>
@@ -105,7 +119,7 @@ export function ExpenseOverview({ expenses, tripParticipants, mainCurrency }: Ex
             <div>
               <h3 className="text-sm font-medium text-gray-600">Pending</h3>
               <p className="text-2xl font-bold text-orange-700">
-                {formatCurrency(pendingExpenses, mainCurrency)}
+                {formatCurrency(pendingExpenses, safeMainCurrency)}
               </p>
             </div>
           </div>
@@ -125,15 +139,19 @@ export function ExpenseOverview({ expenses, tripParticipants, mainCurrency }: Ex
           <p className="text-gray-500 text-center py-8">No expenses recorded yet</p>
         ) : (
           <div className="space-y-4">
-            {participantExpenses.map(({ participant, totalAmount, paidAmount, pendingAmount, expenseCount }) => (
-              <div key={participant.user_id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+            {participantExpenses.map(({ participant, totalAmount, paidAmount, pendingAmount, expenseCount }, index) => {
+              // Ensure we have a unique key
+              const uniqueKey = participant.user_id || `participant-${index}`;
+              
+              return (
+                <div key={uniqueKey} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                 <div className="flex items-center gap-3">
                   {/* <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
                     {(participant.profiles.full_name || 'Unknown').charAt(0).toUpperCase()}
                   </div> */}
                   <div>
                     <p className="font-medium text-gray-900">
-                      {participant.profiles.full_name || 'Unknown User'}
+                      {participant.profiles?.full_name || 'Unknown User'}
                     </p>
                     <p className="text-sm text-gray-500">
                       {expenseCount} expense{expenseCount !== 1 ? 's' : ''}
@@ -148,21 +166,22 @@ export function ExpenseOverview({ expenses, tripParticipants, mainCurrency }: Ex
                 
                 <div className="text-right">
                   <p className="font-semibold text-gray-900">
-                    {formatCurrency(totalAmount, mainCurrency)}
+                    {formatCurrency(totalAmount, safeMainCurrency)}
                   </p>
                   <div className="flex gap-4 text-sm">
-                    <span className="text-green-600">
-                      Paid: {formatCurrency(paidAmount, mainCurrency)}
+                    <span className="text-sm text-green-600">
+                      Paid: {formatCurrency(paidAmount, safeMainCurrency)}
                     </span>
                     {pendingAmount > 0 && (
-                      <span className="text-orange-600">
-                        Pending: {formatCurrency(pendingAmount, mainCurrency)}
+                      <span className="text-sm text-orange-600">
+                        Pending: {formatCurrency(pendingAmount, safeMainCurrency)}
                       </span>
                     )}
                   </div>
                 </div>
               </div>
-            ))}
+            );
+            })}
           </div>
         )}
       </div>
