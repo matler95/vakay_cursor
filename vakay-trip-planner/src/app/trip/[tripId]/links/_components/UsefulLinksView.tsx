@@ -48,7 +48,7 @@ export function UsefulLinksView({
             Useful Links
           </h2>
           <p className="text-gray-600 mt-1">
-            Store and organize your favorite restaurants, POIs, and other useful links
+            Store and organize your favorite links
           </p>
         </div>
         <div className="flex gap-3">
@@ -60,7 +60,6 @@ export function UsefulLinksView({
                   className="flex items-center gap-2"
                 >
                   <Plus className="h-4 w-4" />
-                  Add Link
                 </Button>
               </TooltipTrigger>
               <TooltipContent>

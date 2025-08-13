@@ -79,7 +79,7 @@ export function ExpenseView({
             Expense Tracking
           </h2>
           <p className="text-gray-600 mt-1">
-            Track and manage trip expenses with multi-currency support
+            Track and manage trip expenses with auto rate conversion.
           </p>
         </div>
         <div className="flex gap-3">
@@ -91,7 +91,7 @@ export function ExpenseView({
                 <Button
                   onClick={() => setIsCurrencySettingsModalOpen(true)}
                   variant="outline"
-                  size="sm"
+                  // size="sm"
                   className="flex items-center gap-2"
                 >
                   <Settings className="h-4 w-4" />
@@ -110,7 +110,7 @@ export function ExpenseView({
               <TooltipTrigger asChild>
                 <Button
                   onClick={() => setIsAddExpenseModalOpen(true)}
-                  size="sm"
+                  // size="sm"
                   className="flex items-center gap-2"
                 >
                   <Plus className="h-4 w-4" />
