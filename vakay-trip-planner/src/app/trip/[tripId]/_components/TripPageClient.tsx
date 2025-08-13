@@ -102,22 +102,22 @@ export function TripPageClient({
       case 'plan':
         return (
           <>
-            {/* Secondary Header - Trip Plan */}
-            <div className="flex justify-between items-center gap-4 mb-6 animate-in slide-in-from-top-2 duration-500 delay-600">
-              <div>
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Trip Plan</h2>
-                {isEditing ? (
-                  <div className="text-gray-600 mt-1">
-                    <strong>Edit Mode:</strong> Edit days individually or select multiple to update locations
-                  </div>
-                ) : (
-                  <p className="text-gray-600 mt-1">
-                    Add locations and participants to start planning your trip
-                  </p>
-                )}
-              </div>
+                         {/* Secondary Header - Trip Plan */}
+             <div className="flex justify-between items-center gap-4 mb-6">
+               <div>
+                 <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Trip Plan</h2>
+                 {isEditing ? (
+                   <div className="text-gray-600 mt-1">
+                     <strong>Edit Mode:</strong> Edit days individually or select multiple to update locations
+                   </div>
+                 ) : (
+                   <p className="text-gray-600 mt-1">
+                     Add locations and participants to start planning your trip
+                   </p>
+                 )}
+               </div>
 
-              <div className="flex gap-3 animate-in slide-in-from-right-2 duration-500 delay-700">
+               <div className="flex gap-3">
                 {/* Add Location Button */}
                 <TooltipProvider>
                   <Tooltip>
@@ -148,26 +148,26 @@ export function TripPageClient({
               </div>
             </div>
 
-            {/* Calendar Container */}
-            <div className="mb-4 sm:mb-8 rounded-xl sm:rounded-2xl bg-white shadow p-3 sm:p-6 animate-in slide-in-from-top-2 duration-500 delay-700">
-              <ItineraryView
-                trip={trip}
-                itineraryDays={itineraryDays || []}
-                locations={locations || []}
-                isEditing={isEditing}
-                setIsEditing={setIsEditing}
-              />
-            </div>
+                         {/* Calendar Container */}
+             <div className="mb-4 sm:mb-8 rounded-xl sm:rounded-2xl bg-white shadow p-3 sm:p-6">
+               <ItineraryView
+                 trip={trip}
+                 itineraryDays={itineraryDays || []}
+                 locations={locations || []}
+                 isEditing={isEditing}
+                 setIsEditing={setIsEditing}
+               />
+             </div>
 
-            {/* Locations & Participants Side-by-Side */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8 animate-in slide-in-from-top-2 duration-500 delay-800">
-              <div className="rounded-xl sm:rounded-2xl bg-white shadow p-4 sm:p-6 min-h-[250px] sm:min-h-[300px] flex flex-col animate-in slide-in-from-left-2 duration-500 delay-900">
-                <LocationManager tripId={trip.id} locations={locations || []} />
-              </div>
-              <div className="rounded-xl sm:rounded-2xl bg-white shadow p-4 sm:p-6 min-h-[250px] sm:min-h-[300px] flex flex-col animate-in slide-in-from-right-2 duration-500 delay-900">
-                <ParticipantManager tripId={trip.id} participants={participants || []} currentUserRole={participantRole?.role || null} />
-              </div>
-            </div>
+                         {/* Locations & Participants Side-by-Side */}
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8">
+               <div className="rounded-xl sm:rounded-2xl bg-white shadow p-4 sm:p-6 min-h-[250px] sm:min-h-[300px] flex flex-col">
+                 <LocationManager tripId={trip.id} locations={locations || []} />
+               </div>
+               <div className="rounded-xl sm:rounded-2xl bg-white shadow p-4 sm:p-6 min-h-[250px] sm:min-h-[300px] flex flex-col">
+                 <ParticipantManager tripId={trip.id} participants={participants || []} currentUserRole={participantRole?.role || null} />
+               </div>
+             </div>
           </>
         );
 
@@ -226,22 +226,22 @@ export function TripPageClient({
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-8 py-4 sm:py-8 bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen animate-in fade-in-0 duration-500">
-      {/* Modern Trip Header */}
-      <div className="mb-4 sm:mb-8 rounded-xl sm:rounded-2xl shadow p-4 sm:p-6 bg-white animate-in slide-in-from-top-2 duration-700">
-        {/* Mobile Layout */}
-        <div className="md:hidden animate-in slide-in-from-left-2 duration-700 delay-300">
-          <div className="flex items-start justify-between gap-3 mb-3">
-            <div className="flex-1 min-w-0">
-              <h1 className="text-xl font-extrabold text-gray-900 truncate animate-in slide-in-from-left-2 duration-700 delay-400">
-                {trip.name}
-              </h1>
-            </div>
-            <div className="flex-shrink-0 animate-in slide-in-from-right-2 duration-700 delay-400">
-              <EditTripInline trip={trip} userRole={participantRole?.role || null} />
-            </div>
-          </div>
-          <div className="flex items-center gap-3 text-gray-600 text-sm animate-in slide-in-from-left-2 duration-700 delay-500">
+         <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-8 py-4 sm:py-8 bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+             {/* Modern Trip Header */}
+       <div className="mb-4 sm:mb-8 rounded-xl sm:rounded-2xl shadow p-4 sm:p-6 bg-white">
+         {/* Mobile Layout */}
+         <div className="md:hidden">
+           <div className="flex items-start justify-between gap-3 mb-3">
+             <div className="flex-1 min-w-0">
+               <h1 className="text-xl font-extrabold text-gray-900 truncate">
+                 {trip.name}
+               </h1>
+             </div>
+             <div className="flex-shrink-0">
+               <EditTripInline trip={trip} userRole={participantRole?.role || null} />
+             </div>
+           </div>
+           <div className="flex items-center gap-3 text-gray-600 text-sm">
             <span className="flex items-center gap-1">
               <Calendar className="h-4 w-4 text-blue-500" />
               {dateRange}
@@ -258,35 +258,35 @@ export function TripPageClient({
           </div>
         </div>
 
-        {/* Desktop Layout */}
-        <div className="hidden md:flex md:items-center md:justify-between gap-6 animate-in slide-in-from-right-2 duration-700 delay-300">
-          <div className="flex-1 min-w-0">
-            <h1 className="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-2 flex items-center gap-3 animate-in slide-in-from-left-2 duration-700 delay-400">
-              {trip.name}
-            </h1>
-            <div className="flex flex-row items-center gap-4 text-gray-600 text-base animate-in slide-in-from-left-2 duration-700 delay-500">
-              <span className="flex items-center gap-1">
-                <Calendar className="h-5 w-5 text-blue-500" />
-                {dateRange}
-              </span>
-              {trip.destination && (
-                <span className="flex items-center gap-1">
-                  <MapPin className="h-5 w-5 text-pink-500" />
-                </span>
-              )}
-              <span className="flex items-center gap-1 bg-blue-100 text-blue-700 font-semibold px-3 py-1 rounded-full text-sm">
-                {totalDays} days
-              </span>
-            </div>
-          </div>
-          <div className="flex-shrink-0 animate-in slide-in-from-right-2 duration-700 delay-400">
-            <EditTripInline trip={trip} userRole={participantRole?.role || null} />
-          </div>
-        </div>
+                 {/* Desktop Layout */}
+         <div className="hidden md:flex md:items-center md:justify-between gap-6">
+           <div className="flex-1 min-w-0">
+             <h1 className="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-2 flex items-center gap-3">
+               {trip.name}
+             </h1>
+             <div className="flex flex-row items-center gap-4 text-gray-600 text-base">
+               <span className="flex items-center gap-1">
+                 <Calendar className="h-5 w-5 text-blue-500" />
+                 {dateRange}
+               </span>
+               {trip.destination && (
+                 <span className="flex items-center gap-1">
+                   <MapPin className="h-5 w-5 text-pink-500" />
+                 </span>
+               )}
+               <span className="flex items-center gap-1 bg-blue-100 text-blue-700 font-semibold px-3 py-1 rounded-full text-sm">
+                 {totalDays} days
+               </span>
+             </div>
+           </div>
+           <div className="flex-shrink-0">
+             <EditTripInline trip={trip} userRole={participantRole?.role || null} />
+           </div>
+         </div>
       </div>
 
-      {/* Trip Navigation */}
-      <div className="border-b border-gray-200 mb-6 relative animate-in slide-in-from-top-2 duration-700 delay-200">
+             {/* Trip Navigation */}
+       <div className="border-b border-gray-200 mb-6 relative">
         <nav className="-mb-px flex space-x-8" role="tablist" aria-label="Trip sections">
           {tabs.map((tab) => {
             const Icon = tab.icon;
