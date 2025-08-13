@@ -166,6 +166,32 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Automatically create useful link if booking_url is provided
+    if (booking_url) {
+      try {
+        const { error: linkError } = await supabase
+          .from('useful_links')
+          .insert({
+            trip_id,
+            title: name,
+            url: booking_url,
+            description: `Accommodation: ${name}`,
+            category: 'accommodation',
+            address: address,
+            notes: `Check-in: ${check_in_date}, Check-out: ${check_out_date}`,
+            is_favorite: false,
+          });
+
+        if (linkError) {
+          console.error('Failed to create useful link for accommodation:', linkError);
+          // Don't fail the accommodation creation if useful link creation fails
+        }
+      } catch (linkErr) {
+        console.error('Error creating useful link for accommodation:', linkErr);
+        // Don't fail the accommodation creation if useful link creation fails
+      }
+    }
+
     return NextResponse.json(accommodation, { status: 201 });
   } catch (error) {
     console.error('Error in accommodation POST:', error);

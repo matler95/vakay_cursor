@@ -195,6 +195,43 @@ export async function PUT(
       }
     }
 
+    // Automatically create useful link if booking_url is provided and didn't exist before
+    if (booking_url) {
+      try {
+        // Check if a useful link already exists for this accommodation
+        const { data: existingLink } = await supabase
+          .from('useful_links')
+          .select('id')
+          .eq('trip_id', accommodation.trip_id)
+          .eq('url', booking_url)
+          .single();
+
+        if (!existingLink) {
+          // Create new useful link
+          const { error: linkError } = await supabase
+            .from('useful_links')
+            .insert({
+              trip_id: accommodation.trip_id,
+              title: name,
+              url: booking_url,
+              description: `Accommodation: ${name}`,
+              category: 'accommodation',
+              address: address,
+              notes: `Check-in: ${check_in_date}, Check-out: ${check_out_date}`,
+              is_favorite: false,
+            });
+
+          if (linkError) {
+            console.error('Failed to create useful link for accommodation:', linkError);
+            // Don't fail the accommodation update if useful link creation fails
+          }
+        }
+      } catch (linkErr) {
+        console.error('Error creating useful link for accommodation:', linkErr);
+        // Don't fail the accommodation update if useful link creation fails
+      }
+    }
+
     return NextResponse.json(updatedAccommodation);
   } catch (error) {
     console.error('Error in accommodation PUT:', error);

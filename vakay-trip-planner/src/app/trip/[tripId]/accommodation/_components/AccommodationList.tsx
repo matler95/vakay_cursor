@@ -29,7 +29,6 @@ export function AccommodationList({
 }: AccommodationListProps) {
   const [editingAccommodation, setEditingAccommodation] = useState<Accommodation | null>(null);
   const [deletingAccommodation, setDeletingAccommodation] = useState<Accommodation | null>(null);
-
   const [searchTerm, setSearchTerm] = useState('');
 
   const formatDate = (dateString: string) => {
@@ -82,6 +81,8 @@ export function AccommodationList({
     }
     return { label: 'No Expense', className: 'bg-gray-50 text-gray-500', icon: null };
   };
+
+
 
   const filteredSorted = useMemo(() => {
     const term = searchTerm.toLowerCase().trim();
@@ -167,27 +168,28 @@ export function AccommodationList({
               </div>
 
               <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                <div className="flex gap-2">
-                  {Boolean((a as any).booking_url) && (
-                    <Button 
-                    variant="ghost" 
-                    size="sm" onClick={() => window.open((a as any).booking_url as string, '_blank')} 
-                    className=" p-0 text-gray-500" 
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                      Details
-                    </Button>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onOpenInMaps(a.address)}
-                    className="p-0 text-gray-500"
-                  >
-                    <MapPinned className="h-4 w-4" />
-                    Navigate
-                  </Button>
-                </div>
+                                 <div className="flex gap-2">
+                   {Boolean((a as any).booking_url) && (
+                     <Button 
+                     variant="ghost" 
+                     size="sm" onClick={() => window.open((a as any).booking_url as string, '_blank')} 
+                     className=" p-0 text-gray-500" 
+                     >
+                       <ExternalLink className="h-4 w-4" />
+                       Details
+                     </Button>
+                   )}
+                   <Button
+                     variant="ghost"
+                     size="sm"
+                     onClick={() => onOpenInMaps(a.address)}
+                     className="p-0 text-gray-500"
+                   >
+                     <MapPinned className="h-4 w-4" />
+                     Navigate
+                   </Button>
+
+                 </div>
                 <div className="flex gap-2">
                   <Button variant="ghost" 
                   size="sm" 
@@ -272,25 +274,25 @@ export function AccommodationList({
                         );
                       })()}
                     </td>
-                    <td className="py-3 px-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
+                                         <td className="py-3 px-4 text-right">
+                       <div className="flex items-center justify-end gap-2">
 
-                        <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => setEditingAccommodation(a)} 
-                        className="h-7 w-7 sm:h-8 sm:w-8 p-0 text-gray-400">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => setDeletingAccommodation(a)} 
-                        className="h-7 w-7 sm:h-8 sm:w-8 p-0 text-gray-400 hover:text-red-500 hover:bg-red-50">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </td>
+                         <Button 
+                         variant="ghost" 
+                         size="sm" 
+                         onClick={() => setEditingAccommodation(a)} 
+                         className="h-7 w-7 sm:h-8 sm:w-8 p-0 text-gray-400">
+                           <Edit className="h-4 w-4" />
+                         </Button>
+                         <Button 
+                         variant="ghost" 
+                         size="sm" 
+                         onClick={() => setDeletingAccommodation(a)} 
+                         className="h-7 w-7 sm:h-8 sm:w-8 p-0 text-gray-400 hover:text-red-500 hover:bg-red-50">
+                           <Trash2 className="h-4 w-4" />
+                         </Button>
+                       </div>
+                     </td>
                   </tr>
                 );
               })}
