@@ -43,8 +43,16 @@ export default function TopNav({ user }: { user?: { id: string; email?: string }
       )}
       <header className="sticky top-0 z-40 border-b border-gray-100 bg-white/80 backdrop-blur-sm">
         <div className="container mx-auto flex items-center justify-between px-4 py-3">
-          <Link href={user ? '/dashboard' : '/'} className="text-lg font-semibold text-gray-900">VAKAY</Link>
-          {user ? (
+          <div className="flex items-baseline space-x-0">
+            <Link
+              href={user ? '/dashboard' : '/'}
+              className="text-lg font-semibold text-gray-900"
+            >
+              VAKAY
+            </Link>
+            <p className="text-xs text-gray-900">beta</p>
+          </div>
+        {user ? (
             <>
               {/* Desktop Navigation */}
               <nav className="hidden md:flex items-center gap-4 text-sm text-gray-700">
