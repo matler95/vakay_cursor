@@ -1,7 +1,7 @@
 'use client';
 
 import { Database } from '@/types/database.types';
-import { ItineraryView } from './ItineraryView';
+import { PremiumItineraryView } from './PremiumItineraryView';
 import { LocationManager } from './LocationManager';
 import { ParticipantManager, type Participant } from './ParticipantManager';
 import { EditTripInline } from './EditTripInline';
@@ -159,7 +159,7 @@ export function TripPageClient({
 
                          {/* Calendar Container */}
              <div className="mb-4 sm:mb-8 rounded-xl sm:rounded-2xl bg-white shadow p-3 sm:p-6">
-               <ItineraryView
+               <PremiumItineraryView
                  trip={trip}
                  itineraryDays={itineraryDays || []}
                  locations={locations || []}
