@@ -61,6 +61,22 @@ export function DeleteTransportationModal({
     }
   };
 
+  // Helper function to format location display for flights
+  const formatLocationDisplay = (location: string, type: string) => {
+    if (type === 'flight') {
+      // Extract airport code from location string
+      // Expected format: "WAW - Warsaw Chopin Airport, Warsaw" or just "WAW"
+      const airportCodeMatch = location.match(/^([A-Z]{3})/);
+      if (airportCodeMatch) {
+        return airportCodeMatch[1]; // Return just the airport code (e.g., "WAW")
+      }
+      // Fallback: if no airport code found, return the original location
+      return location;
+    }
+    // For non-flight transportation, return the original location
+    return location;
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="w-full max-w-md bg-white rounded-xl shadow-2xl">
@@ -88,7 +104,7 @@ export function DeleteTransportationModal({
                 Delete {getTransportationTypeLabel(transportation.type)}
               </h3>
               <p className="text-sm text-gray-600">
-                {transportation.provider} - {transportation.departure_location} to {transportation.arrival_location}
+                {transportation.provider} - {formatLocationDisplay(transportation.departure_location, transportation.type)} to {formatLocationDisplay(transportation.arrival_location, transportation.type)}
               </p>
             </div>
           </div>

@@ -70,6 +70,14 @@ export function EditTransportationModal({
   const [mainCurrency, setMainCurrency] = useState('USD');
   const [hasExistingExpense, setHasExistingExpense] = useState(false);
 
+  // Airport autocomplete state
+  const [departureAirports, setDepartureAirports] = useState<any[]>([]);
+  const [arrivalAirports, setArrivalAirports] = useState<any[]>([]);
+  const [showDepartureSuggestions, setShowDepartureSuggestions] = useState(false);
+  const [showArrivalSuggestions, setShowArrivalSuggestions] = useState(false);
+  const [highlightedDepartureIndex, setHighlightedDepartureIndex] = useState(-1);
+  const [highlightedArrivalIndex, setHighlightedArrivalIndex] = useState(-1);
+
   useEffect(() => {
     if (!isOpen) return;
     const load = async () => {
@@ -111,7 +119,22 @@ export function EditTransportationModal({
       setExpenseCurrency(mc);
 
       // Check for existing expense by matching description pattern
-      const expectedDescription = `${transportation.provider} ${transportation.departure_location} → ${transportation.arrival_location}`;
+      const formatLocationDisplay = (location: string, type: string) => {
+        if (type === 'flight') {
+          // Extract airport code from location string
+          // Expected format: "WAW - Warsaw Chopin Airport, Warsaw" or just "WAW"
+          const airportCodeMatch = location.match(/^([A-Z]{3})/);
+          if (airportCodeMatch) {
+            return airportCodeMatch[1]; // Return just the airport code (e.g., "WAW")
+          }
+          // Fallback: if no airport code found, return the original location
+          return location;
+        }
+        // For non-flight transportation, return the original location
+        return location;
+      };
+
+      const expectedDescription = `${transportation.provider} ${formatLocationDisplay(transportation.departure_location, transportation.type)} → ${formatLocationDisplay(transportation.arrival_location, transportation.type)}`;
       const { data: existingExpense } = await supabase
         .from('expenses')
         .select('id, amount, currency, payment_status')
@@ -163,7 +186,134 @@ export function EditTransportationModal({
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+
+    // Handle airport autocomplete for flight type
+    if (formData.type === 'flight') {
+      if (field === 'departure_location') {
+        handleAirportSearch(value, 'departure');
+      } else if (field === 'arrival_location') {
+        handleAirportSearch(value, 'arrival');
+      }
+    }
+
+    // Clear airport suggestions when transportation type changes
+    if (field === 'type') {
+      setDepartureAirports([]);
+      setArrivalAirports([]);
+      setShowDepartureSuggestions(false);
+      setShowArrivalSuggestions(false);
+      setHighlightedDepartureIndex(-1);
+      setHighlightedArrivalIndex(-1);
+    }
+  };
+
+  const handleAirportSearch = async (query: string, type: 'departure' | 'arrival') => {
+    if (query.trim().length < 2) {
+      if (type === 'departure') {
+        setDepartureAirports([]);
+        setShowDepartureSuggestions(false);
+      } else {
+        setArrivalAirports([]);
+        setShowArrivalSuggestions(false);
+      }
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/airports/search?q=${encodeURIComponent(query)}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (type === 'departure') {
+          setDepartureAirports(data.airports || []);
+          setShowDepartureSuggestions(data.airports && data.airports.length > 0);
+          setHighlightedDepartureIndex(-1);
+        } else {
+          setArrivalAirports(data.airports || []);
+          setShowArrivalSuggestions(data.airports && data.airports.length > 0);
+          setHighlightedArrivalIndex(-1);
+        }
+      }
+    } catch (error) {
+      console.error('Error searching airports:', error);
+    }
+  };
+
+  const handleAirportSelect = (airport: any, type: 'departure' | 'arrival') => {
+    if (type === 'departure') {
+      setFormData(prev => ({ ...prev, departure_location: airport.shortDisplay }));
+      setShowDepartureSuggestions(false);
+      setHighlightedDepartureIndex(-1);
+    } else {
+      setFormData(prev => ({ ...prev, arrival_location: airport.shortDisplay }));
+      setShowArrivalSuggestions(false);
+      setHighlightedArrivalIndex(-1);
+    }
+  };
+
+  const handleAirportKeyDown = (e: React.KeyboardEvent, type: 'departure' | 'arrival') => {
+    const airports = type === 'departure' ? departureAirports : arrivalAirports;
+    const showSuggestions = type === 'departure' ? showDepartureSuggestions : showArrivalSuggestions;
+    const highlightedIndex = type === 'departure' ? highlightedDepartureIndex : highlightedArrivalIndex;
+    const setHighlightedIndex = type === 'departure' ? setHighlightedDepartureIndex : setHighlightedArrivalIndex;
+
+    if (!showSuggestions || airports.length === 0) return;
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setHighlightedIndex(prev => 
+          prev < airports.length - 1 ? prev + 1 : prev
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setHighlightedIndex(prev => prev > 0 ? prev - 1 : -1);
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (highlightedIndex >= 0) {
+          handleAirportSelect(airports[highlightedIndex], type);
+        }
+        break;
+      case 'Escape':
+        if (type === 'departure') {
+          setShowDepartureSuggestions(false);
+          setHighlightedDepartureIndex(-1);
+        } else {
+          setShowArrivalSuggestions(false);
+          setHighlightedArrivalIndex(-1);
+        }
+        break;
+    }
+  };
+
+  const handleAirportFocus = (type: 'departure' | 'arrival') => {
+    if (type === 'departure') {
+      if (formData.departure_location.trim() !== '' && departureAirports.length > 0) {
+        setShowDepartureSuggestions(true);
+      }
+    } else {
+      if (formData.arrival_location.trim() !== '' && arrivalAirports.length > 0) {
+        setShowArrivalSuggestions(true);
+      }
+    }
+  };
+
+  const handleAirportBlur = (type: 'departure' | 'arrival') => {
+    // Delay closing to allow click events on suggestions
+    setTimeout(() => {
+      if (type === 'departure') {
+        setShowDepartureSuggestions(false);
+        setHighlightedDepartureIndex(-1);
+      } else {
+        setShowArrivalSuggestions(false);
+        setHighlightedArrivalIndex(-1);
+      }
+    }, 150);
   };
 
   const toggleParticipant = (id: string) => {
@@ -234,23 +384,96 @@ export function EditTransportationModal({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="departure_location">Departure Location</Label>
-              <Input
-                id="departure_location"
-                value={formData.departure_location}
-                onChange={(e) => handleInputChange('departure_location', e.target.value)}
-                placeholder="e.g., JFK Airport, New York"
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="departure_location"
+                  value={formData.departure_location}
+                  onChange={(e) => handleInputChange('departure_location', e.target.value)}
+                  onFocus={() => handleAirportFocus('departure')}
+                  onBlur={() => handleAirportBlur('departure')}
+                  onKeyDown={(e) => handleAirportKeyDown(e, 'departure')}
+                  placeholder={formData.type === 'flight' ? "Search airports..." : "e.g., JFK Airport, New York"}
+                  required
+                />
+                
+                {/* Departure Airport Suggestions Dropdown */}
+                {showDepartureSuggestions && departureAirports.length > 0 && (
+                  <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    <div className="py-2">
+                      {departureAirports.map((airport, index) => (
+                        <button
+                          key={airport.id}
+                          type="button"
+                          onClick={() => handleAirportSelect(airport, 'departure')}
+                          className={`w-full px-4 py-3 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none transition-colors ${
+                            highlightedDepartureIndex === index ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="flex-shrink-0 mt-1">
+                              <span className="text-lg">✈️</span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium text-gray-900 truncate">
+                                  {airport.display}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
+            
             <div className="space-y-2">
               <Label htmlFor="arrival_location">Arrival Location</Label>
-              <Input
-                id="arrival_location"
-                value={formData.arrival_location}
-                onChange={(e) => handleInputChange('arrival_location', e.target.value)}
-                placeholder="e.g., LAX Airport, Los Angeles"
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="arrival_location"
+                  value={formData.arrival_location}
+                  onChange={(e) => handleInputChange('arrival_location', e.target.value)}
+                  onFocus={() => handleAirportFocus('arrival')}
+                  onBlur={() => handleAirportBlur('arrival')}
+                  onKeyDown={(e) => handleAirportKeyDown(e, 'arrival')}
+                  placeholder={formData.type === 'flight' ? "Search airports..." : "e.g., LAX Airport, Los Angeles"}
+                  required
+                />
+                
+                {/* Arrival Airport Suggestions Dropdown */}
+                {showArrivalSuggestions && arrivalAirports.length > 0 && (
+                  <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    <div className="py-2">
+                      {arrivalAirports.map((airport, index) => (
+                        <button
+                          key={airport.id}
+                          type="button"
+                          onClick={() => handleAirportSelect(airport, 'arrival')}
+                          className={`w-full px-4 py-3 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none transition-colors ${
+                            highlightedArrivalIndex === index ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="flex-shrink-0 mt-1">
+                              <span className="text-lg">✈️</span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium text-gray-900 truncate">
+                                  {airport.display}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

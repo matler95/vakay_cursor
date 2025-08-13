@@ -59,7 +59,23 @@ export default async function TransportationPage({ params }: TransportationPageP
   const expenseStatusMap: Record<string, boolean> = {};
   if (transportation) {
     for (const transport of transportation) {
-      const expectedDescription = `${transport.provider} ${transport.departure_location} → ${transport.arrival_location}`;
+      // Helper function to format location display for flights
+      const formatLocationDisplay = (location: string, type: string) => {
+        if (type === 'flight') {
+          // Extract airport code from location string
+          // Expected format: "WAW - Warsaw Chopin Airport, Warsaw" or just "WAW"
+          const airportCodeMatch = location.match(/^([A-Z]{3})/);
+          if (airportCodeMatch) {
+            return airportCodeMatch[1]; // Return just the airport code (e.g., "WAW")
+          }
+          // Fallback: if no airport code found, return the original location
+          return location;
+        }
+        // For non-flight transportation, return the original location
+        return location;
+      };
+
+      const expectedDescription = `${transport.provider} ${formatLocationDisplay(transport.departure_location, transport.type)} → ${formatLocationDisplay(transport.arrival_location, transport.type)}`;
       const { data: existingExpense } = await supabase
         .from('expenses')
         .select('id')

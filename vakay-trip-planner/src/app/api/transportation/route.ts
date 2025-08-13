@@ -109,6 +109,22 @@ export async function POST(request: NextRequest) {
 
     // Optional: create expense
     if (expense && expense.amount && expense.currency) {
+      // Helper function to format location display for flights
+      const formatLocationDisplay = (location: string, type: string) => {
+        if (type === 'flight') {
+          // Extract airport code from location string
+          // Expected format: "WAW - Warsaw Chopin Airport, Warsaw" or just "WAW"
+          const airportCodeMatch = location.match(/^([A-Z]{3})/);
+          if (airportCodeMatch) {
+            return airportCodeMatch[1]; // Return just the airport code (e.g., "WAW")
+          }
+          // Fallback: if no airport code found, return the original location
+          return location;
+        }
+        // For non-flight transportation, return the original location
+        return location;
+      };
+
       // Resolve default participants (all trip participants) if none selected
       let expenseParticipants: string[] = Array.isArray(participants) ? participants : [];
       if (expenseParticipants.length === 0) {
@@ -159,7 +175,7 @@ export async function POST(request: NextRequest) {
           amount: convertedAmount,
           currency: mainCurrency,
           exchange_rate: exchangeRate,
-          description: `${provider} ${departure_location} → ${arrival_location}`,
+          description: `${provider} ${formatLocationDisplay(departure_location, type)} → ${formatLocationDisplay(arrival_location, type)}`,
           payment_status: expense.payment_status || 'pending',
         })
         .select()
