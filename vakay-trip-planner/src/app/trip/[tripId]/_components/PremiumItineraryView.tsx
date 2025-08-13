@@ -220,7 +220,9 @@ export function PremiumItineraryView({
                         Edit Plan
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>Edit trip itinerary</TooltipContent>
+                    <TooltipContent>
+                      <p>Click to enter edit mode. Then use checkboxes to select multiple days or individual edit buttons on each day card.</p>
+                    </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               )}
@@ -346,7 +348,7 @@ export function PremiumItineraryView({
                 <div className="flex-1">
                   <h4 className="text-sm font-medium text-blue-900 mb-1">Edit Mode Active</h4>
                   <p className="text-sm text-blue-700">
-                    Click day cards to select them for bulk editing, or edit individual days directly. 
+                    Use checkboxes to select multiple days for bulk editing, or edit individual days using the "Details" button on each card. 
                     Use the bulk actions panel below for multiple days.
                   </p>
                 </div>

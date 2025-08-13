@@ -22,7 +22,7 @@ export function BulkActionPanel({ selectedCount, locations, onBulkUpdate, onClea
 
   const handleLocationChange = (value: string) => {
     onBulkUpdate({
-      location_1_id: value ? Number(value) : null
+      location_1_id: value === 'clear' ? null : Number(value)
     });
   };
 
@@ -37,11 +37,13 @@ export function BulkActionPanel({ selectedCount, locations, onBulkUpdate, onClea
         </div>
         
         <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-500 hidden sm:block">Set location for all:</span>
           <Select onValueChange={handleLocationChange}>
             <SelectTrigger className="w-[120px] sm:w-[180px] bg-gray-50 border-gray-200 h-7 sm:h-8 text-xs">
-              <SelectValue placeholder="Set location..." />
+              <SelectValue placeholder="Choose location..." />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="clear">Clear location</SelectItem>
               {locations.map((loc) => (
                 <SelectItem key={loc.id} value={loc.id.toString()}>
                   <div className="flex items-center gap-2">
@@ -63,7 +65,7 @@ export function BulkActionPanel({ selectedCount, locations, onBulkUpdate, onClea
           variant="outline"
           className="h-7 px-2 text-xs whitespace-nowrap"
           >
-          Done
+          Clear Selection
         </Button>
       </div>
     </div>
