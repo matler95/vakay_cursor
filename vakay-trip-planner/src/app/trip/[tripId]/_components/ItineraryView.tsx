@@ -342,7 +342,7 @@ function ItineraryViewContent({ trip, itineraryDays, locations, participants, pa
   return (
     <div className="space-y-6">
       {/* Secondary Header - Calendar */}
-      <div className="flex justify-between items-center gap-4 mb-6">
+      <div className="flex justify-between items-center gap-4 mb-4">
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
             Itinerary
@@ -385,7 +385,7 @@ function ItineraryViewContent({ trip, itineraryDays, locations, participants, pa
       {activeSubTab === 'calendar' && (
         <>
           {/* Calendar Controls - Edit and View Toggle */}
-          <div className="flex justify-end gap-3 mb-4">
+          <div className="flex justify-end gap-3 mb-2">
             {/* Edit Mode Toggle */}
             <TooltipProvider>
               <Tooltip>
