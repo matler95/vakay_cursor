@@ -107,11 +107,18 @@ export function DayCard({
     // Pastel gradient with opacity
     const color1 = location1.color || '#6B7280';
     const color2 = location2.color || '#6B7280';
-    dayStyle.background = `linear-gradient(110deg, ${color1}33 20%, ${color2}33 80%)`;
+    // dayStyle.background = `linear-gradient(110deg, ${color1} 20%, ${color2} 80%)`;
+    dayStyle.borderTop = '4px solid';
+    dayStyle.borderImage = `linear-gradient(110deg, ${color1} 20%, ${color2} 80%) 1`;
+    
+
+
   } else if (location1) {
     // Pastel solid background with opacity
     const color1 = location1.color || '#6B7280';
-    dayStyle.background = `${color1}33`;
+    // dayStyle.background = `${color1}`;
+    dayStyle.borderTop = `4px solid ${color1}`; // 4px thickness, solid style, your color
+
   }
 
   const showEditOptions = isEditingCalendar; // Always show edit options when in edit mode

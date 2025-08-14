@@ -19,20 +19,37 @@ interface EditLocationModalProps {
 }
 
 // Preset colors for the dropdown (same as AddLocationModal)
+// const presetColors = [
+//   { name: 'Red', hex: '#FF383C' },
+//   { name: 'Orange', hex: '#FF8D28' },
+//   { name: 'Yellow', hex: '#FFCC00' },
+//   { name: 'Green', hex: '#34C759' },
+//   { name: 'Mint', hex: '#00C8B3' },
+//   { name: 'Teal', hex: '#00C3D0' },
+//   { name: 'Cyan', hex: '#00C0E8' },
+//   { name: 'Blue', hex: '#0088FF' },
+//   { name: 'Indigo', hex: '#6155F5' },
+//   { name: 'Purple', hex: '#CB30E0' },
+//   { name: 'Pink', hex: '#FF2D55' },
+//   { name: 'Brown', hex: '#AC7F5E' },
+//   { name: 'Gray', hex: '#8E8E93' }
+// ];
 const presetColors = [
-  { name: 'Red', hex: '#FF383C' },
-  { name: 'Orange', hex: '#FF8D28' },
-  { name: 'Yellow', hex: '#FFCC00' },
-  { name: 'Green', hex: '#34C759' },
-  { name: 'Mint', hex: '#00C8B3' },
-  { name: 'Teal', hex: '#00C3D0' },
-  { name: 'Cyan', hex: '#00C0E8' },
-  { name: 'Blue', hex: '#0088FF' },
-  { name: 'Indigo', hex: '#6155F5' },
-  { name: 'Purple', hex: '#CB30E0' },
-  { name: 'Pink', hex: '#FF2D55' },
-  { name: 'Brown', hex: '#AC7F5E' },
-  { name: 'Gray', hex: '#8E8E93' }
+  { name: 'Soft Red', hex: '#FF6B6B' },
+  { name: 'Coral', hex: '#FF8E72' },
+  { name: 'Warm Orange', hex: '#FFB86B' },
+  { name: 'Vibrant Yellow', hex: '#FFD93D' },
+  { name: 'Soft Green', hex: '#A3DE83' },
+  { name: 'Mint Green', hex: '#6BCB77' },
+  { name: 'Sky Blue', hex: '#4D96FF' },
+  { name: 'Light Blue', hex: '#6BCBFF' },
+  { name: 'Aqua', hex: '#4BC0C8' },
+  { name: 'Turquoise', hex: '#4ECDC4' },
+  { name: 'Violet', hex: '#9B5DE5' },
+  { name: 'Purple', hex: '#845EC2' },
+  { name: 'Pink', hex: '#FF6FB5' },
+  { name: 'Soft Pink', hex: '#FF92A5' },
+  { name: 'Magenta', hex: '#D65DB1' }
 ];
 
 export function EditLocationModal({ location, isOpen, onClose, onLocationUpdated }: EditLocationModalProps) {

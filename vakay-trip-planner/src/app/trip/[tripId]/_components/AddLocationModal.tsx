@@ -5,6 +5,7 @@ import { addLocation } from '../actions';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import { Plus, X, Trash2, MapPin } from 'lucide-react';
 import { Autocomplete, AutocompleteOption } from '@/components/ui/autocomplete';
 
@@ -23,21 +24,39 @@ interface LocationEntry {
   selectedDestination?: AutocompleteOption | null;
 }
 
-// Preset colors for the dropdown
+// // Preset colors for the dropdown
+// const presetColors = [
+//   { name: 'Red', hex: '#FF383C' },
+//   { name: 'Orange', hex: '#FF8D28' },
+//   { name: 'Yellow', hex: '#FFCC00' },
+//   { name: 'Green', hex: '#34C759' },
+//   { name: 'Mint', hex: '#00C8B3' },
+//   { name: 'Teal', hex: '#00C3D0' },
+//   { name: 'Cyan', hex: '#00C0E8' },
+//   { name: 'Blue', hex: '#0088FF' },
+//   { name: 'Indigo', hex: '#6155F5' },
+//   { name: 'Purple', hex: '#CB30E0' },
+//   { name: 'Pink', hex: '#FF2D55' },
+//   { name: 'Brown', hex: '#AC7F5E' },
+//   { name: 'Gray', hex: '#8E8E93' }
+// ];
+
 const presetColors = [
-  { name: 'Red', hex: '#FF383C' },
-  { name: 'Orange', hex: '#FF8D28' },
-  { name: 'Yellow', hex: '#FFCC00' },
-  { name: 'Green', hex: '#34C759' },
-  { name: 'Mint', hex: '#00C8B3' },
-  { name: 'Teal', hex: '#00C3D0' },
-  { name: 'Cyan', hex: '#00C0E8' },
-  { name: 'Blue', hex: '#0088FF' },
-  { name: 'Indigo', hex: '#6155F5' },
-  { name: 'Purple', hex: '#CB30E0' },
-  { name: 'Pink', hex: '#FF2D55' },
-  { name: 'Brown', hex: '#AC7F5E' },
-  { name: 'Gray', hex: '#8E8E93' }
+  { name: 'Soft Red', hex: '#FF6B6B' },
+  { name: 'Coral', hex: '#FF8E72' },
+  { name: 'Warm Orange', hex: '#FFB86B' },
+  { name: 'Vibrant Yellow', hex: '#FFD93D' },
+  { name: 'Soft Green', hex: '#A3DE83' },
+  { name: 'Mint Green', hex: '#6BCB77' },
+  { name: 'Sky Blue', hex: '#4D96FF' },
+  { name: 'Light Blue', hex: '#6BCBFF' },
+  { name: 'Aqua', hex: '#4BC0C8' },
+  { name: 'Turquoise', hex: '#4ECDC4' },
+  { name: 'Violet', hex: '#9B5DE5' },
+  { name: 'Purple', hex: '#845EC2' },
+  { name: 'Pink', hex: '#FF6FB5' },
+  { name: 'Soft Pink', hex: '#FF92A5' },
+  { name: 'Magenta', hex: '#D65DB1' }
 ];
 
 export function AddLocationModal({ tripId, isOpen, onClose, onLocationAdded }: AddLocationModalProps) {
@@ -138,21 +157,6 @@ export function AddLocationModal({ tripId, isOpen, onClose, onLocationAdded }: A
             {locations.map((location, index) => (
               <div key={location.id} className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4">
                 <div className="flex-grow space-y-2 sm:space-y-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-gray-600">Location {index + 1}</span>
-                    {locations.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeLocationEntry(location.id)}
-                        className="h-5 w-5 sm:h-6 sm:w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    )}
-                  </div>
-                  
                   <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                     <div className="space-y-2 md:col-span-4">
                       <Label htmlFor={`name-${location.id}`}>Location Name</Label>
@@ -163,74 +167,78 @@ export function AddLocationModal({ tripId, isOpen, onClose, onLocationAdded }: A
                         placeholder="Search destinations (e.g., Paris, Angkor Wat, Bali)"
                         className="w-full"
                       />
-                    </div>
 
-                  {location.selectedDestination && (
-                    <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-sm text-blue-800">
-                          <MapPin className="h-4 w-4" />
-                          <span className="font-medium">{location.selectedDestination.name}</span>
-                          <span className="text-blue-600">
-                            ({location.selectedDestination.country})
-                          </span>
+
+                      {location.selectedDestination && (
+                        <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-sm text-blue-800">
+                              <MapPin className="h-4 w-4" />
+                              <span className="font-medium">{location.selectedDestination.name}</span>
+                              <span className="text-blue-600">({location.selectedDestination.country})</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                updateLocationEntry(location.id, 'name', location.selectedDestination?.name || '');
+                                setLocations(locations.map(loc => 
+                                  loc.id === location.id ? { ...loc, selectedDestination: null } : loc
+                                ));
+                              }}
+                              className="text-blue-600 hover:text-blue-800 text-xs"
+                            >
+                              Edit manually
+                            </button>
+                          </div>
+                          <p className="text-xs text-blue-600 mt-1">{location.selectedDestination.display_name}</p>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            // Clear the selected destination to allow manual editing
-                            updateLocationEntry(location.id, 'name', location.selectedDestination?.name || '');
-                            setLocations(locations.map(loc => 
-                              loc.id === location.id ? { ...loc, selectedDestination: null } : loc
-                            ));
-                          }}
-                          className="text-blue-600 hover:text-blue-800 text-xs"
-                        >
-                          Edit manually
-                        </button>
-                      </div>
-                      <p className="text-xs text-blue-600 mt-1">
-                        {location.selectedDestination.display_name}
-                      </p>
+                      )}
                     </div>
-                  )}
 
                     <div className="space-y-2 md:col-span-1">
                       <Label>Color</Label>
-                      <Select
-                        value={location.color}
-                        onValueChange={(value) => updateLocationEntry(location.id, 'color', value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue>
-                            <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2">
+                        <Select
+                          value={location.color}
+                          onValueChange={(value) => updateLocationEntry(location.id, 'color', value)}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue>
                               <div
                                 className="w-4 h-4 rounded-full border border-gray-300"
                                 style={{ backgroundColor: location.color }}
                               />
-                              {/* <span>
-                                {presetColors.find(c => c.hex === location.color)?.name || 'Custom'}
-                              </span> */}
-                            </div>
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                          {presetColors.map((color) => (
-                            <SelectItem key={color.hex} value={color.hex}>
-                              <div className="flex items-center gap-2">
-                                <div
-                                  className="w-4 h-4 rounded-full border border-gray-300"
-                                  style={{ backgroundColor: color.hex }}
-                                />
-                                <span>{color.name}</span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {presetColors.map((color) => (
+                              <SelectItem key={color.hex} value={color.hex}>
+                                <div className="flex items-center gap-2">
+                                  <div
+                                    className="w-4 h-4 rounded-full border border-gray-300"
+                                    style={{ backgroundColor: color.hex }}
+                                  />
+                                  <span>{color.name}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+
+                        {locations.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeLocationEntry(location.id)}
+                            className="h-10 w-10 p-0 text-gray-400 hover:text-red-500 hover:bg-red-50 flex items-center justify-center"
+                          >
+                            <Trash2 className="h-5 w-5" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </div>
-
                 </div>
               </div>
             ))}
