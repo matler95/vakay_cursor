@@ -402,6 +402,7 @@ function ItineraryViewContent({ trip, itineraryDays, locations, isEditing, setIs
               onUpdateDraft={handleUpdateDraft}
               onBulkUpdate={handleBulkUpdate}
               onExitEditMode={() => setIsEditing(false)}
+              saveAction={formAction}
             />
           ) : (
             <ListView

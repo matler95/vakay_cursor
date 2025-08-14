@@ -101,7 +101,6 @@ export async function saveItineraryChanges(prevState: { message: string }, formD
     // Revalidate the trip page to show updated data
     revalidatePath(`/trip/${tripIdStr}`);
     
-    return { message: 'Itinerary saved successfully!' };
   } catch (error) {
     console.error('Unexpected error saving itinerary:', error);
     return { message: 'An unexpected error occurred while saving the itinerary.' };

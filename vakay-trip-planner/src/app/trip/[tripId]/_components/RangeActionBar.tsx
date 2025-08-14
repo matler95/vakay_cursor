@@ -17,6 +17,7 @@ interface RangeActionBarProps {
   onAssignLocation: (locationId: number | null) => void;
   onAssignTransfer: (fromLocationId: number | null, toLocationId: number | null) => void;
   onClear: () => void;
+  onDone?: () => void; // Add onDone prop
   currentLocationId?: number | null;
   currentTransferId?: number | null;
 }
@@ -27,6 +28,7 @@ export function RangeActionBar({
   onAssignLocation,
   onAssignTransfer,
   onClear,
+  onDone,
   currentLocationId,
   currentTransferId
 }: RangeActionBarProps) {
@@ -75,7 +77,10 @@ export function RangeActionBar({
       onAssignLocation(locationId);
     }
     
-    // Close the modal
+    // Show save/cancel buttons immediately (replaces this modal)
+    onDone?.();
+    
+    // Clear selection to show Save/Cancel buttons
     onClear();
   };
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo, startTransition } from 'react';
 import { Database } from '@/types/database.types';
 import { DayCard } from './DayCard';
 import { RangeActionBar } from './RangeActionBar';
@@ -22,6 +22,7 @@ interface CalendarGridProps {
   onUpdateDraft: (dateStr: string, updatedValues: Partial<ItineraryDay>) => void;
   onBulkUpdate: (updates: Partial<ItineraryDay>) => void;
   onExitEditMode: () => void;
+  saveAction: (formData: FormData) => void; // Add this prop for saving to database
 }
 
 interface DateRange {
@@ -36,7 +37,8 @@ export function CalendarGrid({
   isEditing, 
   onUpdateDraft, 
   onBulkUpdate,
-  onExitEditMode
+  onExitEditMode,
+  saveAction
 }: CalendarGridProps) {
   const [selectedRange, setSelectedRange] = useState<DateRange | null>(null);
   const [isSelecting, setIsSelecting] = useState(false);
@@ -46,6 +48,7 @@ export function CalendarGrid({
   const [isClickMode, setIsClickMode] = useState(true);
   const [draftItinerary, setDraftItinerary] = useState<Map<string, ItineraryDay>>(new Map());
   const [hasDraftChanges, setHasDraftChanges] = useState(false);
+  const [showSaveCancel, setShowSaveCancel] = useState(false); // Track if Save/Cancel should be visible
   const calendarRef = useRef<HTMLDivElement>(null);
   const { addAction } = useUndoManager();
 
@@ -58,7 +61,10 @@ export function CalendarGrid({
    
   // Calculate calendar layout
   const firstDay = tripDates[0].getUTCDay();
-  const emptyCells = (firstDay + 6) % 7;
+  // Adjust for Monday as first day: 0=Sunday, 1=Monday, 2=Tuesday, etc.
+  // We want Monday=0, Tuesday=1, ..., Sunday=6
+  const adjustedFirstDay = firstDay === 0 ? 6 : firstDay - 1;
+  const emptyCells = adjustedFirstDay;
 
   // Initialize draft itinerary from props
   useEffect(() => {
@@ -87,6 +93,15 @@ export function CalendarGrid({
     
     setDraftItinerary(initialMap);
   }, [itineraryDays, tripDates, trip.id]);
+
+  // Show Save/Cancel buttons immediately when entering edit mode
+  useEffect(() => {
+    if (isEditing) {
+      setShowSaveCancel(true);
+    } else {
+      setShowSaveCancel(false);
+    }
+  }, [isEditing]);
 
   // Debug effect to track draft itinerary changes
   useEffect(() => {
@@ -119,6 +134,7 @@ export function CalendarGrid({
     setHasMoved(false);
     setSelectionStart(dateStr);
     setIsClickMode(true); // Start in click mode
+    setShowSaveCancel(false); // Hide Save/Cancel when starting to select days
   }, [isEditing]);
 
   const handleMouseEnter = useCallback((dateStr: string) => {
@@ -274,7 +290,11 @@ export function CalendarGrid({
     setIsSelecting(false);
     setHasMoved(false);
     setIsClickMode(true);
-  }, []);
+    // Show Save/Cancel buttons again when no days are selected (if still in edit mode)
+    if (isEditing) {
+      setShowSaveCancel(true);
+    }
+  }, [isEditing]);
 
   // Handle individual day selection/deselection
   const handleDayClick = useCallback((dateStr: string) => {
@@ -302,6 +322,9 @@ export function CalendarGrid({
     console.log('Current selectedDates:', Array.from(selectedDates));
     console.log('Is date currently selected?', selectedDates.has(dateStr));
     
+    // Hide Save/Cancel buttons when starting to select days
+    setShowSaveCancel(false);
+    
     // Toggle selection for this specific date
     setSelectedDates(prev => {
       const newSet = new Set(prev);
@@ -322,18 +345,67 @@ export function CalendarGrid({
     setSelectedRange(null);
   }, [isEditing, isSelecting, isClickMode, selectedDates, selectedRange]);
 
+  // Handle showing Save/Cancel buttons after "Done" is clicked
+  const handleShowSaveCancel = useCallback(() => {
+    setShowSaveCancel(true);
+    // Note: Selection state will be cleared by the RangeActionBar's onClear
+  }, []);
+
   // Handle saving draft changes
   const handleSaveChanges = useCallback(() => {
-    // Apply all draft changes to the database
+    console.log('=== SAVE CHANGES STARTED ===');
+    console.log('Current draft itinerary size:', draftItinerary.size);
+    console.log('Current itineraryDays length:', itineraryDays.length);
+    
+    // Collect all changed days
+    const changedDays: ItineraryDay[] = [];
+    
     draftItinerary.forEach((dayData, dateStr) => {
       const originalDay = itineraryDays.find(d => d.date === dateStr);
       if (originalDay && JSON.stringify(originalDay) !== JSON.stringify(dayData)) {
-        onUpdateDraft(dateStr, dayData);
+        console.log(`Saving changes for ${dateStr}:`, {
+          original: originalDay,
+          updated: dayData,
+          changes: {
+            location_1_id: originalDay.location_1_id !== dayData.location_1_id,
+            location_2_id: originalDay.location_2_id !== dayData.location_2_id,
+            notes: originalDay.notes !== dayData.notes,
+            summary: originalDay.summary !== dayData.summary
+          }
+        });
+        
+        // Add to changed days array
+        changedDays.push(dayData);
       }
     });
-    setHasDraftChanges(false);
-    onExitEditMode();
-  }, [draftItinerary, itineraryDays, onUpdateDraft, onExitEditMode]);
+    
+    console.log(`=== SAVE COMPLETED ===`);
+    console.log(`Total changes: ${changedDays.length}`);
+    
+    if (changedDays.length > 0) {
+      console.log('=== SAVING TO DATABASE ===');
+      
+      // Create FormData for the save action
+      const formData = new FormData();
+      formData.append('tripId', trip.id || '');
+      formData.append('itineraryDays', JSON.stringify(changedDays));
+      
+      // Call the save action to persist changes to database
+      startTransition(() => {
+        saveAction(formData);
+      });
+      
+      console.log('=== CHANGES SENT TO DATABASE ===');
+      setHasDraftChanges(false);
+      setShowSaveCancel(false); // Close the Save/Cancel window
+      onExitEditMode();
+    } else {
+      console.log('=== NO CHANGES TO SAVE ===');
+      setHasDraftChanges(false);
+      setShowSaveCancel(false); // Close the Save/Cancel window
+      onExitEditMode();
+    }
+  }, [draftItinerary, itineraryDays, trip.id, saveAction, onExitEditMode]);
 
   // Handle canceling draft changes
   const handleCancelChanges = useCallback(() => {
@@ -344,6 +416,7 @@ export function CalendarGrid({
     setSelectedRange(null);
     setHasMoved(false);
     setIsClickMode(true);
+    setShowSaveCancel(false); // Hide Save/Cancel when cancelling
     onExitEditMode();
   }, [itineraryDays, onExitEditMode]);
 
@@ -501,65 +574,11 @@ export function CalendarGrid({
 
   return (
     <div className="space-y-6">
-      {/* Save/Cancel buttons when in edit mode - floating above calendar */}
-      {isEditing && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-white rounded-xl shadow-lg border border-gray-200 p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-green-700">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="text-sm font-medium">
-                {hasDraftChanges ? 'You have unsaved changes' : 'Edit mode active'}
-              </span>
-            </div>
-            <div className="flex gap-3">
-              <Button 
-                onClick={handleCancelChanges}
-                variant="outline"
-                className="px-6"
-              >
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleSaveChanges}
-                disabled={!hasDraftChanges}
-                className="px-6 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-              >
-                Save Changes
-              </Button>
-            </div>
-          </div>
-          
-          {/* Instructions moved to floating bar */}
-          <div className="mt-3 pt-3 border-t border-gray-200">
-            <div className="flex items-center gap-2 text-blue-800">
-              <CalendarIcon className="h-4 w-4" />
-              <span className="text-sm font-medium">How to edit:</span>
-            </div>
-            <p className="text-sm text-blue-700 mt-1">
-              Click and drag to select date ranges, then use the Range Action Bar to assign locations. Changes are saved as drafts until you click "Save Changes".
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Help message when not in edit mode */}
-      {!isEditing && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-white rounded-xl shadow-lg border border-gray-200 p-4">
-          <div className="flex items-center gap-2 text-blue-800">
-            <CalendarIcon className="h-4 w-4" />
-            <span className="text-sm font-medium">How to use the calendar:</span>
-          </div>
-          <p className="text-sm text-blue-700 mt-1">
-            Click the edit button (pencil icon) above to enable edit mode. Then you can select date ranges and assign locations to your trip days.
-          </p>
-        </div>
-      )}
-
       {/* Calendar Container */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         {/* Weekday headers */}
         <div className="grid grid-cols-7 gap-px mb-2">
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
             <div
               key={day}
               className="py-3 text-center text-sm font-medium text-gray-500 uppercase tracking-wide"
@@ -583,7 +602,7 @@ export function CalendarGrid({
         >
           {/* Empty cells for proper alignment */}
           {Array.from({ length: emptyCells }).map((_, i) => (
-            <div key={`empty-${i}`} className="min-h-[140px] sm:min-h-[160px] bg-white"></div>
+            <div key={`empty-${i}`} className="min-h-[80px] sm:min-h-[100px] bg-white"></div>
           ))}
 
           {/* Consecutive day grouping overlay */}
@@ -663,8 +682,49 @@ export function CalendarGrid({
         </div>
       </div>
 
+      {/* Save/Cancel buttons when in edit mode - floating above calendar */}
+      {showSaveCancel && (
+        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 bg-white rounded-xl shadow-lg border border-gray-200 p-4 min-w-[400px]">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-green-700">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <span className="text-sm font-medium">
+                {hasDraftChanges ? 'You have unsaved changes' : 'Edit mode active'}
+              </span>
+            </div>
+            <div className="flex gap-3">
+              <Button 
+                onClick={handleCancelChanges}
+                variant="outline"
+                className="px-6"
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleSaveChanges}
+                disabled={!hasDraftChanges}
+                className="px-6 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                Save Changes
+              </Button>
+            </div>
+          </div>
+          
+          {/* Instructions moved to floating bar */}
+          <div className="mt-3 pt-3 border-t border-gray-200">
+            <div className="flex items-center gap-2 text-blue-800">
+              <CalendarIcon className="h-4 w-4" />
+              <span className="text-sm font-medium">How to edit:</span>
+            </div>
+            <p className="text-sm text-blue-700 mt-1">
+              Click and drag to select date ranges, then use the Range Action Bar to assign locations. Changes are saved as drafts until you click "Save Changes".
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Range Action Bar */}
-      {(selectedRange || selectedDates.size > 0) && (
+      {(selectedRange || selectedDates.size > 0) && !showSaveCancel && (
         <>
           <RangeActionBar
             selectedRange={selectedRange || { start: '', end: '' }}
@@ -672,6 +732,7 @@ export function CalendarGrid({
             onAssignLocation={handleBulkLocationAssign}
             onAssignTransfer={handleBulkTransferAssign}
             onClear={clearSelection}
+            onDone={handleShowSaveCancel}
             currentLocationId={selectedRange 
               ? draftItinerary.get(selectedRange.start)?.location_1_id ?? null
               : selectedDates.size > 0 

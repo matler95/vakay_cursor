@@ -120,8 +120,8 @@ export function DayCard({
   return (
     <div
       className={cn(
-        "relative min-h-[140px] sm:min-h-[160px] bg-white p-2 sm:p-3 transition-all duration-200 cursor-pointer",
-        "hover:outline hover:outline-2 hover:outline-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50",
+        "relative min-h-[80px] sm:min-h-[100px] bg-white p-2 sm:p-3 transition-all duration-200 cursor-pointer",
+        " hover:outline-2 hover:outline-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50",
         isInRange && "ring-2 ring-blue-500 ring-opacity-50 bg-blue-50",
         isToday && "bg-blue-50 border-l-4 border-l-blue-500",
         isSelected && "ring-2 ring-blue-600 bg-blue-100",
@@ -153,100 +153,44 @@ export function DayCard({
       )}
 
       {/* Date Header with Month */}
-      <div className="flex flex-col items-start mb-2 sm:mb-3">
+      <div className="flex items-center gap-1 mb-2 sm:mb-3">
         {/* Month */}
-        <span className="text-xs text-gray-500 font-medium mb-1">
+        <span className="text-xs text-gray-500 font-medium">
           {date.toLocaleDateString('en-US', { month: 'short' })}
         </span>
-        
         {/* Day Number */}
-        <div className="flex items-center gap-1 sm:gap-2">
-          <span className={cn(
-            "text-base sm:text-lg font-semibold",
-            isToday ? "text-blue-600" : "text-gray-900"
-          )}>
-            {date.getDate()}
-          </span>
-          {isToday && (
-            <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-500 rounded-full"></div>
-          )}
-        </div>
-        
-        {/* Day of week (mobile only) */}
-        <span className="text-xs text-gray-500 md:hidden">
-          {date.toLocaleDateString('en-US', { weekday: 'short' })}
+        <span className={cn(
+          "text-base sm:text-lg font-semibold",
+          isToday ? "text-blue-600" : "text-gray-900"
+        )}>
+          {date.getDate()}
         </span>
+        {isToday && (
+          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-500 rounded-full"></div>
+        )}
       </div>
 
       {/* Content Area - with proper spacing and overflow handling */}
       <div className="space-y-1.5 sm:space-y-2 min-h-0 flex-1">
-        {/* Primary Location */}
-        {location1 && (
-          <div className="group">
-            <div className="flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors min-w-0">
-              <div 
-                className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full flex-shrink-0"
-                style={{ backgroundColor: (location1 as Location).color || '#6B7280' }}
-              />
-              <span className="text-xs sm:text-sm font-medium text-gray-900 truncate min-w-0 flex-1">
+          {/* Primary Location */}
+          {location1 && (
+            <div className="mb-2 truncate">
+              <span className="text-xs sm:text-sm font-medium text-gray-900">
                 {(location1 as Location).name}
               </span>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Transfer Day - Show both locations with proper spacing */}
-        {isTransfer && location1 && location2 && (
-          <div className="space-y-1">
-            <div className="flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 min-w-0">
-              <div 
-                className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full flex-shrink-0"
-                style={{ backgroundColor: (location1 as Location).color || '#6B7280' }}
-              />
-              <span className="text-xs text-gray-700 truncate min-w-0 flex-1">
-                {(location1 as Location).name}
-              </span>
-              <div className="flex-shrink-0 flex items-center justify-center px-0.5 sm:px-1">
-                <div className="w-3 h-3 sm:w-4 sm:h-4 text-blue-500">
-                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                  </svg>
-                </div>
-              </div>
-              <div 
-                className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full flex-shrink-0"
-                style={{ backgroundColor: (location2 as Location).color || '#6B7280' }}
-              />
-              <span className="text-xs text-gray-700 truncate min-w-0 flex-1">
+          {/* Transfer Location */}
+          {isTransfer && location1 && location2 && (
+            <div className="flex items-center gap-1 text-xs text-gray-600">
+              <span>→</span>
+              <span className="truncate">
                 {(location2 as Location).name}
               </span>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Secondary Location (non-transfer) */}
-        {!isTransfer && location2 && (
-          <div className="group">
-            <div className="flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors min-w-0">
-              <div 
-                className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full flex-shrink-0"
-                style={{ backgroundColor: (location2 as Location).color || '#6B7280' }}
-              />
-              <span className="text-xs text-gray-700 truncate min-w-0 flex-1">
-                {(location2 as Location).name}
-              </span>
-            </div>
-          </div>
-        )}
-
-        {/* Notes - with proper text wrapping */}
-        {dayData?.notes && (
-          <div className="p-1.5 sm:p-2 rounded-lg bg-yellow-50 border border-yellow-200 min-w-0">
-            <p className="text-xs text-yellow-800 break-words leading-relaxed">
-              {dayData.notes}
-            </p>
-          </div>
-        )}
 
         {/* Empty State */}
         {!location1 && !location2 && !dayData?.notes && (
