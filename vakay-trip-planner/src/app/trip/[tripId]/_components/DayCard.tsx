@@ -107,7 +107,7 @@ export function DayCard({
     // Pastel gradient with opacity
     const color1 = location1.color || '#6B7280';
     const color2 = location2.color || '#6B7280';
-    dayStyle.background = `linear-gradient(135deg, ${color1}33 0%, ${color2}33 100%)`;
+    dayStyle.background = `linear-gradient(110deg, ${color1}33 20%, ${color2}33 80%)`;
   } else if (location1) {
     // Pastel solid background with opacity
     const color1 = location1.color || '#6B7280';
