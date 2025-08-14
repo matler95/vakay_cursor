@@ -23,15 +23,23 @@ interface ParticipantManagerProps {
   tripId: string;
   participants: Participant[];
   currentUserRole: string | null;
+  isDeleteMode?: boolean;
+  setIsDeleteMode?: (value: boolean) => void;
+  isAddParticipantModalOpen?: boolean;
+  setIsAddParticipantModalOpen?: (value: boolean) => void;
 }
 
-export function ParticipantManager({ tripId, participants, currentUserRole }: ParticipantManagerProps) {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isDeleteMode, setIsDeleteMode] = useState(false);
+export function ParticipantManager({ tripId, participants, currentUserRole, isDeleteMode, setIsDeleteMode, isAddParticipantModalOpen, setIsAddParticipantModalOpen }: ParticipantManagerProps) {
   const [selectedParticipants, setSelectedParticipants] = useState<Set<string>>(new Set());
   const [participantToDelete, setParticipantToDelete] = useState<Participant | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
+
+  // Use props if provided, otherwise fall back to internal state
+  const deleteMode = isDeleteMode ?? false;
+  const setDeleteMode = setIsDeleteMode ?? (() => {});
+  const addModalOpen = isAddParticipantModalOpen ?? false;
+  const setAddModalOpen = setIsAddParticipantModalOpen ?? (() => {});
 
   const isAdmin = currentUserRole === 'admin';
 
@@ -69,7 +77,7 @@ export function ParticipantManager({ tripId, participants, currentUserRole }: Pa
           // Success message handled by server action
         }
         setSelectedParticipants(new Set());
-        setIsDeleteMode(false);
+        setDeleteMode(false);
       } else {
         const result = await removeParticipant(participantToDelete.profiles.id, tripId);
         if (result?.message) {
@@ -91,7 +99,7 @@ export function ParticipantManager({ tripId, participants, currentUserRole }: Pa
 
   const toggleDeleteMode = () => {
     if (!isAdmin) return;
-    setIsDeleteMode(!isDeleteMode);
+    setDeleteMode(!deleteMode);
     setSelectedParticipants(new Set());
   };
 
@@ -135,52 +143,9 @@ export function ParticipantManager({ tripId, participants, currentUserRole }: Pa
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-          <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-          </h2>
-        <div className="flex items-center gap-1 sm:gap-2">
-          {isAdmin && participants.length > 0 && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                onClick={toggleDeleteMode}
-                size="sm"
-                variant="outline"
-                className="h-7 w-7 sm:h-8 sm:w-8 px-2 sm:px-3"
-              >
-                {isDeleteMode ? 
-                <X className="h-3 w-3 sm:h-4 sm:w-4"/>:
-                <CopyCheck className="h-3 w-3 sm:h-4 sm:w-4"/>}
-              </Button>
-              </TooltipTrigger>
-            <TooltipContent>
-              <p>{isDeleteMode ? 
-                'Cancel':
-                'Select participants'}
-              </p>
-            </TooltipContent>
-          </Tooltip>
-          )}
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                onClick={() => setIsModalOpen(true)}
-                size="sm"
-                className="h-7 w-7 sm:h-8 sm:w-8 p-0"
-              >
-                <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Invite participants</p>
-            </TooltipContent>
-          </Tooltip>
-        </div>
-      </div>
 
       {/* Floating toolbar - appears when selections are made */}
-      {isAdmin && isDeleteMode && selectedParticipants.size > 0 && (
+      {isAdmin && deleteMode && selectedParticipants.size > 0 && (
         <div className="fixed bottom-4 sm:bottom-6 left-1/2 transform -translate-x-1/2 z-40">
           <div className="bg-white rounded-xl shadow-2xl border border-gray-200 px-3 sm:px-4 py-2 sm:py-3 flex items-center gap-2 sm:gap-4 max-w-[calc(100vw-2rem)]">
             <div className="flex items-center gap-1 sm:gap-2">
@@ -227,13 +192,13 @@ export function ParticipantManager({ tripId, participants, currentUserRole }: Pa
               <div
                 key={participant.profiles?.id}
                 className={`flex items-center justify-between p-2 sm:p-3 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors ${
-                  isAdmin && isDeleteMode && selectedParticipants.has(participant.profiles.id) 
+                  isAdmin && deleteMode && selectedParticipants.has(participant.profiles.id) 
                     ? 'bg-red-50 border-red-200' 
                     : ''
                 }`}
               >
                 <div className="flex items-center gap-2 sm:gap-3">
-                  {isAdmin && isDeleteMode && (
+                  {isAdmin && deleteMode && (
                     <input
                       type="checkbox"
                       checked={selectedParticipants.has(participant.profiles.id)}
@@ -253,7 +218,7 @@ export function ParticipantManager({ tripId, participants, currentUserRole }: Pa
                   <span className="text-xs sm:text-sm text-gray-500 capitalize">
                     {getRoleLabel(participant.role)}
                   </span>
-                  {isAdmin && !isDeleteMode && (
+                  {isAdmin && !deleteMode && (
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
@@ -286,8 +251,8 @@ export function ParticipantManager({ tripId, participants, currentUserRole }: Pa
       {/* Add Participant Modal */}
       <AddParticipantModal
         tripId={tripId}
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={addModalOpen}
+        onClose={() => setAddModalOpen(false)}
         onParticipantAdded={handleParticipantAdded}
       />
 

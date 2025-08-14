@@ -10,7 +10,7 @@ import { UndoManager, useUndoManager } from './UndoManager';
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Pencil, CheckCircle, AlertCircle, X, MapPin, Settings, MapPinPlus, UserRoundPlus } from 'lucide-react';
+import { Pencil, CheckCircle, AlertCircle, X, MapPin, Settings, MapPinPlus, UserRoundPlus, CopyCheck, Plus } from 'lucide-react';
 import { BulkActionPanel } from './BulkActionPanel';
 import { LocationManager } from './LocationManager';
 import { ParticipantManager, type Participant } from './ParticipantManager';
@@ -55,7 +55,26 @@ function ItineraryViewContent({ trip, itineraryDays, locations, participants, pa
   const [showMessage, setShowMessage] = useState(false);
   const [showLocationsSidebar, setShowLocationsSidebar] = useState(false);
   const [activeSubTab, setActiveSubTab] = useState<ItinerarySubTab>('calendar');
+  const [isDeleteMode, setIsDeleteMode] = useState(false);
+  const [isAddLocationModalOpen, setIsAddLocationModalOpen] = useState(false);
+  const [isDeleteParticipantsMode, setIsDeleteParticipantsMode] = useState(false);
+  const [isAddParticipantModalOpen, setIsAddParticipantModalOpen] = useState(false);
   const { addAction } = useUndoManager();
+
+  // Reset delete mode when switching tabs
+  useEffect(() => {
+    if (activeSubTab !== 'locations') {
+      setIsDeleteMode(false);
+      setIsAddLocationModalOpen(false);
+    }
+    if (activeSubTab !== 'participants') {
+      setIsDeleteParticipantsMode(false);
+      setIsAddParticipantModalOpen(false);
+    }
+    if (activeSubTab !== 'calendar') {
+      setIsEditing(false);
+    }
+  }, [activeSubTab, setIsEditing]);
   // Form action function that matches the expected signature
   const formAction = async (formData: FormData) => {
     try {
@@ -249,6 +268,110 @@ function ItineraryViewContent({ trip, itineraryDays, locations, participants, pa
 
           </div>
         )}
+
+        {/* Right Side: Locations Controls */}
+        {activeSubTab === 'locations' && (
+          <div className="flex gap-3">
+            {/* Select Locations Toggle */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    onClick={() => setIsDeleteMode(!isDeleteMode)}
+                    variant={isDeleteMode ? "default" : "outline"}
+                    className="flex items-center gap-2"
+                    >
+                    {isDeleteMode ? (
+                      <>
+                        <X className="h-4 w-4" />
+                        <span className="hidden sm:inline">Cancel</span>
+                      </>
+                    ) : (
+                      <>
+                        <CopyCheck className="h-4 w-4" />
+                        {/* <span className="hidden sm:inline">Select Locations</span> */}
+                      </>
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{isDeleteMode ? 'Cancel' : 'Select locations'}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            {/* Add Location Button */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    onClick={() => setIsAddLocationModalOpen(true)}
+                    variant="default"
+                    className="flex items-center gap-2"
+                    >
+                    <Plus className="h-4 w-4" />
+                    {/* <span className="hidden sm:inline">Add Location</span> */}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Add locations</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        )}
+
+        {/* Right Side: Participants Controls */}
+        {activeSubTab === 'participants' && (
+          <div className="flex gap-3">
+            {/* Select Participants Toggle */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    onClick={() => setIsDeleteParticipantsMode(!isDeleteParticipantsMode)}
+                    variant={isDeleteParticipantsMode ? "default" : "outline"}
+                    className="flex items-center gap-2"
+                    >
+                    {isDeleteParticipantsMode ? (
+                      <>
+                        <X className="h-4 w-4" />
+                        <span className="hidden sm:inline">Cancel</span>
+                      </>
+                    ) : (
+                      <>
+                        <CopyCheck className="h-4 w-4" />
+                        {/* <span className="hidden sm:inline">Select Participants</span> */}
+                      </>
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{isDeleteParticipantsMode ? 'Cancel' : 'Select participants'}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            {/* Add Participant Button */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    onClick={() => setIsAddParticipantModalOpen(true)}
+                    variant="default"
+                    className="flex items-center gap-2"
+                    >
+                    <Plus className="h-4 w-4" />
+                    {/* <span className="hidden sm:inline">Add Participant</span> */}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Invite participants</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        )}
       </div>
 
       {/* --- SUB-TABS NAVIGATION --- */}
@@ -303,13 +426,28 @@ function ItineraryViewContent({ trip, itineraryDays, locations, participants, pa
 
       {activeSubTab === 'locations' && (
         <div className="space-y-4">
-          <LocationManager tripId={trip.id} locations={locations} />
+          <LocationManager 
+            tripId={trip.id} 
+            locations={locations} 
+            isDeleteMode={isDeleteMode}
+            setIsDeleteMode={setIsDeleteMode}
+            isAddLocationModalOpen={isAddLocationModalOpen}
+            setIsAddLocationModalOpen={setIsAddLocationModalOpen}
+          />
         </div>
       )}
 
       {activeSubTab === 'participants' && (
         <div className="space-y-4">
-          <ParticipantManager tripId={trip.id} participants={participants} currentUserRole={participantRole} />
+          <ParticipantManager 
+            tripId={trip.id} 
+            participants={participants} 
+            currentUserRole={participantRole}
+            isDeleteMode={isDeleteParticipantsMode}
+            setIsDeleteMode={setIsDeleteParticipantsMode}
+            isAddParticipantModalOpen={isAddParticipantModalOpen}
+            setIsAddParticipantModalOpen={setIsAddParticipantModalOpen}
+          />
         </div>
       )}
     </div>
