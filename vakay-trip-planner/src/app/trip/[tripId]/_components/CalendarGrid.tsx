@@ -64,7 +64,15 @@ export function CalendarGrid({
   // Adjust for Monday as first day: 0=Sunday, 1=Monday, 2=Tuesday, etc.
   // We want Monday=0, Tuesday=1, ..., Sunday=6
   const adjustedFirstDay = firstDay === 0 ? 6 : firstDay - 1;
-  const emptyCells = adjustedFirstDay;
+  const emptyCellsBefore = adjustedFirstDay;
+  
+  // Calculate total days in the current week after the trip ends
+  const lastTripDate = tripDates[tripDates.length - 1];
+  const lastDayOfWeek = lastTripDate.getUTCDay();
+  // Adjust for Monday as first day: 0=Sunday, 1=Monday, 2=Tuesday, etc.
+  const adjustedLastDay = lastDayOfWeek === 0 ? 6 : lastDayOfWeek - 1;
+  // Empty cells needed to complete the week (Sunday = 6, so 6 - adjustedLastDay)
+  const emptyCellsAfter = 6 - adjustedLastDay;
 
   // Initialize draft itinerary from props
   useEffect(() => {
@@ -601,16 +609,16 @@ export function CalendarGrid({
           onMouseMove={handleMouseMove}
         >
           {/* Empty cells for proper alignment */}
-          {Array.from({ length: emptyCells }).map((_, i) => (
-            <div key={`empty-${i}`} className="min-h-[80px] sm:min-h-[100px] bg-white"></div>
+          {Array.from({ length: emptyCellsBefore }).map((_, i) => (
+            <div key={`empty-before-${i}`} className="min-h-[80px] sm:min-h-[100px] bg-gray-50 border border-gray-100"></div>
           ))}
 
           {/* Consecutive day grouping overlay */}
           {consecutiveGroups.map((group, index) => {
             if (!group.locationId || group.start === group.end) return null;
             
-            const startIndex = tripDates.findIndex(d => d.toISOString().split('T')[0] === group.start) + emptyCells;
-            const endIndex = tripDates.findIndex(d => d.toISOString().split('T')[0] === group.end) + emptyCells;
+            const startIndex = tripDates.findIndex(d => d.toISOString().split('T')[0] === group.start) + emptyCellsBefore;
+            const endIndex = tripDates.findIndex(d => d.toISOString().split('T')[0] === group.end) + emptyCellsBefore;
             const span = endIndex - startIndex + 1;
             
             return (
@@ -672,6 +680,11 @@ export function CalendarGrid({
               />
             );
           })}
+
+          {/* Empty cells after trip to complete the week */}
+          {Array.from({ length: emptyCellsAfter }).map((_, i) => (
+            <div key={`empty-after-${i}`} className="min-h-[80px] sm:min-h-[100px] bg-gray-50 border border-gray-100"></div>
+          ))}
 
           {/* Range selection indicator */}
           {selectedRange && (
