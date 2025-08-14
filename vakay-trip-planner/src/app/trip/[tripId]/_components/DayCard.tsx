@@ -168,7 +168,7 @@ export function DayCard({
         </span>
         {/* Day Number */}
         <span className={cn(
-          "text-sm sm:text-base md:text-lg font-semibold",
+          "text-xs sm:text-base md:text-lg font-semibold",
           isToday ? "text-blue-600" : "text-gray-900"
         )}>
           {date.getDate()}
@@ -179,7 +179,8 @@ export function DayCard({
         </div>
         
       {/* Content Area - with proper spacing and overflow handling */}
-      <div className="space-y-1 sm:space-y-1.5 md:space-y-2 min-h-0 flex-1">
+      {/* <div className="space-y-1 sm:space-y-1.5 md:space-y-2 min-h-0 flex-1"> */}
+      <div className="hidden sm:block space-y-1 sm:space-y-1.5 md:space-y-2 min-h-0 flex-1">
           {/* Primary Location */}
           {location1 && (
             <div className="mb-1 sm:mb-2 truncate">

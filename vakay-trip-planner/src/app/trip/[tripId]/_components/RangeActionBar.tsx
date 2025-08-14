@@ -87,8 +87,9 @@ export function RangeActionBar({
   const isDoneDisabled = !selectedLocation || selectedLocation === 'none';
 
   return (
-    <div className="fixed bottom-4 sm:bottom-6 left-4 right-4 sm:left-1/2 sm:transform sm:-translate-x-1/2 z-40 bg-white rounded-xl shadow-lg border border-gray-200 p-4 sm:p-6 sm:min-w-[400px] max-w-full">
-      <div className="space-y-4 sm:space-y-6">
+    // <div className="fixed top-4 sm:top-12 left-4 right-4 sm:left-1/2 sm:transform sm:-translate-x-1/2 z-40 bg-white rounded-xl shadow-lg border border-gray-200 p-4 sm:p-6 sm:min-w-[400px] max-w-full">
+    <div className="fixed top-4 sm:top-12 left-4 right-4 sm:left-1/2 sm:transform sm:-translate-x-1/2 z-40 bg-white rounded-xl shadow-lg border border-gray-200 p-4 sm:p-6 sm:min-w-[400px] sm:max-w-xl">
+    <div className="space-y-4 sm:space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <h3 className="text-base sm:text-lg font-semibold text-gray-900">
@@ -115,6 +116,7 @@ export function RangeActionBar({
         </div>
 
         {/* Main Location Selector */}
+        <div className="flex flex-col sm:flex-row gap-3 pt-2">
         <div className="space-y-2">
           <label className="text-sm font-medium text-gray-700">
             Location
@@ -164,11 +166,12 @@ export function RangeActionBar({
               ))}
             </SelectContent>
           </Select>
-          <p className="text-xs text-gray-500 bg-blue-50 p-2 rounded border border-blue-200">
+          {/* <p className="text-xs text-gray-500 bg-blue-50 p-2 rounded border border-blue-200">
             If selected, this will be assigned as a transfer to the last day of the range
-          </p>
+          </p> */}
         </div>
-
+        </div>
+        
         {/* Action Buttons - Stacked on mobile for better touch targets */}
         <div className="flex flex-col sm:flex-row gap-3 pt-2">
           <Button

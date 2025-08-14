@@ -718,7 +718,7 @@ export function CalendarGrid({
 
       {/* Save/Cancel buttons when in edit mode - Mobile optimized */}
       {showSaveCancel && (
-        <div className="fixed bottom-4 sm:bottom-6 left-4 right-4 sm:left-1/2 sm:transform sm:-translate-x-1/2 z-50 bg-white rounded-xl shadow-lg border border-gray-200 p-4 sm:min-w-[400px] max-w-full">
+        <div className="fixed top-4 sm:top-12 left-4 right-4 sm:left-1/2 sm:transform sm:-translate-x-1/2 z-50 bg-white rounded-xl shadow-lg border border-gray-200 p-4 sm:min-w-[400px] sm:max-w-xl">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center gap-2 text-green-700">
               <div className="w-2 h-2 bg-green-500 rounded-full"></div>

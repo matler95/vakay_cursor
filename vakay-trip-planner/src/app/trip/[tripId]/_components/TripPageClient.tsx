@@ -92,10 +92,10 @@ export function TripPageClient({
 
   const tabs = [
     { id: 'plan', name: 'Plan', icon: Calendar },
-    { id: 'accommodation', name: 'Accommodation', icon: Bed },
+    { id: 'accommodation', name: 'Sleep', icon: Bed },
     { id: 'transportation', name: 'Travel', icon: Plane },
-    { id: 'links', name: 'Useful Links', icon: LinkIcon },
-    { id: 'expenses', name: 'Expenses', icon: DollarSign },
+    { id: 'links', name: 'Links', icon: LinkIcon },
+    { id: 'expenses', name: 'Budget', icon: DollarSign },
   ];
 
   const renderTabContent = () => {
@@ -296,7 +296,7 @@ export function TripPageClient({
         <div className="border-b border-gray-200 mb-3 sm:mb-4 md:mb-6 relative">
           {/* Mobile: Scrollable horizontal tabs */}
           <div className="md:hidden overflow-x-auto scrollbar-hide">
-            <nav className="flex space-x-1 pb-2" role="tablist" aria-label="Trip sections">
+            <nav className="flex  pb-2" role="tablist" aria-label="Trip sections">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.id;
