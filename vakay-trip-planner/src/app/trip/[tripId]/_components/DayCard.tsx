@@ -25,6 +25,7 @@ interface DayCardProps {
   onKeyDown?: (e: React.KeyboardEvent) => void;
   isInRange?: boolean;
   isToday?: boolean;
+  'data-date'?: string;
 }
 
 // Add a simple Switch component
@@ -66,7 +67,8 @@ export function DayCard({
   onMouseEnter,
   onKeyDown,
   isInRange,
-  isToday
+  isToday,
+  'data-date': dataDate
 }: DayCardProps) {
   const locationsMap = new Map(locations.map((loc) => [loc.id, loc]));
   const location1: Location | null = dayData?.location_1_id ? (locationsMap.get(dayData.location_1_id) ?? null) : null;
@@ -119,33 +121,45 @@ export function DayCard({
     <div
       className={cn(
         "relative min-h-[140px] sm:min-h-[160px] bg-white p-2 sm:p-3 transition-all duration-200 cursor-pointer",
-        "hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50",
+        "hover:outline hover:outline-2 hover:outline-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50",
         isInRange && "ring-2 ring-blue-500 ring-opacity-50 bg-blue-50",
         isToday && "bg-blue-50 border-l-4 border-l-blue-500",
-        isSelected && "ring-2 ring-blue-600 bg-blue-100"
+        isSelected && "ring-2 ring-blue-600 bg-blue-100",
+        isEditingCalendar && "select-none"
       )}
       style={dayStyle}
+      onClick={onSelectDate}
       onMouseDown={onMouseDown}
       onMouseEnter={onMouseEnter}
       onKeyDown={onKeyDown}
       tabIndex={isEditingCalendar ? 0 : -1}
       role="button"
       aria-label={`Day ${date.getDate()}, ${date.toLocaleDateString('en-US', { weekday: 'long' })}`}
+      data-date={dataDate}
     >
-      {/* Selection Checkbox - moved to top left to avoid overlap */}
+      {/* Selection Checkbox - positioned to avoid covering day number */}
       {isEditingCalendar && (
-        <div className="absolute top-1 left-1 sm:top-2 sm:left-2 z-10">
+        <div className="absolute top-1 right-1 sm:top-2 sm:right-2 z-10">
           <input
             type="checkbox"
             checked={isSelected}
-            onChange={onSelectDate}
+            onChange={(e) => {
+              e.stopPropagation();
+              onSelectDate();
+            }}
             className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
           />
         </div>
       )}
 
-      {/* Date Header */}
-      <div className="flex items-center justify-between mb-2 sm:mb-3">
+      {/* Date Header with Month */}
+      <div className="flex flex-col items-start mb-2 sm:mb-3">
+        {/* Month */}
+        <span className="text-xs text-gray-500 font-medium mb-1">
+          {date.toLocaleDateString('en-US', { month: 'short' })}
+        </span>
+        
+        {/* Day Number */}
         <div className="flex items-center gap-1 sm:gap-2">
           <span className={cn(
             "text-base sm:text-lg font-semibold",
@@ -244,25 +258,8 @@ export function DayCard({
         )}
       </div>
 
-      {/* Hover Actions */}
-      {isEditingCalendar && (
-        <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-5 transition-all duration-200 rounded-lg flex items-center justify-center opacity-0 hover:opacity-100">
-          <div className="bg-white rounded-lg shadow-lg p-2 border border-gray-200">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                // Open day editor
-              }}
-              className="p-2 hover:bg-gray-100 rounded transition-colors"
-              title="Edit day"
-            >
-              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Hover Actions - removed, using outline instead */}
+      {/* The hover effect is now handled by the main div's hover:bg-gray-50 class */}
     </div>
   );
 }

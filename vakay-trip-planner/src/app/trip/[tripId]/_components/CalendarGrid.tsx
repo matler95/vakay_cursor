@@ -7,7 +7,7 @@ import { RangeActionBar } from './RangeActionBar';
 import { getDatesInRange } from '@/lib/dateUtils';
 import { cn } from '@/lib/utils';
 import { useUndoManager } from './UndoManager';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
+import { Calendar as CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 type Trip = Database['public']['Tables']['trips']['Row'];
@@ -41,8 +41,10 @@ export function CalendarGrid({
   const [selectedRange, setSelectedRange] = useState<DateRange | null>(null);
   const [isSelecting, setIsSelecting] = useState(false);
   const [selectionStart, setSelectionStart] = useState<string | null>(null);
+  const [selectedDates, setSelectedDates] = useState<Set<string>>(new Set());
+  const [hasMoved, setHasMoved] = useState(false);
+  const [isClickMode, setIsClickMode] = useState(true);
   const [draftItinerary, setDraftItinerary] = useState<Map<string, ItineraryDay>>(new Map());
-  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [hasDraftChanges, setHasDraftChanges] = useState(false);
   const calendarRef = useRef<HTMLDivElement>(null);
   const { addAction } = useUndoManager();
@@ -109,74 +111,94 @@ export function CalendarGrid({
     console.log('Locations with colors:', locations.filter(loc => loc.color).slice(0, 3));
   }, [locations]);
 
-  // Get month labels
-  const monthLabel = useMemo(() => {
-    const monthYearSet = Array.from(new Set(tripDates.map(d => `${d.getUTCMonth()}-${d.getUTCFullYear()}`)))
-      .map(key => {
-        const [month, year] = key.split('-');
-        return { month: Number(month), year: Number(year) };
-      });
-
-    if (monthYearSet.length === 1) {
-      return tripDates[0].toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-    } else if (monthYearSet.length === 2) {
-      const [a, b] = monthYearSet;
-      if (a.year === b.year) {
-        return `${new Date(a.year, a.month).toLocaleString('en-US', { month: 'long' })} – ${new Date(b.year, b.month).toLocaleString('en-US', { month: 'long', year: 'numeric' })}`;
-      } else {
-        return `${new Date(a.year, a.month).toLocaleString('en-US', { month: 'long', year: 'numeric' })} – ${new Date(b.year, b.month).toLocaleString('en-US', { month: 'long', year: 'numeric' })}`;
-      }
-    }
-    return '';
-  }, [tripDates]);
-
-  // Month navigation
-  const goToPreviousMonth = () => {
-    setCurrentMonth(prev => {
-      const newMonth = new Date(prev);
-      newMonth.setMonth(prev.getMonth() - 1);
-      return newMonth;
-    });
-  };
-
-  const goToNextMonth = () => {
-    setCurrentMonth(prev => {
-      const newMonth = new Date(prev);
-      newMonth.setMonth(prev.getMonth() + 1);
-      return newMonth;
-    });
-  };
-
-  const goToToday = () => {
-    setCurrentMonth(new Date());
-  };
-
   // Range selection handlers
   const handleMouseDown = useCallback((dateStr: string) => {
     if (!isEditing) return;
     
-    setIsSelecting(true);
+    console.log('=== MOUSE DOWN ===', dateStr);
+    setHasMoved(false);
     setSelectionStart(dateStr);
-    setSelectedRange({ start: dateStr, end: dateStr });
+    setIsClickMode(true); // Start in click mode
   }, [isEditing]);
 
   const handleMouseEnter = useCallback((dateStr: string) => {
-    if (!isSelecting || !selectionStart) return;
+    if (!selectionStart) return;
     
-    const startDate = new Date(selectionStart!);
-    const currentDate = new Date(dateStr);
+    console.log('=== MOUSE ENTER ===', dateStr, 'hasMoved:', hasMoved, 'isSelecting:', isSelecting, 'isClickMode:', isClickMode);
     
-    if (currentDate < startDate) {
-      setSelectedRange({ start: dateStr, end: selectionStart! });
-    } else {
-      setSelectedRange({ start: selectionStart!, end: dateStr });
+    // If this is the first move, switch to drag mode
+    if (!hasMoved) {
+      console.log('First move detected - switching to drag mode');
+      setHasMoved(true);
+      setIsClickMode(false);
+      setIsSelecting(true);
+      setSelectedRange({ start: selectionStart, end: dateStr });
+      
+      // Clear individual selections when starting range selection
+      setSelectedDates(new Set());
+    } else if (isSelecting) {
+      // Continue range selection
+      console.log('Continuing range selection');
+      const startDate = new Date(selectionStart);
+      const currentDate = new Date(dateStr);
+      
+      if (currentDate < startDate) {
+        setSelectedRange({ start: dateStr, end: selectionStart });
+      } else {
+        setSelectedRange({ start: selectionStart, end: dateStr });
+      }
     }
-  }, [isSelecting, selectionStart]);
+  }, [selectionStart, hasMoved, isSelecting]);
 
   const handleMouseUp = useCallback(() => {
     setIsSelecting(false);
     setSelectionStart(null);
+    setHasMoved(false);
+    setIsClickMode(true); // Reset to click mode
   }, []);
+
+  // Handle mouse move for better drag detection
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!selectionStart || !isEditing) return;
+    
+    console.log('=== MOUSE MOVE ===', 'selectionStart:', selectionStart, 'hasMoved:', hasMoved, 'isSelecting:', isSelecting);
+    
+    // Get the element under the mouse
+    const element = document.elementFromPoint(e.clientX, e.clientY);
+    if (!element) return;
+    
+    // Find the closest day card
+    const dayCard = element.closest('[data-date]');
+    if (dayCard) {
+      const dateStr = dayCard.getAttribute('data-date');
+      if (dateStr && dateStr !== selectionStart) {
+        console.log('=== MOUSE MOVE OVER DAY ===', dateStr, 'from', selectionStart);
+        
+        // If this is the first move, switch to drag mode
+        if (!hasMoved) {
+          console.log('First move detected via mouse move - switching to drag mode');
+          setHasMoved(true);
+          setIsClickMode(false);
+          setIsSelecting(true);
+          setSelectedRange({ start: selectionStart, end: dateStr });
+          
+          // Clear individual selections when starting range selection
+          setSelectedDates(new Set());
+        } else if (isSelecting) {
+          // Continue range selection
+          console.log('Continuing range selection via mouse move');
+          const startDate = new Date(selectionStart);
+          const currentDate = new Date(dateStr);
+          
+          if (currentDate < startDate) {
+            setSelectedRange({ start: dateStr, end: selectionStart });
+          } else {
+            setSelectedRange({ start: selectionStart, end: dateStr });
+          }
+        }
+      }
+    }
+  }, [selectionStart, hasMoved, isSelecting, isEditing]);
 
   // Keyboard range selection
   const handleKeyDown = useCallback((e: React.KeyboardEvent, dateStr: string) => {
@@ -198,16 +220,23 @@ export function CalendarGrid({
     }
   }, [isEditing, selectedRange]);
 
-  // Check if a date is in the selected range
+  // Check if a date is in the selected range or individually selected
   const isInSelectedRange = useCallback((dateStr: string) => {
-    if (!selectedRange) return false;
+    // Check if date is in range selection
+    if (selectedRange) {
+      const date = new Date(dateStr);
+      const start = new Date(selectedRange.start);
+      const end = new Date(selectedRange.end);
+      const inRange = date >= start && date <= end;
+      console.log(`Date ${dateStr}: Range selection check - inRange: ${inRange}`);
+      return inRange;
+    }
     
-    const date = new Date(dateStr);
-    const start = new Date(selectedRange.start);
-    const end = new Date(selectedRange.end);
-    
-    return date >= start && date <= end;
-  }, [selectedRange]);
+    // Check if date is individually selected
+    const isIndividuallySelected = selectedDates.has(dateStr);
+    console.log(`Date ${dateStr}: Individual selection check - selected: ${isIndividuallySelected}`);
+    return isIndividuallySelected;
+  }, [selectedRange, selectedDates]);
 
   // Get consecutive day groups for visual grouping
   const consecutiveGroups = useMemo(() => {
@@ -241,7 +270,57 @@ export function CalendarGrid({
   // Clear selection
   const clearSelection = useCallback(() => {
     setSelectedRange(null);
+    setSelectedDates(new Set());
+    setIsSelecting(false);
+    setHasMoved(false);
+    setIsClickMode(true);
   }, []);
+
+  // Handle individual day selection/deselection
+  const handleDayClick = useCallback((dateStr: string) => {
+    console.log('=== HANDLE DAY CLICK CALLED ===');
+    console.log('Date clicked:', dateStr);
+    console.log('isEditing:', isEditing);
+    console.log('isSelecting:', isSelecting);
+    console.log('isClickMode:', isClickMode);
+    console.log('Current selectedDates:', Array.from(selectedDates));
+    console.log('Current selectedRange:', selectedRange);
+    
+    if (!isEditing) {
+      console.log('Not in edit mode, returning');
+      return;
+    }
+    
+    // If we're in range selection mode or not in click mode, don't handle individual clicks
+    if (isSelecting || !isClickMode) {
+      console.log('In range selection mode or not in click mode, returning');
+      return;
+    }
+    
+    console.log('=== HANDLE DAY CLICK ===');
+    console.log('Date clicked:', dateStr);
+    console.log('Current selectedDates:', Array.from(selectedDates));
+    console.log('Is date currently selected?', selectedDates.has(dateStr));
+    
+    // Toggle selection for this specific date
+    setSelectedDates(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(dateStr)) {
+        // Deselect the day
+        console.log('Deselecting day:', dateStr);
+        newSet.delete(dateStr);
+      } else {
+        // Select the day
+        console.log('Selecting day:', dateStr);
+        newSet.add(dateStr);
+      }
+      console.log('New selectedDates:', Array.from(newSet));
+      return newSet;
+    });
+    
+    // Clear range selection when toggling individual days
+    setSelectedRange(null);
+  }, [isEditing, isSelecting, isClickMode, selectedDates, selectedRange]);
 
   // Handle saving draft changes
   const handleSaveChanges = useCallback(() => {
@@ -263,27 +342,35 @@ export function CalendarGrid({
     setDraftItinerary(initialMap);
     setHasDraftChanges(false);
     setSelectedRange(null);
+    setHasMoved(false);
+    setIsClickMode(true);
     onExitEditMode();
   }, [itineraryDays, onExitEditMode]);
 
   // Handle bulk location assignment
   const handleBulkLocationAssign = useCallback((locationId: number | null) => {
-    if (!selectedRange) return;
+    // Get dates to update - either from range or individual selection
+    let datesToUpdate: string[] = [];
+    
+    if (selectedRange) {
+      const rangeDates = getDatesInRange(new Date(selectedRange.start), new Date(selectedRange.end));
+      datesToUpdate = rangeDates.map(d => d.toISOString().split('T')[0]);
+    } else if (selectedDates.size > 0) {
+      datesToUpdate = Array.from(selectedDates);
+    }
+    
+    if (datesToUpdate.length === 0) return;
     
     console.log('=== BULK LOCATION ASSIGN ===');
-    console.log('Selected range:', selectedRange);
+    console.log('Dates to update:', datesToUpdate);
     console.log('Location ID to assign:', locationId);
     console.log('Current draft itinerary size:', draftItinerary.size);
-    
-    const rangeDates = getDatesInRange(new Date(selectedRange.start), new Date(selectedRange.end));
-    console.log('Range dates:', rangeDates.map(d => d.toISOString().split('T')[0]));
     
     // Create a new Map instance to ensure React re-renders
     const newDraftItinerary = new Map(draftItinerary);
     
     // Apply changes to draft itinerary
-    rangeDates.forEach(date => {
-      const dateStr = date.toISOString().split('T')[0];
+    datesToUpdate.forEach(dateStr => {
       const existing = newDraftItinerary.get(dateStr);
       
       const updatedDay: ItineraryDay = {
@@ -316,20 +403,27 @@ export function CalendarGrid({
     setTimeout(() => {
       clearSelection();
     }, 100);
-  }, [selectedRange, draftItinerary, clearSelection, trip.id]);
+  }, [selectedRange, selectedDates, draftItinerary, clearSelection, trip.id]);
 
   // Handle bulk transfer assignment
   const handleBulkTransferAssign = useCallback((fromLocationId: number | null, toLocationId: number | null) => {
-    if (!selectedRange) return;
+    // Get dates to update - either from range or individual selection
+    let datesToUpdate: string[] = [];
     
-    const rangeDates = getDatesInRange(new Date(selectedRange.start), new Date(selectedRange.end));
+    if (selectedRange) {
+      const rangeDates = getDatesInRange(new Date(selectedRange.start), new Date(selectedRange.end));
+      datesToUpdate = rangeDates.map(d => d.toISOString().split('T')[0]);
+    } else if (selectedDates.size > 0) {
+      datesToUpdate = Array.from(selectedDates);
+    }
+    
+    if (datesToUpdate.length === 0) return;
     
     // Create a new Map instance to ensure React re-renders
     const newDraftItinerary = new Map(draftItinerary);
     
     // Apply main location to all days
-    rangeDates.forEach(date => {
-      const dateStr = date.toISOString().split('T')[0];
+    datesToUpdate.forEach(dateStr => {
       const existing = newDraftItinerary.get(dateStr);
       const updatedDay: ItineraryDay = {
         ...existing, // Spread existing properties first
@@ -345,8 +439,8 @@ export function CalendarGrid({
     });
     
     // Apply transfer to last day only
-    if (toLocationId && rangeDates.length > 0) {
-      const lastDateStr = rangeDates[rangeDates.length - 1].toISOString().split('T')[0];
+    if (toLocationId && datesToUpdate.length > 0) {
+      const lastDateStr = datesToUpdate[datesToUpdate.length - 1];
       const lastDay = newDraftItinerary.get(lastDateStr);
       if (lastDay) {
         lastDay.location_2_id = toLocationId;
@@ -361,20 +455,27 @@ export function CalendarGrid({
     setTimeout(() => {
       clearSelection();
     }, 100);
-  }, [selectedRange, draftItinerary, clearSelection, trip.id]);
+  }, [selectedRange, selectedDates, draftItinerary, clearSelection, trip.id]);
 
   // Handle bulk notes
   const handleBulkNotes = useCallback((notes: string) => {
-    if (!selectedRange) return;
+    // Get dates to update - either from range or individual selection
+    let datesToUpdate: string[] = [];
     
-    const rangeDates = getDatesInRange(new Date(selectedRange.start), new Date(selectedRange.end));
+    if (selectedRange) {
+      const rangeDates = getDatesInRange(new Date(selectedRange.start), new Date(selectedRange.end));
+      datesToUpdate = rangeDates.map(d => d.toISOString().split('T')[0]);
+    } else if (selectedDates.size > 0) {
+      datesToUpdate = Array.from(selectedDates);
+    }
+    
+    if (datesToUpdate.length === 0) return;
     
     // Create a new Map instance to ensure React re-renders
     const newDraftItinerary = new Map(draftItinerary);
     
     // Apply notes to all days
-    rangeDates.forEach(date => {
-      const dateStr = date.toISOString().split('T')[0];
+    datesToUpdate.forEach(dateStr => {
       const existing = newDraftItinerary.get(dateStr);
       const updatedDay: ItineraryDay = {
         ...existing, // Spread existing properties first
@@ -396,7 +497,7 @@ export function CalendarGrid({
     setTimeout(() => {
       clearSelection();
     }, 100);
-  }, [selectedRange, draftItinerary, clearSelection, trip.id]);
+  }, [selectedRange, selectedDates, draftItinerary, clearSelection, trip.id]);
 
   return (
     <div className="space-y-6">
@@ -427,88 +528,35 @@ export function CalendarGrid({
               </Button>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Modern Calendar Header */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center justify-between mb-6">
-          {/* Left side - Month/Year and Today button */}
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={goToPreviousMonth}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
-                aria-label="Previous month"
-              >
-                <ChevronLeft className="h-5 w-5 text-gray-600" />
-              </button>
-              
-              <h1 className="text-2xl font-semibold text-gray-900">
-                {monthLabel}
-              </h1>
-              
-              <button
-                onClick={goToNextMonth}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
-                aria-label="Next month"
-              >
-                <ChevronRight className="h-5 w-5 text-gray-600" />
-              </button>
-            </div>
-            
-            <button
-              onClick={goToToday}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200"
-            >
-              Today
-            </button>
-          </div>
-
-          {/* Right side - Calendar icon and view options */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              <CalendarIcon className="h-4 w-4" />
-              <span>Itinerary Calendar</span>
-            </div>
-            
-            {/* Debug: Show editing state */}
-            <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-              isEditing 
-                ? 'bg-green-100 text-green-800' 
-                : 'bg-gray-100 text-gray-600'
-            }`}>
-              {isEditing ? 'Edit Mode' : 'View Mode'}
-            </div>
-          </div>
-        </div>
-
-        {/* Help message when not in edit mode */}
-        {!isEditing && (
-          <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          
+          {/* Instructions moved to floating bar */}
+          <div className="mt-3 pt-3 border-t border-gray-200">
             <div className="flex items-center gap-2 text-blue-800">
               <CalendarIcon className="h-4 w-4" />
-              <span className="text-sm font-medium">How to use the calendar:</span>
+              <span className="text-sm font-medium">How to edit:</span>
             </div>
             <p className="text-sm text-blue-700 mt-1">
-              Click the edit button (pencil icon) above to enable edit mode. Then you can select date ranges and assign locations to your trip days.
-            </p>
-          </div>
-        )}
-
-        {/* Help message when in edit mode */}
-        {isEditing && (
-          <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-            <div className="flex items-center gap-2 text-green-800">
-              <CalendarIcon className="h-4 w-4" />
-              <span className="text-sm font-medium">Edit Mode Active:</span>
-            </div>
-            <p className="text-sm text-green-700 mt-1">
               Click and drag to select date ranges, then use the Range Action Bar to assign locations. Changes are saved as drafts until you click "Save Changes".
             </p>
           </div>
-        )}
+        </div>
+      )}
 
+      {/* Help message when not in edit mode */}
+      {!isEditing && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-white rounded-xl shadow-lg border border-gray-200 p-4">
+          <div className="flex items-center gap-2 text-blue-800">
+            <CalendarIcon className="h-4 w-4" />
+            <span className="text-sm font-medium">How to use the calendar:</span>
+          </div>
+          <p className="text-sm text-blue-700 mt-1">
+            Click the edit button (pencil icon) above to enable edit mode. Then you can select date ranges and assign locations to your trip days.
+          </p>
+        </div>
+      )}
+
+      {/* Calendar Container */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         {/* Weekday headers */}
         <div className="grid grid-cols-7 gap-px mb-2">
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
@@ -524,9 +572,14 @@ export function CalendarGrid({
         {/* Calendar grid */}
         <div 
           ref={calendarRef}
-          className="relative grid grid-cols-7 gap-px bg-gray-200 rounded-lg overflow-hidden border border-gray-200"
+          className={cn(
+            "relative grid grid-cols-7 gap-px bg-gray-200 rounded-lg overflow-hidden border border-gray-200",
+            isEditing && "select-none",
+            isSelecting && "cursor-crosshair"
+          )}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
+          onMouseMove={handleMouseMove}
         >
           {/* Empty cells for proper alignment */}
           {Array.from({ length: emptyCells }).map((_, i) => (
@@ -585,14 +638,18 @@ export function CalendarGrid({
                 locations={locations}
                 isEditingCalendar={isEditing}
                 isSelected={isSelected}
-                selectionCount={selectedRange ? 1 : 0}
-                onSelectDate={() => {}} // Not used in grid view
+                selectionCount={selectedRange 
+                  ? getDatesInRange(new Date(selectedRange.start), new Date(selectedRange.end)).length
+                  : selectedDates.size
+                }
+                onSelectDate={() => handleDayClick(dateStr)} // Use handleDayClick for individual selection
                 onUpdateDraft={onUpdateDraft}
                 onMouseDown={() => handleMouseDown(dateStr)}
                 onMouseEnter={() => handleMouseEnter(dateStr)}
                 onKeyDown={(e) => handleKeyDown(e, dateStr)}
                 isInRange={isSelected}
                 isToday={isToday}
+                data-date={dateStr}
               />
             );
           })}
@@ -607,16 +664,26 @@ export function CalendarGrid({
       </div>
 
       {/* Range Action Bar */}
-      {selectedRange && (
+      {(selectedRange || selectedDates.size > 0) && (
         <>
           <RangeActionBar
-            selectedRange={selectedRange}
+            selectedRange={selectedRange || { start: '', end: '' }}
             locations={locations}
             onAssignLocation={handleBulkLocationAssign}
             onAssignTransfer={handleBulkTransferAssign}
             onClear={clearSelection}
-            currentLocationId={draftItinerary.get(selectedRange.start)?.location_1_id ?? null}
-            currentTransferId={draftItinerary.get(selectedRange.end)?.location_2_id ?? null}
+            currentLocationId={selectedRange 
+              ? draftItinerary.get(selectedRange.start)?.location_1_id ?? null
+              : selectedDates.size > 0 
+                ? draftItinerary.get(Array.from(selectedDates)[0])?.location_1_id ?? null
+                : null
+            }
+            currentTransferId={selectedRange 
+              ? draftItinerary.get(selectedRange.end)?.location_2_id ?? null
+              : selectedDates.size > 0 
+                ? draftItinerary.get(Array.from(selectedDates)[selectedDates.size - 1])?.location_2_id ?? null
+                : null
+            }
           />
         </>
       )}
