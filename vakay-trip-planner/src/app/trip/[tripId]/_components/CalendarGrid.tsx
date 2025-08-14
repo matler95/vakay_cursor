@@ -575,9 +575,9 @@ export function CalendarGrid({
   return (
     <div className="space-y-6">
       {/* Calendar Container */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div >
         {/* Weekday headers */}
-        <div className="grid grid-cols-7 gap-px mb-2">
+        <div className="grid grid-cols-7 gap-px">
           {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
             <div
               key={day}

@@ -184,8 +184,8 @@ function ItineraryViewContent({ trip, itineraryDays, locations, participants, pa
         } else {
           newMap.set(dateStr, {
             id: 0,
-            date: dateStr,
-            trip_id: trip.id,
+        date: dateStr, 
+        trip_id: trip.id, 
             location_1_id: null,
             location_2_id: null,
             notes: '',
@@ -241,7 +241,7 @@ function ItineraryViewContent({ trip, itineraryDays, locations, participants, pa
         newMap.set(dateStr, {
           id: 0,
           date: dateStr,
-          trip_id: trip.id,
+        trip_id: trip.id,
           location_1_id: null,
           location_2_id: null,
           notes: '',
@@ -272,7 +272,7 @@ function ItineraryViewContent({ trip, itineraryDays, locations, participants, pa
       );
     }
 
-    setSelectedDates(new Set());
+      setSelectedDates(new Set());
   }, [selectedDates, draftItinerary, trip.id, addAction]);
 
   // Quick action handlers
@@ -340,12 +340,14 @@ function ItineraryViewContent({ trip, itineraryDays, locations, participants, pa
   }
 
   return (
-    <div>
-      {/* Header with Trip Info and Actions */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="space-y-6">
+      {/* Secondary Header - Calendar */}
+      <div className="flex justify-between items-center gap-4 mb-6">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Itinerary</h2>
-          <p className="text-gray-600 text-sm sm:text-base">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            Itinerary
+          </h2>
+          <p className="text-gray-600 mt-1">
             {isEditing ? 'Edit mode: Select days to assign locations' : 'Plan your daily activities'}
           </p>
         </div>
@@ -413,56 +415,56 @@ function ItineraryViewContent({ trip, itineraryDays, locations, participants, pa
               </Tooltip>
             </TooltipProvider>
 
-            {/* View Toggle Button */}
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="outline" 
+          {/* View Toggle Button */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="outline" 
                     size="sm"
-                    onClick={() => setViewMode(viewMode === 'calendar' ? 'list' : 'calendar')}
+                  onClick={() => setViewMode(viewMode === 'calendar' ? 'list' : 'calendar')}
                     className="flex items-center gap-2"
-                  >
-                    {viewMode === 'calendar' ? (
-                      <>
-                        <List className="h-4 w-4" />
+                >
+                  {viewMode === 'calendar' ? (
+                    <>
+                      <List className="h-4 w-4" />
                         <span className="hidden sm:inline">List</span>
-                      </>
-                    ) : (
-                      <>
-                        <Calendar className="h-4 w-4" />
+                    </>
+                  ) : (
+                    <>
+                      <Calendar className="h-4 w-4" />
                         <span className="hidden sm:inline">Calendar</span>
-                      </>
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Switch to {viewMode === 'calendar' ? 'list' : 'calendar'} view</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-
-          {viewMode === 'calendar' ? (
+                    </>
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Switch to {viewMode === 'calendar' ? 'list' : 'calendar'} view</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+      </div>
+      
+      {viewMode === 'calendar' ? (
             <CalendarGrid
               trip={trip}
               itineraryDays={itineraryDays}
-              locations={locations}
+                  locations={locations}
               isEditing={isEditing}
-              onUpdateDraft={handleUpdateDraft}
+                  onUpdateDraft={handleUpdateDraft}
               onBulkUpdate={handleBulkUpdate}
               onExitEditMode={() => setIsEditing(false)}
               saveAction={formAction}
-            />
-          ) : (
-            <ListView
-              tripDates={tripDates}
-              draftItinerary={draftItinerary}
-              locations={locations}
-              isEditingCalendar={isEditing}
-              selectedDates={selectedDates}
-              onSelectDate={handleSelectDate}
-              onUpdateDraft={handleUpdateDraft}
+                />
+      ) : (
+        <ListView
+          tripDates={tripDates}
+          draftItinerary={draftItinerary}
+          locations={locations}
+          isEditingCalendar={isEditing}
+          selectedDates={selectedDates}
+          onSelectDate={handleSelectDate}
+          onUpdateDraft={handleUpdateDraft}
             />
           )}
         </>

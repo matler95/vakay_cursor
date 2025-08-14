@@ -5,10 +5,10 @@ import { ItineraryView } from './ItineraryView';
 import { LocationManager } from './LocationManager';
 import { ParticipantManager, type Participant } from './ParticipantManager';
 import { EditTripInline } from './EditTripInline';
-import { Calendar, MapPin, MapPinPlus, UserRoundPlus, Bed, Plane, Link as LinkIcon, DollarSign, CheckCircle } from 'lucide-react';
+import { Calendar, MapPin, MapPinPlus, UserRoundPlus, Bed, Plane, Link as LinkIcon, DollarSign, CheckCircle, ChevronUp, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useState } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { AddLocationModal } from './AddLocationModal';
 import { AddParticipantModal } from './AddParticipantModal';
 import { AccommodationView } from '../accommodation/_components/AccommodationView';
@@ -69,6 +69,7 @@ export function TripPageClient({
   const [isAddLocationModalOpen, setIsAddLocationModalOpen] = useState(false);
   const [isAddParticipantModalOpen, setIsAddParticipantModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
 
   // Keyboard navigation support
   const handleKeyDown = (e: React.KeyboardEvent, tabId: TabType) => {
@@ -102,51 +103,8 @@ export function TripPageClient({
       case 'plan':
         return (
           <>
-            {/* Secondary Header - Trip Plan */}
-            <div className="flex justify-between items-center gap-4 mb-6">
-              <div>
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Trip Plan</h2>
-                <p className="text-gray-600 mt-1">
-                  Add locations and participants to start planning your trip
-                </p>
-              </div>
-
-              <div className="flex gap-3">
-                {/* Add Participant Button */}
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button onClick={() => setIsAddParticipantModalOpen(true)} 
-                        variant="outline" 
-                        className="flex items-center gap-2 hover:scale-105 transition-transform duration-200">
-                        <UserRoundPlus className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Invite participants</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
-                {/* Add Location Button */}
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button onClick={() => setIsAddLocationModalOpen(true)} 
-                        className="flex items-center gap-2 hover:scale-105 transition-transform duration-200">
-                        <MapPinPlus className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Add new locations</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-            </div>
-
             {/* Calendar Container */}
-            <div className="mb-4 sm:mb-8 rounded-xl sm:rounded-2xl bg-white shadow p-3 sm:p-6">
+            <div >
               <ItineraryView
                 trip={trip}
                 itineraryDays={itineraryDays || []}
@@ -222,120 +180,174 @@ export function TripPageClient({
   };
 
   return (
-         <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-8 py-4 sm:py-8 bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
-             {/* Modern Trip Header */}
-       <div className="mb-4 sm:mb-8 rounded-xl sm:rounded-2xl shadow p-4 sm:p-6 bg-white">
-         {/* Mobile Layout */}
-         <div className="md:hidden">
-           <div className="flex items-start justify-between gap-3 mb-3">
-             <div className="flex-1 min-w-0">
-               <h1 className="text-xl font-extrabold text-gray-900 truncate">
-                 {trip.name}
-               </h1>
-             </div>
-             <div className="flex-shrink-0">
-               <EditTripInline trip={trip} userRole={participantRole?.role || null} />
-             </div>
-           </div>
-           <div className="flex items-center gap-3 text-gray-600 text-sm">
-            <span className="flex items-center gap-1">
-              <Calendar className="h-4 w-4 text-blue-500" />
-              {dateRange}
-            </span>
-            {trip.destination && (
-              <span className="flex items-center gap-1">
-                <MapPin className="h-4 w-4 text-pink-500" />
-                {trip.destination}
-              </span>
-            )}
-            <span className="flex items-center gap-1 bg-blue-100 text-blue-700 font-semibold px-2 py-1 rounded-full text-xs">
-              {totalDays} days
-            </span>
+    <div className="min-h-screen bg-gray-50">
+      {/* Modern Trip Header */}
+      <div className="mt-2 mb-2">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="mb-4 sm:mb-8 rounded-xl sm:rounded-2xl shadow p-4 sm:p-6 bg-white">
+            {/* Mobile Layout */}
+            <div className="md:hidden">
+              <div 
+                className="cursor-pointer"
+                onClick={() => setIsHeaderCollapsed(!isHeaderCollapsed)}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
+                    <h1 className={`font-bold text-gray-900 transition-all duration-300 ${
+                      isHeaderCollapsed ? 'text-lg' : 'text-2xl'
+                    }`}>
+                      {trip.name}
+                    </h1>
+                    {!isHeaderCollapsed && (
+                      <div className="mt-2 space-y-1">
+                        <div className="flex items-center gap-3 text-gray-600 text-sm">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-4 w-4 text-blue-500" />
+                            {dateRange}
+                          </span>
+                          {trip.destination && (
+                            <span className="flex items-center gap-1">
+                              <MapPin className="h-4 w-4 text-pink-500" />
+                              {trip.destination}
+                            </span>
+                          )}
+                          <span className="flex items-center gap-1 bg-blue-100 text-blue-700 font-semibold px-2 py-1 rounded-full text-xs">
+                            {totalDays} days
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 ml-4">
+                    {!isHeaderCollapsed && (
+                      <EditTripInline trip={trip} userRole={participantRole?.role || null} />
+                    )}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsHeaderCollapsed(!isHeaderCollapsed);
+                      }}
+                      className="p-1 rounded-full hover:bg-gray-100 transition-colors duration-200"
+                      aria-label={isHeaderCollapsed ? 'Expand header' : 'Collapse header'}
+                    >
+                      {isHeaderCollapsed ? (
+                        <ChevronDown className="w-5 h-5 text-gray-500" />
+                      ) : (
+                        <ChevronUp className="w-5 h-5 text-gray-500" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Desktop Layout */}
+            <div className="hidden md:flex md:items-center md:justify-between gap-6">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-3">
+                  <h1 className={`font-extrabold text-gray-900 transition-all duration-300 ${
+                    isHeaderCollapsed ? 'text-2xl' : 'text-3xl lg:text-4xl'
+                  }`}>
+                    {trip.name}
+                  </h1>
+                  <button
+                    onClick={() => setIsHeaderCollapsed(!isHeaderCollapsed)}
+                    className="p-1 rounded-full hover:bg-gray-100 transition-colors duration-200"
+                    aria-label={isHeaderCollapsed ? 'Expand header' : 'Collapse header'}
+                  >
+                    {isHeaderCollapsed ? (
+                      <ChevronDown className="w-5 h-5 text-gray-500" />
+                    ) : (
+                      <ChevronUp className="w-5 h-5 text-gray-500" />
+                    )}
+                  </button>
+                </div>
+                {!isHeaderCollapsed && (
+                  <div className="flex flex-row items-center gap-4 text-gray-600 text-base mt-2">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-5 w-5 text-blue-500" />
+                      {dateRange}
+                    </span>
+                    {trip.destination && (
+                      <span className="flex items-center gap-1">
+                        <MapPin className="h-5 w-5 text-pink-500" />
+                        {trip.destination}
+                      </span>
+                    )}
+                    <span className="flex items-center gap-1 bg-blue-100 text-blue-700 font-semibold px-3 py-1 rounded-full text-sm">
+                      {totalDays} days
+                    </span>
+                  </div>
+                )}
+              </div>
+              {!isHeaderCollapsed && (
+                <div className="flex-shrink-0">
+                  <EditTripInline trip={trip} userRole={participantRole?.role || null} />
+                </div>
+              )}
+            </div>
           </div>
         </div>
-
-                 {/* Desktop Layout */}
-         <div className="hidden md:flex md:items-center md:justify-between gap-6">
-           <div className="flex-1 min-w-0">
-             <h1 className="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-2 flex items-center gap-3">
-               {trip.name}
-             </h1>
-             <div className="flex flex-row items-center gap-4 text-gray-600 text-base">
-               <span className="flex items-center gap-1">
-                 <Calendar className="h-5 w-5 text-blue-500" />
-                 {dateRange}
-               </span>
-               {trip.destination && (
-                 <span className="flex items-center gap-1">
-                   <MapPin className="h-5 w-5 text-pink-500" />
-                 </span>
-               )}
-               <span className="flex items-center gap-1 bg-blue-100 text-blue-700 font-semibold px-3 py-1 rounded-full text-sm">
-                 {totalDays} days
-               </span>
-             </div>
-           </div>
-           <div className="flex-shrink-0">
-             <EditTripInline trip={trip} userRole={participantRole?.role || null} />
-           </div>
-         </div>
       </div>
 
-             {/* Trip Navigation */}
-       <div className="border-b border-gray-200 mb-6 relative">
-                 <nav className="-mb-px flex space-x-2 sm:space-x-8" role="tablist" aria-label="Trip sections">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                id={`tab-${tab.id}`}
-                                 onClick={() => {
-                   if (activeTab !== tab.id) {
-                     setActiveTab(tab.id as TabType);
-                   }
-                 }}
-                 onKeyDown={(e) => handleKeyDown(e, tab.id as TabType)}
-                 aria-selected={isActive}
-                 aria-label={`${tab.name} tab`}
-                 role="tab"
-                 tabIndex={0}
-                                    className={`
-                     flex items-center gap-1 sm:gap-2 py-2 sm:py-3 px-2 sm:px-3 border-b-2 font-medium text-sm transition-all duration-200 cursor-pointer rounded-t-lg relative
-                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-                     ${isActive
-                       ? 'border-blue-500 text-blue-600 bg-blue-50 shadow-sm'
-                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50 hover:shadow-sm'
-                     }
-                     transform hover:scale-105 active:scale-95
-                   `}
-              >
-                                 <Icon className={`h-5 w-5 sm:h-4 sm:w-4 transition-transform duration-200 ${isActive ? 'scale-110' : ''}`} />
-                 <span className="hidden sm:inline">{tab.name}</span>
-                {isActive && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500 rounded-full animate-pulse"></div>
-                )}
-                {/* Subtle ripple effect */}
-                <div className="absolute inset-0 rounded-t-lg bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
-              </button>
-            );
-          })}
-        </nav>
-      </div>
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Trip Navigation */}
+        <div className="border-b border-gray-200 mb-6 relative">
+          <nav className="-mb-px flex space-x-2 sm:space-x-8" role="tablist" aria-label="Trip sections">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  id={`tab-${tab.id}`}
+                  onClick={() => {
+                    if (activeTab !== tab.id) {
+                      setActiveTab(tab.id as TabType);
+                    }
+                  }}
+                  onKeyDown={(e) => handleKeyDown(e, tab.id as TabType)}
+                  aria-selected={isActive}
+                  aria-label={`${tab.name} tab`}
+                  role="tab"
+                  tabIndex={0}
+                  className={`
+                    flex items-center gap-1 sm:gap-2 py-2 sm:py-3 px-2 sm:px-3 border-b-2 font-medium text-sm transition-all duration-200 cursor-pointer rounded-t-lg relative
+                    focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                    ${isActive
+                      ? 'border-blue-500 text-blue-600 bg-blue-50 shadow-sm'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50 hover:shadow-sm'
+                    }
+                    transform hover:scale-105 active:scale-95
+                  `}
+                >
+                  <Icon className={`h-5 w-5 sm:h-4 sm:w-4 transition-transform duration-200 ${isActive ? 'scale-110' : ''}`} />
+                  <span className="hidden sm:inline">{tab.name}</span>
+                  {isActive && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500 rounded-full animate-pulse"></div>
+                  )}
+                  {/* Subtle ripple effect */}
+                  <div className="absolute inset-0 rounded-t-lg bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                </button>
+              );
+            })}
+          </nav>
+        </div>
 
-             {/* Tab Content with Smooth Transitions */}
-       <div 
-         key={activeTab}
-         className="transition-all duration-300 ease-in-out relative min-h-[400px]"
-         role="tabpanel"
-         aria-labelledby={`tab-${activeTab}`}
-         id={`panel-${activeTab}`}
-       >
-         <div className="animate-in fade-in-0 duration-200">
-           {renderTabContent()}
-         </div>
-       </div>
+        {/* Tab Content with Smooth Transitions */}
+        <div 
+          key={activeTab}
+          className="transition-all duration-300 ease-in-out relative min-h-[400px]"
+          role="tabpanel"
+          aria-labelledby={`tab-${activeTab}`}
+          id={`panel-${activeTab}`}
+        >
+          <div className="animate-in fade-in-0 duration-200">
+            {renderTabContent()}
+          </div>
+        </div>
+      </div>
 
       {/* Modals */}
       {isAddLocationModalOpen && (
