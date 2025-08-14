@@ -229,7 +229,7 @@ function ItineraryViewContent({ trip, itineraryDays, locations, participants, pa
             {activeSubTab === 'participants' && 'Participants'}
           </h2>
           <p className="text-sm sm:text-base text-gray-600 mt-1">
-            {activeSubTab === 'calendar' && (isEditing ? 'Edit mode: Select days to assign locations' : 'Plan your daily activities')}
+            {activeSubTab === 'calendar' && 'Plan your daily activities'}
             {activeSubTab === 'locations' && 'Manage locations for your trip'}
             {activeSubTab === 'participants' && 'Manage who\'s coming on your trip'}
           </p>
