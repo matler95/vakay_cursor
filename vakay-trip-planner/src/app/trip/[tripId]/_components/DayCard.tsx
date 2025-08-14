@@ -142,7 +142,7 @@ export function DayCard({
         <div className="absolute top-1 right-1 sm:top-2 sm:right-2 z-10">
           <input
             type="checkbox"
-            checked={isSelected}
+            checked={isSelected} 
             onChange={(e) => {
               e.stopPropagation();
               onSelectDate();
@@ -151,7 +151,7 @@ export function DayCard({
           />
         </div>
       )}
-
+      
       {/* Date Header with Month */}
       <div className="flex items-center gap-1 mb-2 sm:mb-3">
         {/* Month */}
@@ -168,8 +168,8 @@ export function DayCard({
         {isToday && (
           <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-500 rounded-full"></div>
         )}
-      </div>
-
+        </div>
+        
       {/* Content Area - with proper spacing and overflow handling */}
       <div className="space-y-1.5 sm:space-y-2 min-h-0 flex-1">
           {/* Primary Location */}
@@ -178,8 +178,8 @@ export function DayCard({
               <span className="text-xs sm:text-sm font-medium text-gray-900">
                 {(location1 as Location).name}
               </span>
-            </div>
-          )}
+              </div>
+            )}
 
           {/* Transfer Location */}
           {isTransfer && location1 && location2 && (
@@ -188,7 +188,7 @@ export function DayCard({
               <span className="truncate">
                 {(location2 as Location).name}
               </span>
-            </div>
+              </div>
           )}
 
 

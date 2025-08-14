@@ -5,7 +5,7 @@ import { ItineraryView } from './ItineraryView';
 import { LocationManager } from './LocationManager';
 import { ParticipantManager, type Participant } from './ParticipantManager';
 import { EditTripInline } from './EditTripInline';
-import { Calendar, MapPin, MapPinPlus, UserRoundPlus, Bed, Plane, Link as LinkIcon, DollarSign } from 'lucide-react';
+import { Calendar, MapPin, MapPinPlus, UserRoundPlus, Bed, Plane, Link as LinkIcon, DollarSign, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useState } from 'react';
@@ -102,30 +102,23 @@ export function TripPageClient({
       case 'plan':
         return (
           <>
-                         {/* Secondary Header - Trip Plan */}
-             <div className="flex justify-between items-center gap-4 mb-6">
-               <div>
-                 <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Trip Plan</h2>
-                 {isEditing ? (
-                   <div className="text-gray-600 mt-1">
-                     <strong>Edit Mode:</strong> Edit days individually or select multiple to update locations
-                   </div>
-                 ) : (
-                   <p className="text-gray-600 mt-1">
-                     Add locations and participants to start planning your trip
-                   </p>
-                 )}
-               </div>
+            {/* Secondary Header - Trip Plan */}
+            <div className="flex justify-between items-center gap-4 mb-6">
+              <div>
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Trip Plan</h2>
+                <p className="text-gray-600 mt-1">
+                  Add locations and participants to start planning your trip
+                </p>
+              </div>
 
-               <div className="flex gap-3">
+              <div className="flex gap-3">
                 {/* Add Participant Button */}
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button onClick={() => setIsAddParticipantModalOpen(true)} 
-                      variant="outline" 
-                      // size="sm" 
-                      className="flex items-center gap-2 hover:scale-105 transition-transform duration-200">
+                        variant="outline" 
+                        className="flex items-center gap-2 hover:scale-105 transition-transform duration-200">
                         <UserRoundPlus className="h-4 w-4" />
                       </Button>
                     </TooltipTrigger>
@@ -135,16 +128,12 @@ export function TripPageClient({
                   </Tooltip>
                 </TooltipProvider>
 
-                
-                
                 {/* Add Location Button */}
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button onClick={() => setIsAddLocationModalOpen(true)} 
-                      // variant="outline" 
-                      // size="sm" 
-                      className="flex items-center gap-2 hover:scale-105 transition-transform duration-200">
+                        className="flex items-center gap-2 hover:scale-105 transition-transform duration-200">
                         <MapPinPlus className="h-4 w-4" />
                       </Button>
                     </TooltipTrigger>
@@ -153,81 +142,79 @@ export function TripPageClient({
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-
               </div>
             </div>
 
-                         {/* Calendar Container */}
-             <div className="mb-4 sm:mb-8 rounded-xl sm:rounded-2xl bg-white shadow p-3 sm:p-6">
-               <ItineraryView
-                 trip={trip}
-                 itineraryDays={itineraryDays || []}
-                 locations={locations || []}
-                 isEditing={isEditing}
-                 setIsEditing={setIsEditing}
-               />
-             </div>
-
-                         {/* Locations & Participants Side-by-Side */}
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8">
-               <div className="rounded-xl sm:rounded-2xl bg-white shadow p-4 sm:p-6 min-h-[250px] sm:min-h-[300px] flex flex-col">
-                 <LocationManager tripId={trip.id} locations={locations || []} />
-               </div>
-               <div className="rounded-xl sm:rounded-2xl bg-white shadow p-4 sm:p-6 min-h-[250px] sm:min-h-[300px] flex flex-col">
-                 <ParticipantManager tripId={trip.id} participants={participants || []} currentUserRole={participantRole?.role || null} />
-               </div>
-             </div>
+            {/* Calendar Container */}
+            <div className="mb-4 sm:mb-8 rounded-xl sm:rounded-2xl bg-white shadow p-3 sm:p-6">
+              <ItineraryView
+                trip={trip}
+                itineraryDays={itineraryDays || []}
+                locations={locations || []}
+                participants={participants || []}
+                participantRole={participantRole?.role || null}
+                isEditing={isEditing}
+                setIsEditing={setIsEditing}
+              />
+            </div>
           </>
         );
 
-             case 'accommodation':
-         return (
-           <AccommodationView
-             trip={trip}
-             accommodations={accommodations || []}
-             expenseStatus={accommodationExpenseStatus || {}}
-             userRole={participantRole?.role || null}
-             currentUserId={currentUserId}
-           />
-         );
+      case 'accommodation':
+        return (
+          <AccommodationView
+            trip={trip}
+            accommodations={accommodations || []}
+            expenseStatus={accommodationExpenseStatus || {}}
+            userRole={participantRole?.role || null}
+            currentUserId={currentUserId}
+          />
+        );
 
-             case 'transportation':
-         return (
-           <TransportationView
-             trip={trip}
-             transportation={transportation || []}
-             expenseStatus={transportationExpenseStatus || {}}
-             userRole={participantRole?.role || null}
-             currentUserId={currentUserId}
-           />
-         );
+      case 'transportation':
+        return (
+          <TransportationView
+            trip={trip}
+            transportation={transportation || []}
+            expenseStatus={transportationExpenseStatus || {}}
+            userRole={participantRole?.role || null}
+            currentUserId={currentUserId}
+          />
+        );
 
-             case 'links':
-         return (
-           <UsefulLinksView
-             trip={trip}
-             usefulLinks={usefulLinks || []}
-             userRole={participantRole?.role || null}
-             currentUserId={currentUserId}
-           />
-         );
+      case 'links':
+        return (
+          <UsefulLinksView
+            trip={trip}
+            usefulLinks={usefulLinks || []}
+            userRole={participantRole?.role || null}
+            currentUserId={currentUserId}
+          />
+        );
 
-             case 'expenses':
-         return (
-           <ExpenseView
-             trip={trip}
-             expenses={expenses || []}
-             categories={expenseCategories || []}
-             tripParticipants={participants || []}
-             userRole={participantRole?.role || null}
-             currentUserId={currentUserId}
-             addExpenseAction={async () => ({ message: 'Not implemented' })}
-             updateExpenseStatusAction={async () => ({ message: 'Not implemented' })}
-             updateTripMainCurrencyAction={async () => ({ message: 'Not implemented' })}
-             deleteExpenseAction={async () => ({ message: 'Not implemented' })}
-             updateExpenseAction={async () => ({ message: 'Not implemented' })}
-           />
-         );
+      case 'expenses':
+        // Convert participants to the format expected by ExpenseView
+        const tripParticipants = participants.map(p => ({
+          user_id: p.profiles.id,
+          role: p.role || 'traveler',
+          profiles: p.profiles
+        }));
+
+        return (
+          <ExpenseView
+            trip={trip}
+            expenses={expenses || []}
+            categories={expenseCategories || []}
+            tripParticipants={tripParticipants}
+            userRole={participantRole?.role || null}
+            currentUserId={currentUserId}
+            addExpenseAction={async () => ({ message: 'Not implemented' })}
+            updateExpenseStatusAction={async () => ({ message: 'Not implemented' })}
+            updateTripMainCurrencyAction={async () => ({ message: 'Not implemented' })}
+            deleteExpenseAction={async () => ({ message: 'Not implemented' })}
+            updateExpenseAction={async () => ({ message: 'Not implemented' })}
+          />
+        );
 
       default:
         return null;

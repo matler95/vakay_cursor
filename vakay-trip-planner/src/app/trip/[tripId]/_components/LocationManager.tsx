@@ -127,7 +127,6 @@ export function LocationManager({ tripId, locations, onLocationsChange }: Locati
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-          <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-pink-500" /> Locations
         </h2>
         <div className="flex items-center gap-1 sm:gap-2">
           {locations.length > 0 && (

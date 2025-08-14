@@ -137,7 +137,6 @@ export function ParticipantManager({ tripId, participants, currentUserRole }: Pa
     <div className="space-y-4">
       <div className="flex items-center justify-between">
           <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-          <UsersRound className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600"/> Participants
           </h2>
         <div className="flex items-center gap-1 sm:gap-2">
           {isAdmin && participants.length > 0 && (

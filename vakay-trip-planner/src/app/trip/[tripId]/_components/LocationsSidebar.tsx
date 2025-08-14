@@ -4,7 +4,6 @@ import { useState, useMemo } from 'react';
 import { Database } from '@/types/database.types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { MapPin, Star, Clock, Plus, Search, Filter, Edit, Trash2, Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';

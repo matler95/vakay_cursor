@@ -11,11 +11,11 @@ import { UndoManager, useUndoManager } from './UndoManager';
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Pencil, CheckCircle, AlertCircle, X, Calendar, List, MapPin, Settings } from 'lucide-react';
+import { Pencil, CheckCircle, AlertCircle, X, Calendar, List, MapPin, Settings, MapPinPlus, UserRoundPlus } from 'lucide-react';
 import { BulkActionPanel } from './BulkActionPanel';
+import { LocationManager } from './LocationManager';
+import { ParticipantManager, type Participant } from './ParticipantManager';
 import { saveItineraryChanges } from '../actions';
-import { useActionState } from 'react';
-
 
 type Trip = Database['public']['Tables']['trips']['Row'];
 type ItineraryDay = Database['public']['Tables']['itinerary_days']['Row'];
@@ -25,18 +25,23 @@ interface ItineraryViewProps {
   trip: Trip;
   itineraryDays: ItineraryDay[];
   locations: Location[];
+  participants: Participant[];
+  participantRole: string | null;
   isEditing: boolean;
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
+type ItinerarySubTab = 'calendar' | 'locations' | 'participants';
 
-export function ItineraryView({ trip, itineraryDays, locations, isEditing, setIsEditing }: ItineraryViewProps) {
+export function ItineraryView({ trip, itineraryDays, locations, participants, participantRole, isEditing, setIsEditing }: ItineraryViewProps) {
   return (
     <UndoManager>
       <ItineraryViewContent 
         trip={trip}
         itineraryDays={itineraryDays}
         locations={locations}
+        participants={participants}
+        participantRole={participantRole}
         isEditing={isEditing}
         setIsEditing={setIsEditing}
       />
@@ -45,19 +50,35 @@ export function ItineraryView({ trip, itineraryDays, locations, isEditing, setIs
 }
 
 // Separate component that can use the undo context
-function ItineraryViewContent({ trip, itineraryDays, locations, isEditing, setIsEditing }: ItineraryViewProps) {
+function ItineraryViewContent({ trip, itineraryDays, locations, participants, participantRole, isEditing, setIsEditing }: ItineraryViewProps) {
   const [selectedDates, setSelectedDates] = useState<Set<string>>(new Set());
   const [draftItinerary, setDraftItinerary] = useState<Map<string, ItineraryDay>>(new Map());
-  const [state, formAction] = useActionState(saveItineraryChanges, { message: '' });
+  const [state, setState] = useState<{ message: string }>({ message: '' });
   const [showMessage, setShowMessage] = useState(false);
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('list'); // Default to list on mobile
   const [showLocationsSidebar, setShowLocationsSidebar] = useState(false);
+  const [activeSubTab, setActiveSubTab] = useState<ItinerarySubTab>('calendar');
   const { addAction } = useUndoManager();
+
+  // Form action function that matches the expected signature
+  const formAction = async (formData: FormData) => {
+    try {
+      const result = await saveItineraryChanges(state, formData);
+      if (result?.message) {
+        setState({ message: result.message });
+      }
+      return result;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred';
+      setState({ message: errorMessage });
+      return { message: errorMessage };
+    }
+  };
   
 
 
   useEffect(() => {
-    const initialMap = new Map(itineraryDays.map(day => [day.date, day]));
+    const initialMap = new Map((itineraryDays || []).map(day => [day.date, day]));
     setDraftItinerary(initialMap);
   }, [itineraryDays]);
 
@@ -81,7 +102,7 @@ function ItineraryViewContent({ trip, itineraryDays, locations, isEditing, setIs
 
   // Auto-dismiss status messages after 3 seconds
   useEffect(() => {
-    if (state.message) {
+    if (state?.message) {
       setShowMessage(true);
       const timer = setTimeout(() => {
         setShowMessage(false);
@@ -89,7 +110,7 @@ function ItineraryViewContent({ trip, itineraryDays, locations, isEditing, setIs
 
       return () => clearTimeout(timer);
     }
-  }, [state.message]);
+  }, [state?.message]);
 
   const handleSelectDate = (dateStr: string) => {
     const newSelectedDates = new Set(selectedDates);
@@ -256,12 +277,19 @@ function ItineraryViewContent({ trip, itineraryDays, locations, isEditing, setIs
 
   // Quick action handlers
 
-  if (!trip.start_date || !trip.end_date) {
-    return <p>Please set a start and end date for this trip.</p>;
+  // Calculate trip dates
+  const tripDates = trip.start_date && trip.end_date 
+    ? getDatesInRange(new Date(trip.start_date), new Date(trip.end_date))
+    : [];
+
+  // Early return if no trip dates
+  if (tripDates.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-500">Please set start and end dates for this trip to view the itinerary.</p>
+      </div>
+    );
   }
-
-  const tripDates = getDatesInRange(new Date(trip.start_date), new Date(trip.end_date));
-
 
   // Calculate unique months/years in tripDates
   const monthYearSet = Array.from(new Set(tripDates.map(d => `${d.getUTCMonth()}-${d.getUTCFullYear()}`)))
@@ -285,27 +313,125 @@ function ItineraryViewContent({ trip, itineraryDays, locations, isEditing, setIs
   const firstDay = tripDates[0].getUTCDay();
   const emptyCells = (firstDay + 6) % 7;
 
+  // Show success/error message
+  if (showMessage && state?.message) {
+    return (
+      <div className="fixed top-4 right-4 z-50">
+        <div className={`flex items-center gap-2 p-4 rounded-lg shadow-lg ${
+          state.message.includes('success') || state.message.includes('saved')
+            ? 'bg-green-100 text-green-800 border border-green-200'
+            : 'bg-red-100 text-red-800 border border-red-200'
+        }`}>
+          {state.message.includes('success') || state.message.includes('saved') ? (
+            <CheckCircle className="h-5 w-5" />
+          ) : (
+            <AlertCircle className="h-5 w-5" />
+          )}
+          <span className="text-sm font-medium">{state.message}</span>
+          <button
+            onClick={() => setShowMessage(false)}
+            className="ml-2 text-gray-500 hover:text-gray-700"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       {/* Header with Trip Info and Actions */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-3">
-                  <div className="flex gap-3 ml-auto">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Itinerary</h2>
+          <p className="text-gray-600 text-sm sm:text-base">
+            {isEditing ? 'Edit mode: Select days to assign locations' : 'Plan your daily activities'}
+          </p>
+        </div>
+      </div>
+
+      {/* Sub-tabs for Itinerary sections */}
+      <div className="border-b border-gray-200 mb-4">
+        <nav className="-mb-px flex space-x-6" role="tablist" aria-label="Itinerary sections">
+          {[
+            { id: 'calendar', name: 'Calendar', icon: Calendar },
+            { id: 'locations', name: 'Locations', icon: MapPin },
+            { id: 'participants', name: 'Participants', icon: UserRoundPlus }
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeSubTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveSubTab(tab.id as ItinerarySubTab)}
+                className={`flex items-center gap-2 py-2 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
+                  isActive
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                {tab.name}
+              </button>
+            );
+          })}
+        </nav>
+      </div>
+
+      {/* Sub-tab Content */}
+      {activeSubTab === 'calendar' && (
+        <>
+          {/* Calendar Controls - Edit and View Toggle */}
+          <div className="flex justify-end gap-3 mb-4">
+            {/* Edit Mode Toggle */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    onClick={() => setIsEditing(!isEditing)}
+                    variant={isEditing ? "default" : "outline"}
+                    size="sm"
+                    className="flex items-center gap-2"
+                  >
+                    {isEditing ? (
+                      <>
+                        <CheckCircle className="h-4 w-4" />
+                        <span className="hidden sm:inline">Done</span>
+                      </>
+                    ) : (
+                      <>
+                        <Pencil className="h-4 w-4" />
+                        <span className="hidden sm:inline">Edit</span>
+                      </>
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{isEditing ? 'Finish editing' : 'Edit itinerary'}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
             {/* View Toggle Button */}
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button 
                     variant="outline" 
+                    size="sm"
                     onClick={() => setViewMode(viewMode === 'calendar' ? 'list' : 'calendar')}
-                    className="hidden md:flex items-center gap-2"
+                    className="flex items-center gap-2"
                   >
                     {viewMode === 'calendar' ? (
                       <>
                         <List className="h-4 w-4" />
+                        <span className="hidden sm:inline">List</span>
                       </>
                     ) : (
                       <>
                         <Calendar className="h-4 w-4" />
+                        <span className="hidden sm:inline">Calendar</span>
                       </>
                     )}
                   </Button>
@@ -315,84 +441,8 @@ function ItineraryViewContent({ trip, itineraryDays, locations, isEditing, setIs
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-
-            {/* Locations Sidebar Toggle */}
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setShowLocationsSidebar(!showLocationsSidebar)}
-                    className="flex items-center gap-2"
-                  >
-                    <MapPin className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{showLocationsSidebar ? 'Hide' : 'Show'} locations sidebar</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
-            {/* Edit Button - always visible */}
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setIsEditing(!isEditing)}
-                    className="flex items-center gap-2"
-                  >
-                    {isEditing ? (
-                      <>
-                        <CheckCircle className="h-4 w-4" />
-                        Exit Edit
-                      </>
-                    ) : (
-                      <>
-                        <Pencil className="h-4 w-4" />
-                        Edit
-                      </>
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{isEditing ? 'Exit edit mode' : 'Edit trip plan'}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-        </div>
-      </div>
-      
-      {/* Status message */}
-      {state.message && showMessage && (
-        <div className={`mb-4 flex items-center justify-between rounded-md p-3 transition-all duration-300 ${
-          state.message.includes('successfully') 
-            ? 'bg-green-50 text-green-800 border border-green-200' 
-            : 'bg-red-50 text-red-800 border border-red-200'
-        }`}>
-          <div className="flex items-center gap-2">
-            {state.message.includes('successfully') ? (
-              <CheckCircle className="h-4 w-4" />
-            ) : (
-              <AlertCircle className="h-4 w-4" />
-            )}
-            <span className="text-sm">{state.message}</span>
           </div>
-          <button
-            onClick={() => {
-              setShowMessage(false);
-            }}
-            className="ml-2 text-gray-500 hover:text-gray-700 transition-colors"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-      )}
-      
-      {/* View Content */}
-      <div className="flex">
-        <div className="flex-1">
+
           {viewMode === 'calendar' ? (
             <CalendarGrid
               trip={trip}
@@ -415,34 +465,46 @@ function ItineraryViewContent({ trip, itineraryDays, locations, isEditing, setIs
               onUpdateDraft={handleUpdateDraft}
             />
           )}
-        </div>
+        </>
+      )}
 
-        {/* Locations Sidebar */}
-        {showLocationsSidebar && (
-          <LocationsSidebar
-            locations={locations}
-            itineraryDays={itineraryDays}
-            tripId={trip.id}
-            onLocationSelect={(location) => {
-              // Handle location selection - could open day editor or assign to selected dates
-              console.log('Location selected:', location);
-            }}
-            onEditLocation={(location) => {
-              // Handle location editing - could open edit modal
-              console.log('Edit location:', location);
-            }}
-            onDeleteLocation={(locationId) => {
-              // Handle location deletion
-              console.log('Delete location:', locationId);
-            }}
-            onCreateLocation={() => {
-              // Handle location creation - could open add location modal
-              console.log('Create location');
-            }}
-            className="w-80 border-l border-gray-200"
-          />
-        )}
-      </div>
+      {activeSubTab === 'locations' && (
+        <div className="space-y-4">
+          <LocationManager tripId={trip.id} locations={locations} />
+        </div>
+      )}
+
+      {activeSubTab === 'participants' && (
+        <div className="space-y-4">
+          <ParticipantManager tripId={trip.id} participants={participants} currentUserRole={participantRole} />
+        </div>
+      )}
+
+      {/* Locations Sidebar */}
+      {showLocationsSidebar && (
+        <LocationsSidebar
+          locations={locations}
+          itineraryDays={itineraryDays}
+          tripId={trip.id}
+          onLocationSelect={(location) => {
+            // Handle location selection - could open day editor or assign to selected dates
+            console.log('Location selected:', location);
+          }}
+          onEditLocation={(location) => {
+            // Handle location editing - could open edit modal
+            console.log('Edit location:', location);
+          }}
+          onDeleteLocation={(locationId) => {
+            // Handle location deletion
+            console.log('Delete location:', locationId);
+          }}
+          onCreateLocation={() => {
+            // Handle location creation - could open add location modal
+            console.log('Create location');
+          }}
+          className="w-80 border-l border-gray-200"
+        />
+      )}
 
       {/* Floating Bulk Action Panel */}
       {isEditing && selectedDates.size > 1 && (
