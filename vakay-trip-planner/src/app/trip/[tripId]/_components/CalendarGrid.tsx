@@ -581,15 +581,15 @@ export function CalendarGrid({
   }, [selectedRange, selectedDates, draftItinerary, clearSelection, trip.id]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 pb-16 sm:pb-8 md:pb-0">
       {/* Calendar Container */}
-      <div >
+      <div>
         {/* Weekday headers */}
-        <div className="grid grid-cols-7 gap-px">
+        <div className="grid grid-cols-7 gap-px mb-2">
           {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
             <div
               key={day}
-              className="py-3 text-center text-sm font-medium text-gray-500 uppercase tracking-wide"
+              className="py-2 sm:py-3 text-center text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wide"
             >
               {day}
             </div>
@@ -607,10 +607,31 @@ export function CalendarGrid({
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
           onMouseMove={handleMouseMove}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            handleMouseUp();
+          }}
+          onTouchMove={(e) => {
+            e.preventDefault();
+            // Touch move handling can be simplified for mobile
+            if (selectionStart && isEditing) {
+              const touch = e.touches[0];
+              const element = document.elementFromPoint(touch.clientX, touch.clientY);
+              if (element) {
+                const dayCard = element.closest('[data-date]');
+                if (dayCard) {
+                  const dateStr = dayCard.getAttribute('data-date');
+                  if (dateStr && dateStr !== selectionStart) {
+                    handleMouseEnter(dateStr);
+                  }
+                }
+              }
+            }
+          }}
         >
           {/* Empty cells for proper alignment */}
           {Array.from({ length: emptyCellsBefore }).map((_, i) => (
-            <div key={`empty-before-${i}`} className="min-h-[80px] sm:min-h-[100px] bg-gray-50 border border-gray-100"></div>
+            <div key={`empty-before-${i}`} className="min-h-[50px] sm:min-h-[60px] md:min-h-[80px] lg:min-h-[100px] bg-gray-50 border border-gray-100"></div>
           ))}
 
           {/* Consecutive day grouping overlay */}
@@ -683,7 +704,7 @@ export function CalendarGrid({
 
           {/* Empty cells after trip to complete the week */}
           {Array.from({ length: emptyCellsAfter }).map((_, i) => (
-            <div key={`empty-after-${i}`} className="min-h-[80px] sm:min-h-[100px] bg-gray-50 border border-gray-100"></div>
+            <div key={`empty-after-${i}`} className="min-h-[50px] sm:min-h-[60px] md:min-h-[80px] lg:min-h-[100px] bg-gray-50 border border-gray-100"></div>
           ))}
 
           {/* Range selection indicator */}
@@ -695,42 +716,53 @@ export function CalendarGrid({
         </div>
       </div>
 
-      {/* Save/Cancel buttons when in edit mode - floating above calendar */}
+      {/* Save/Cancel buttons when in edit mode - Mobile optimized */}
       {showSaveCancel && (
-        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 bg-white rounded-xl shadow-lg border border-gray-200 p-4 min-w-[400px]">
-          <div className="flex items-center justify-between">
+        <div className="fixed bottom-4 sm:bottom-6 left-4 right-4 sm:left-1/2 sm:transform sm:-translate-x-1/2 z-50 bg-white rounded-xl shadow-lg border border-gray-200 p-4 sm:min-w-[400px] max-w-full">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center gap-2 text-green-700">
               <div className="w-2 h-2 bg-green-500 rounded-full"></div>
               <span className="text-sm font-medium">
                 {hasDraftChanges ? 'You have unsaved changes' : 'Edit mode active'}
               </span>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <Button 
                 onClick={handleCancelChanges}
                 variant="outline"
-                className="px-6"
+                className="h-12 sm:h-10 px-6 text-sm font-medium"
               >
                 Cancel
               </Button>
               <Button 
                 onClick={handleSaveChanges}
                 disabled={!hasDraftChanges}
-                className="px-6 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                className="h-12 sm:h-10 px-6 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-sm font-medium"
               >
                 Save Changes
               </Button>
             </div>
           </div>
           
-          {/* Instructions moved to floating bar */}
-          <div className="mt-3 pt-3 border-t border-gray-200">
+          {/* Instructions - Hidden on very small screens */}
+          <div className="mt-3 pt-3 border-t border-gray-200 hidden sm:block">
             <div className="flex items-center gap-2 text-blue-800">
               <CalendarIcon className="h-4 w-4" />
               <span className="text-sm font-medium">How to edit:</span>
             </div>
             <p className="text-sm text-blue-700 mt-1">
               Click and drag to select date ranges, then use the Range Action Bar to assign locations. Changes are saved as drafts until you click "Save Changes".
+            </p>
+          </div>
+          
+          {/* Mobile instructions */}
+          <div className="mt-3 pt-3 border-t border-gray-200 sm:hidden">
+            <div className="flex items-center gap-2 text-blue-800">
+              <CalendarIcon className="h-4 w-4" />
+              <span className="text-xs font-medium">Mobile editing:</span>
+            </div>
+            <p className="text-xs text-blue-700 mt-1">
+              Tap dates to select, then use the action bar below to assign locations.
             </p>
           </div>
         </div>

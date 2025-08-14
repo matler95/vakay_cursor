@@ -127,9 +127,10 @@ export function DayCard({
   return (
     <div
       className={cn(
-        "relative min-h-[80px] sm:min-h-[100px] bg-white p-2 sm:p-3 transition-all duration-200 cursor-pointer",
+        "relative min-h-[50px] sm:min-h-[60px] md:min-h-[80px] lg:min-h-[100px] bg-white p-1.5 sm:p-2 md:p-3 transition-all duration-200 cursor-pointer touch-manipulation",
         " hover:outline-2 hover:outline-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50",
-        isInRange && "ring-2 ring-blue-500 ring-opacity-50 bg-blue-50",
+        " active:scale-95 sm:active:scale-100", // Mobile touch feedback
+        isInRange && "ring-2 ring-blue-500 ring-opacity-50",
         isToday && "bg-blue-50 border-l-4 border-l-blue-500",
         isSelected && "ring-2 ring-blue-600 bg-blue-100",
         isEditingCalendar && "select-none"
@@ -154,35 +155,35 @@ export function DayCard({
               e.stopPropagation();
               onSelectDate();
             }}
-            className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+            className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 focus:ring-2 touch-manipulation"
           />
         </div>
       )}
       
       {/* Date Header with Month */}
-      <div className="flex items-center gap-1 mb-2 sm:mb-3">
+      <div className="flex items-center gap-1 mb-1 sm:mb-2 md:mb-3">
         {/* Month */}
         <span className="text-xs text-gray-500 font-medium">
           {date.toLocaleDateString('en-US', { month: 'short' })}
         </span>
         {/* Day Number */}
         <span className={cn(
-          "text-base sm:text-lg font-semibold",
+          "text-sm sm:text-base md:text-lg font-semibold",
           isToday ? "text-blue-600" : "text-gray-900"
         )}>
           {date.getDate()}
         </span>
         {isToday && (
-          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-500 rounded-full"></div>
+          <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 md:w-2 md:h-2 bg-blue-500 rounded-full"></div>
         )}
         </div>
         
       {/* Content Area - with proper spacing and overflow handling */}
-      <div className="space-y-1.5 sm:space-y-2 min-h-0 flex-1">
+      <div className="space-y-1 sm:space-y-1.5 md:space-y-2 min-h-0 flex-1">
           {/* Primary Location */}
           {location1 && (
-            <div className="mb-2 truncate">
-              <span className="text-xs sm:text-sm font-medium text-gray-900">
+            <div className="mb-1 sm:mb-2 truncate">
+              <span className="text-xs sm:text-sm font-medium text-gray-900 leading-tight">
                 {(location1 as Location).name}
               </span>
               </div>
@@ -191,8 +192,8 @@ export function DayCard({
           {/* Transfer Location */}
           {isTransfer && location1 && location2 && (
             <div className="flex items-center gap-1 text-xs text-gray-600">
-              <span>→</span>
-              <span className="truncate">
+              <span className="text-blue-500">→</span>
+              <span className="truncate leading-tight">
                 {(location2 as Location).name}
               </span>
               </div>
@@ -201,9 +202,9 @@ export function DayCard({
 
         {/* Empty State */}
         {!location1 && !location2 && !dayData?.notes && (
-          <div className="h-6 sm:h-8 flex items-center justify-center">
-            <span className="text-xs text-gray-400 text-center">
-              {isEditingCalendar ? "Click to add location" : "No plans"}
+          <div className="h-4 sm:h-6 md:h-8 flex items-center justify-center">
+            <span className="text-xs text-gray-400 text-center leading-tight">
+              {isEditingCalendar ? "Tap to add location" : "No plans"}
             </span>
           </div>
         )}

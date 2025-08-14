@@ -87,27 +87,28 @@ export function RangeActionBar({
   const isDoneDisabled = !selectedLocation || selectedLocation === 'none';
 
   return (
-    <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40 bg-white rounded-xl shadow-lg border border-gray-200 p-6 min-w-[400px]">
-      <div className="space-y-4">
+    <div className="fixed bottom-4 sm:bottom-6 left-4 right-4 sm:left-1/2 sm:transform sm:-translate-x-1/2 z-40 bg-white rounded-xl shadow-lg border border-gray-200 p-4 sm:p-6 sm:min-w-[400px] max-w-full">
+      <div className="space-y-4 sm:space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900">
             Assign Location to {selectedRange.start === selectedRange.end ? 'Day' : 'Range'}
           </h3>
           <button
             onClick={onClear}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors touch-manipulation"
+            aria-label="Close"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
         {/* Date Range Display */}
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
           {selectedRange.start === selectedRange.end ? (
-            <span>{new Date(selectedRange.start).toLocaleDateString()}</span>
+            <span className="font-medium">{new Date(selectedRange.start).toLocaleDateString()}</span>
           ) : (
-            <span>
+            <span className="font-medium">
               {new Date(selectedRange.start).toLocaleDateString()} – {new Date(selectedRange.end).toLocaleDateString()}
             </span>
           )}
@@ -119,19 +120,19 @@ export function RangeActionBar({
             Location
           </label>
           <Select value={selectedLocation} onValueChange={setSelectedLocation}>
-            <SelectTrigger>
+            <SelectTrigger className="h-12 sm:h-10">
               <SelectValue placeholder="Select a location" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="none">No location</SelectItem>
               {locations.map((location) => (
                 <SelectItem key={location.id} value={location.id.toString()}>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3 py-2">
                     <div 
-                      className="w-3 h-3 rounded-full" 
+                      className="w-4 h-4 rounded-full border border-gray-300" 
                       style={{ backgroundColor: location.color || '#6B7280' }}
                     />
-                    {location.name}
+                    <span className="text-sm">{location.name}</span>
                   </div>
                 </SelectItem>
               ))}
@@ -145,42 +146,42 @@ export function RangeActionBar({
             Transfer Location (optional)
           </label>
           <Select value={transferLocation} onValueChange={setTransferLocation}>
-            <SelectTrigger>
+            <SelectTrigger className="h-12 sm:h-10">
               <SelectValue placeholder="Select transfer location (optional)" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="none">No transfer</SelectItem>
               {locations.map((location) => (
                 <SelectItem key={location.id} value={location.id.toString()}>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3 py-2">
                     <div 
-                      className="w-3 h-3 rounded-full" 
+                      className="w-4 h-4 rounded-full border border-gray-300" 
                       style={{ backgroundColor: location.color || '#6B7280' }}
                     />
-                    {location.name}
+                    <span className="text-sm">{location.name}</span>
                   </div>
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-500 bg-blue-50 p-2 rounded border border-blue-200">
             If selected, this will be assigned as a transfer to the last day of the range
           </p>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-3 pt-2">
+        {/* Action Buttons - Stacked on mobile for better touch targets */}
+        <div className="flex flex-col sm:flex-row gap-3 pt-2">
           <Button
             onClick={onClear}
             variant="outline"
-            className="flex-1"
+            className="flex-1 h-12 sm:h-10 text-sm font-medium"
           >
             Cancel
           </Button>
           <Button
             onClick={handleDone}
             disabled={isDoneDisabled}
-            className="flex-1"
+            className="flex-1 h-12 sm:h-10 text-sm font-medium"
           >
             Done
           </Button>

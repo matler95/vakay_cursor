@@ -31,6 +31,18 @@ export default function TopNav({ user }: { user?: { id: string; email?: string }
     setIsMenuOpen(false);
   }, [pathname]);
 
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isMenuOpen && !(event.target as Element).closest('.mobile-menu-container')) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isMenuOpen]);
+
   return (
     <>
       {loading && (
@@ -46,21 +58,21 @@ export default function TopNav({ user }: { user?: { id: string; email?: string }
           <div className="flex items-baseline space-x-0">
             <Link
               href={user ? '/dashboard' : '/'}
-              className="text-lg font-semibold text-gray-900"
+              className="text-lg font-semibold text-gray-900 hover:text-blue-600 transition-colors"
             >
               VAKAY
             </Link>
-            <p className="text-xs text-gray-900">beta</p>
+            <p className="text-xs text-gray-900 ml-1">beta</p>
           </div>
         {user ? (
             <>
               {/* Desktop Navigation */}
               <nav className="hidden md:flex items-center gap-4 text-sm text-gray-700">
-                <Link href="/dashboard" className="flex items-center gap-2 rounded-md px-3 py-2 hover:bg-gray-50" onClick={handleNav('/dashboard')}>
+                <Link href="/dashboard" className="flex items-center gap-2 rounded-md px-3 py-2 hover:bg-gray-50 transition-colors" onClick={handleNav('/dashboard')}>
                   <LayoutDashboard className="h-4 w-4" />
                   <span>Dashboard</span>
                 </Link>
-                <Link href="/dashboard/profile" className="flex items-center gap-2 rounded-md px-3 py-2 hover:bg-gray-50" onClick={handleNav('/dashboard/profile')}>
+                <Link href="/dashboard/profile" className="flex items-center gap-2 rounded-md px-3 py-2 hover:bg-gray-50 transition-colors" onClick={handleNav('/dashboard/profile')}>
                   <UserIcon className="h-4 w-4" />
                   <span>Profile</span>
                 </Link>
@@ -70,13 +82,14 @@ export default function TopNav({ user }: { user?: { id: string; email?: string }
               {/* Mobile Menu Button */}
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="md:hidden p-2 rounded-md hover:bg-gray-50"
+                className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors touch-manipulation"
                 aria-label="Toggle menu"
+                aria-expanded={isMenuOpen}
               >
                 {isMenuOpen ? (
-                  <X className="h-5 w-5 text-gray-700" />
+                  <X className="h-6 w-6 text-gray-700" />
                 ) : (
-                  <Menu className="h-5 w-5 text-gray-700" />
+                  <Menu className="h-6 w-6 text-gray-700" />
                 )}
               </button>
             </>
@@ -85,27 +98,27 @@ export default function TopNav({ user }: { user?: { id: string; email?: string }
           )}
         </div>
 
-        {/* Mobile Menu */}
+        {/* Mobile Menu - Improved for touch */}
         {user && isMenuOpen && (
-          <div className="md:hidden border-t border-gray-100 bg-white">
-            <nav className="container mx-auto px-4 py-2 space-y-1">
+          <div className="mobile-menu-container md:hidden border-t border-gray-100 bg-white shadow-lg">
+            <nav className="container mx-auto px-4 py-3 space-y-1">
               <Link 
                 href="/dashboard" 
-                className="flex items-center gap-3 rounded-md px-3 py-3 text-sm text-gray-700 hover:bg-gray-50" 
+                className="flex items-center gap-3 rounded-lg px-4 py-4 text-sm text-gray-700 hover:bg-gray-50 transition-colors touch-manipulation" 
                 onClick={handleNav('/dashboard')}
               >
-                <LayoutDashboard className="h-4 w-4" />
-                <span>Dashboard</span>
+                <LayoutDashboard className="h-5 w-5 text-gray-500" />
+                <span className="font-medium">Dashboard</span>
               </Link>
               <Link 
                 href="/dashboard/profile" 
-                className="flex items-center gap-3 rounded-md px-3 py-3 text-sm text-gray-700 hover:bg-gray-50" 
+                className="flex items-center gap-3 rounded-lg px-4 py-4 text-sm text-gray-700 hover:bg-gray-50 transition-colors touch-manipulation" 
                 onClick={handleNav('/dashboard/profile')}
               >
-                <UserIcon className="h-4 w-4" />
-                <span>Profile</span>
+                <UserIcon className="h-5 w-5 text-gray-500" />
+                <span className="font-medium">Profile</span>
               </Link>
-              <div className="px-3 py-3">
+              <div className="px-4 py-2">
                 <LogoutButton />
               </div>
             </nav>

@@ -340,22 +340,22 @@ function ItineraryViewContent({ trip, itineraryDays, locations, participants, pa
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 pb-8 sm:pb-0">
       {/* Secondary Header - Calendar */}
-      <div className="flex justify-between items-center gap-4 mb-4">
+      <div className="flex justify-between items-center gap-4 mb-3 sm:mb-4">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
             Itinerary
           </h2>
-          <p className="text-gray-600 mt-1">
+          <p className="text-sm sm:text-base text-gray-600 mt-1">
             {isEditing ? 'Edit mode: Select days to assign locations' : 'Plan your daily activities'}
           </p>
         </div>
       </div>
 
       {/* Sub-tabs for Itinerary sections */}
-      <div className="border-b border-gray-200 mb-4">
-        <nav className="-mb-px flex space-x-6" role="tablist" aria-label="Itinerary sections">
+      <div className="border-b border-gray-200 mb-3 sm:mb-4">
+        <nav className="-mb-px flex space-x-4 sm:space-x-6" role="tablist" aria-label="Itinerary sections">
           {[
             { id: 'calendar', name: 'Calendar', icon: Calendar },
             { id: 'locations', name: 'Locations', icon: MapPin },
@@ -367,14 +367,14 @@ function ItineraryViewContent({ trip, itineraryDays, locations, participants, pa
               <button
                 key={tab.id}
                 onClick={() => setActiveSubTab(tab.id as ItinerarySubTab)}
-                className={`flex items-center gap-2 py-2 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
+                className={`flex items-center gap-1 sm:gap-2 py-2 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
                   isActive
                     ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
                 <Icon className="h-4 w-4" />
-                {tab.name}
+                <span className="hidden sm:inline">{tab.name}</span>
               </button>
             );
           })}
@@ -385,7 +385,7 @@ function ItineraryViewContent({ trip, itineraryDays, locations, participants, pa
       {activeSubTab === 'calendar' && (
         <>
           {/* Calendar Controls - Edit and View Toggle */}
-          <div className="flex justify-end gap-3 mb-2">
+          <div className="flex justify-end gap-2 sm:gap-3 mb-2">
             {/* Edit Mode Toggle */}
             <TooltipProvider>
               <Tooltip>
@@ -394,56 +394,56 @@ function ItineraryViewContent({ trip, itineraryDays, locations, participants, pa
                     onClick={() => setIsEditing(!isEditing)}
                     variant={isEditing ? "default" : "outline"}
                     size="sm"
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm"
                   >
                     {isEditing ? (
                       <>
-                        <CheckCircle className="h-4 w-4" />
-                        <span className="hidden sm:inline">Done</span>
+                        <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+                        <span className="hidden sm:inline">Exit Edit</span>
                       </>
                     ) : (
                       <>
-                        <Pencil className="h-4 w-4" />
+                        <Pencil className="h-3 w-3 sm:h-4 sm:w-4" />
                         <span className="hidden sm:inline">Edit</span>
                       </>
                     )}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>{isEditing ? 'Finish editing' : 'Edit itinerary'}</p>
+                  <p>{isEditing ? 'Exit edit mode' : 'Enter edit mode'}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
 
-          {/* View Toggle Button */}
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="outline" 
+            {/* View Mode Toggle */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={() => setViewMode(viewMode === 'calendar' ? 'list' : 'calendar')}
+                    variant="outline"
                     size="sm"
-                  onClick={() => setViewMode(viewMode === 'calendar' ? 'list' : 'calendar')}
-                    className="flex items-center gap-2"
-                >
-                  {viewMode === 'calendar' ? (
-                    <>
-                      <List className="h-4 w-4" />
+                    className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm"
+                  >
+                    {viewMode === 'calendar' ? (
+                      <>
+                        <List className="h-3 w-3 sm:h-4 sm:w-4" />
                         <span className="hidden sm:inline">List</span>
-                    </>
-                  ) : (
-                    <>
-                      <Calendar className="h-4 w-4" />
+                      </>
+                    ) : (
+                      <>
+                        <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
                         <span className="hidden sm:inline">Calendar</span>
-                    </>
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Switch to {viewMode === 'calendar' ? 'list' : 'calendar'} view</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-      </div>
+                      </>
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Switch to {viewMode === 'calendar' ? 'list' : 'calendar'} view</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
       
       {viewMode === 'calendar' ? (
             <CalendarGrid
