@@ -47,7 +47,7 @@ export function UsefulLinksView({
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
             Useful Links
           </h2>
-          <p className="text-gray-600 mt-1">
+          <p className="text-sm sm:text-base text-gray-600 mt-1">
             Store and organize your favorite links
           </p>
         </div>

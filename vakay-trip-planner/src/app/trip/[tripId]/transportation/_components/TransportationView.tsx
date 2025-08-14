@@ -80,7 +80,7 @@ export function TransportationView({
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
             Transportation
           </h2>
-          <p className="text-gray-600 mt-1">
+          <p className="text-sm sm:text-base text-gray-600 mt-1">
             Manage your trip transportation and travel details
           </p>
         </div>

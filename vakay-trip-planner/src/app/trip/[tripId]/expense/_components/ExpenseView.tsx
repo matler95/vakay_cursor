@@ -78,7 +78,7 @@ export function ExpenseView({
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
             Expense Tracking
           </h2>
-          <p className="text-gray-600 mt-1">
+          <p className="text-sm sm:text-base text-gray-600 mt-1">
             Track and manage trip expenses with auto rate conversion.
           </p>
         </div>

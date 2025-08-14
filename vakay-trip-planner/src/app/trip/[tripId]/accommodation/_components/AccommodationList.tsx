@@ -112,11 +112,7 @@ export function AccommodationList({
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-        <div className="flex items-center gap-3 mb-6">
-        <div className="p-2 bg-green-100 rounded-full">
-          <BedDoubleIcon className="h-6 w-6 text-green-600" />
-        </div>
-        <h3 className="text-lg font-semibold text-gray-900">Accommodations</h3>
+        <div className="flex items-center gap-3">
       </div>
 
       {/* Search only (align with expenses bar) */}
@@ -125,7 +121,7 @@ export function AccommodationList({
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
-              placeholder="Search accommodations..."
+              placeholder="Search"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"

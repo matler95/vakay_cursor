@@ -67,8 +67,8 @@ export function AccommodationView({
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
             Accommodation
           </h2>
-          <p className="text-gray-600 mt-1">
-            Manage your trip accommodations and lodging details
+          <p className="text-sm sm:text-base text-gray-600 mt-1">
+            Manage your trip accommodations.
           </p>
         </div>
         <div className="flex gap-3">
@@ -90,69 +90,7 @@ export function AccommodationView({
         </div>
       </div>
 
-      {/* Accommodation Overview */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-white rounded-xl shadow p-4">
-          <div className="flex items-center gap-3">
-            {/* <div className="p-2 bg-blue-100 rounded-lg">
-              <MapPin className="h-5 w-5 text-blue-600" />
-            </div> */}
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Stays</p>
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-5 w-5 text-blue-600" />
-                  <p className="text-2xl font-bold text-gray-900">{accommodations.length}</p>
-                </div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white rounded-xl shadow p-4">
-          <div className="flex items-center gap-3">
-            {/* <div className="p-2 bg-green-100 rounded-lg">
-              <MapPin className="h-5 w-5 text-green-600" />
-            </div> */}
-            <div>
-              <p className="text-sm font-medium text-gray-600">Nights</p>
-              <div className="flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-green-600" />
-                <p className="text-2xl font-bold text-gray-900">
-                  {accommodations.reduce((total, acc) => {
-                    const checkIn = new Date(acc.check_in_date);
-                    const checkOut = new Date(acc.check_out_date);
-                    const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
-                    return total + nights;
-                  }, 0)}
-                </p>
-              </div>    
-            </div>
-          </div>
-        </div>
 
-        <div className="bg-white rounded-xl shadow p-4">
-          <div className="flex items-center gap-3">
-            {/* <div className="p-2 bg-purple-100 rounded-lg">
-              <MapPin className="h-5 w-5 text-purple-600" />
-            </div> */}
-            <div>
-              <p className="text-sm font-medium text-gray-600">Next Stay</p>
-              <div className="flex items-center gap-2">
-                {/* <MapPin className="h-5 w-5 text-purple-600" /> */}
-                <p className="text-lg font-semibold text-gray-900">
-                  {accommodations.length > 0 ? (
-                    new Date(accommodations[0].check_in_date).toLocaleDateString('en-US', { 
-                      month: 'short', 
-                      day: 'numeric' 
-                    })
-                  ) : (
-                    'None'
-                  )}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Accommodation List */}
       <div className="bg-white rounded-xl shadow">
