@@ -5,13 +5,14 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useEffect, useState } from 'react';
+import { cn } from '@/lib/utils';
 
 type ItineraryDay = Database['public']['Tables']['itinerary_days']['Row'];
 type Location = Database['public']['Tables']['locations']['Row'];
 
 interface DayCardProps {
   date: Date;
-  dayData: ItineraryDay | undefined;
+  dayData?: ItineraryDay;
   locations: Location[];
   isEditingCalendar: boolean;
   isSelected: boolean;
@@ -19,6 +20,11 @@ interface DayCardProps {
   onSelectDate: () => void;
   onUpdateDraft: (dateStr: string, updatedValues: Partial<ItineraryDay>) => void;
   isListView?: boolean;
+  onMouseDown?: () => void;
+  onMouseEnter?: () => void;
+  onKeyDown?: (e: React.KeyboardEvent) => void;
+  isInRange?: boolean;
+  isToday?: boolean;
 }
 
 // Add a simple Switch component
@@ -46,10 +52,39 @@ function Switch({ checked, onCheckedChange, id, label, disabled }: { checked: bo
   );
 }
 
-export function DayCard({ date, dayData, locations, isEditingCalendar, isSelected, selectionCount, onSelectDate, onUpdateDraft, isListView = false }: DayCardProps) {
+export function DayCard({ 
+  date, 
+  dayData, 
+  locations, 
+  isEditingCalendar, 
+  isSelected, 
+  selectionCount, 
+  onSelectDate, 
+  onUpdateDraft, 
+  isListView = false,
+  onMouseDown,
+  onMouseEnter,
+  onKeyDown,
+  isInRange,
+  isToday
+}: DayCardProps) {
   const locationsMap = new Map(locations.map((loc) => [loc.id, loc]));
-  const location1 = dayData?.location_1_id ? (locationsMap.get(dayData.location_1_id) ?? null) : null;
-  const location2 = dayData?.location_2_id ? (locationsMap.get(dayData.location_2_id) ?? null) : null;
+  const location1: Location | null = dayData?.location_1_id ? (locationsMap.get(dayData.location_1_id) ?? null) : null;
+  const location2: Location | null = dayData?.location_2_id ? (locationsMap.get(dayData.location_2_id) ?? null) : null;
+  
+  // Debug logging
+  const dateStr = date.toISOString().split('T')[0];
+  if (date.getDate() <= 5) {
+    console.log(`DayCard ${dateStr}:`, {
+      dayData,
+      location1_id: dayData?.location_1_id,
+      location2_id: dayData?.location_2_id,
+      location1,
+      location2,
+      locationsCount: locations.length,
+      locationsMapSize: locationsMap.size
+    });
+  }
   
   // Calculate isTransfer based on current data (for coloring), but keep a local UI state to allow enabling before a value is chosen
   const isTransfer = !!location2;
@@ -60,215 +95,174 @@ export function DayCard({ date, dayData, locations, isEditingCalendar, isSelecte
 
   // Unified color logic:
   const dayStyle: React.CSSProperties = {};
-  const cardBgClass = '';
+  let cardBgClass = '';
   const textColor = 'text-gray-900';
-  if (location1 && isTransfer && location2) {
+  
+  // Enhanced styling for range selection and consecutive days
+  if (isInRange) {
+    cardBgClass = 'ring-2 ring-blue-500 ring-opacity-50 bg-blue-50';
+  } else if (location1 && isTransfer && location2) {
     // Pastel gradient with opacity
-    dayStyle.background = `linear-gradient(135deg, ${location1.color}33 0%, ${location2.color}33 100%)`;
+    const color1 = location1.color || '#6B7280';
+    const color2 = location2.color || '#6B7280';
+    dayStyle.background = `linear-gradient(135deg, ${color1}33 0%, ${color2}33 100%)`;
   } else if (location1) {
     // Pastel solid background with opacity
-    dayStyle.background = `${location1.color}33`;
+    const color1 = location1.color || '#6B7280';
+    dayStyle.background = `${color1}33`;
   }
 
-  const dateStr = date.toISOString().split('T')[0];
   const showEditOptions = isEditingCalendar; // Always show edit options when in edit mode
   const isDisabled = isEditingCalendar && isSelected && selectionCount > 1; // Disable when multi-selected
 
   return (
     <div
-      className={`relative flex flex-col ${isListView ? 'p-3 sm:p-4 min-h-0' : 'p-2 sm:p-3 min-h-32 sm:min-h-40'} rounded-lg sm:rounded-xl transition-all duration-200 shadow-none border border-gray-100
-        ${cardBgClass}
-        ${isEditingCalendar ? 'cursor-pointer hover:scale-[1.02] hover:shadow-md hover:border-gray-200' : ''}
-      `}
+      className={cn(
+        "relative min-h-[140px] sm:min-h-[160px] bg-white p-2 sm:p-3 transition-all duration-200 cursor-pointer",
+        "hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50",
+        isInRange && "ring-2 ring-blue-500 ring-opacity-50 bg-blue-50",
+        isToday && "bg-blue-50 border-l-4 border-l-blue-500",
+        isSelected && "ring-2 ring-blue-600 bg-blue-100"
+      )}
       style={dayStyle}
+      onMouseDown={onMouseDown}
+      onMouseEnter={onMouseEnter}
+      onKeyDown={onKeyDown}
+      tabIndex={isEditingCalendar ? 0 : -1}
+      role="button"
+      aria-label={`Day ${date.getDate()}, ${date.toLocaleDateString('en-US', { weekday: 'long' })}`}
     >
       {/* Selection Checkbox - moved to top left to avoid overlap */}
       {isEditingCalendar && (
-        <div className="absolute top-1 left-1 sm:top-2 sm:left-2 z-10" onClick={(e) => e.stopPropagation()}>
-          <Checkbox 
-            checked={isSelected} 
-            onCheckedChange={onSelectDate}
-            className="data-[state=checked]:bg-gray-500 data-[state=checked]:border-gray-500 border-gray-500 scale-75 sm:scale-100"
+        <div className="absolute top-1 left-1 sm:top-2 sm:left-2 z-10">
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={onSelectDate}
+            className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
           />
         </div>
       )}
-      
-      <div onClick={isEditingCalendar ? onSelectDate : undefined} className="flex-grow">
-        {/* Date Header - adjusted spacing for checkbox */}
-        <div className={`flex items-center justify-between mb-1 sm:mb-2 ${isEditingCalendar ? 'ml-5 sm:ml-6' : ''}`}>
-          <div className="flex items-center gap-2">
-            <time dateTime={date.toISOString()} className={`font-semibold ${isListView ? 'text-lg sm:text-xl' : 'text-base sm:text-lg'} ${textColor}`}>
-              {isListView ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : date.getUTCDate()}
-            </time>
-            <div className={`${isListView ? 'text-sm' : 'text-xs'} ${textColor} opacity-60 font-light`}>
-              {isListView ? date.toLocaleDateString('en-US', { weekday: 'long' }) : date.toLocaleDateString('en-US', { weekday: 'short' })}
-            </div>
-          </div>
+
+      {/* Date Header */}
+      <div className="flex items-center justify-between mb-2 sm:mb-3">
+        <div className="flex items-center gap-1 sm:gap-2">
+          <span className={cn(
+            "text-base sm:text-lg font-semibold",
+            isToday ? "text-blue-600" : "text-gray-900"
+          )}>
+            {date.getDate()}
+          </span>
+          {isToday && (
+            <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-500 rounded-full"></div>
+          )}
         </div>
         
-        {showEditOptions ? (
-          <div className={`mt-1 relative${isDisabled ? ' opacity-40 pointer-events-none bg-gray-50 bg-opacity-30 rounded-sm' : ''}`} style={{ minHeight: '80px' }} onClick={(e) => e.stopPropagation()}>
-            {isListView ? (
-              // List view layout: locations on left, notes on right
-              <div className="flex gap-3">
-                <div className="flex-1 space-y-1 sm:space-y-2">
-                  <Select
-                    name="location_1_id"
-                    value={dayData?.location_1_id?.toString() || ''}
-                    onValueChange={(value) => onUpdateDraft(dateStr, { location_1_id: value ? Number(value) : null })}
-                    disabled={isDisabled}
-                  >
-                    <SelectTrigger className={`h-6 sm:h-7 text-xs ${isDisabled ? 'bg-gray-100' : ''}`}>
-                      <SelectValue placeholder="Location" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {locations.map((loc) => <SelectItem key={loc.id} value={loc.id.toString()}>{loc.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+        {/* Day of week (mobile only) */}
+        <span className="text-xs text-gray-500 md:hidden">
+          {date.toLocaleDateString('en-US', { weekday: 'short' })}
+        </span>
+      </div>
 
-                  {/* Always reserve space for the second select, but hide it if not transferEnabled */}
-                  <div style={{ minHeight: '24px', position: 'relative' }}>
-                    <Select
-                      name="location_2_id"
-                      value={dayData?.location_2_id?.toString() || ''}
-                      onValueChange={value => onUpdateDraft(dateStr, { location_2_id: value ? Number(value) : null })}
-                      disabled={isDisabled || !transferEnabled}
-                    >
-                      <SelectTrigger
-                        className={`h-6 sm:h-7 text-xs ${isDisabled || !transferEnabled ? 'bg-gray-100' : ''}`}
-                        style={{
-                          opacity: transferEnabled ? 1 : 0,
-                          pointerEvents: transferEnabled ? 'auto' : 'none',
-                          position: transferEnabled ? 'static' : 'absolute',
-                          top: 0, left: 0, width: '100%',
-                          transition: 'opacity 0.2s',
-                        }}
-                      >
-                        <SelectValue placeholder="Transfer to..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {locations.map((loc) => <SelectItem key={loc.id} value={loc.id.toString()}>{loc.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <Switch
-                    checked={transferEnabled}
-                    onCheckedChange={checked => {
-                      setTransferEnabled(checked);
-                      if (!checked) {
-                        // Clear location_2_id in draft when unchecking
-                        onUpdateDraft(dateStr, { location_2_id: null });
-                      }
-                    }}
-                    label="Transfer Day"
-                    disabled={isDisabled}
-                  />
-                </div>
-
-                <div className="flex-1">
-                  <Textarea
-                    name="notes"
-                    placeholder="Notes..."
-                    value={dayData?.notes || ''}
-                    onChange={(e) => onUpdateDraft(dateStr, { notes: e.target.value })}
-                    className={`text-xs resize-none ${isDisabled ? 'bg-gray-100' : ''}`} 
-                    rows={3}
-                    disabled={isDisabled}
-                  />
-                </div>
-              </div>
-            ) : (
-              // Calendar view layout: vertical stack
-              <div className="space-y-1 sm:space-y-2">
-                <Select
-                  name="location_1_id"
-                  value={dayData?.location_1_id?.toString() || ''}
-                  onValueChange={(value) => onUpdateDraft(dateStr, { location_1_id: value ? Number(value) : null })}
-                  disabled={isDisabled}
-                >
-                  <SelectTrigger className={`h-6 sm:h-7 text-xs ${isDisabled ? 'bg-gray-100' : ''}`}>
-                    <SelectValue placeholder="Location" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {locations.map((loc) => <SelectItem key={loc.id} value={loc.id.toString()}>{loc.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-
-                {/* Always reserve space for the second select, but hide it if not transferEnabled */}
-                <div style={{ minHeight: '24px', position: 'relative' }}>
-                  <Select
-                    name="location_2_id"
-                    value={dayData?.location_2_id?.toString() || ''}
-                    onValueChange={value => onUpdateDraft(dateStr, { location_2_id: value ? Number(value) : null })}
-                    disabled={isDisabled || !transferEnabled}
-                  >
-                    <SelectTrigger
-                      className={`h-6 sm:h-7 text-xs ${isDisabled || !transferEnabled ? 'bg-gray-100' : ''}`}
-                      style={{
-                        opacity: transferEnabled ? 1 : 0,
-                        pointerEvents: transferEnabled ? 'auto' : 'none',
-                        position: transferEnabled ? 'static' : 'absolute',
-                        top: 0, left: 0, width: '100%',
-                        transition: 'opacity 0.2s',
-                      }}
-                    >
-                      <SelectValue placeholder="Transfer to..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {locations.map((loc) => <SelectItem key={loc.id} value={loc.id.toString()}>{loc.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <Textarea
-                  name="notes"
-                  placeholder="Notes..."
-                  value={dayData?.notes || ''}
-                  onChange={(e) => onUpdateDraft(dateStr, { notes: e.target.value })}
-                  className={`text-xs resize-none ${isDisabled ? 'bg-gray-100' : ''}`} 
-                  rows={1}
-                  disabled={isDisabled}
-                />
-                <Switch
-                  checked={transferEnabled}
-                  onCheckedChange={checked => {
-                    setTransferEnabled(checked);
-                    if (!checked) {
-                      // Clear location_2_id in draft when unchecking
-                      onUpdateDraft(dateStr, { location_2_id: null });
-                    }
-                  }}
-                  label="Transfer Day"
-                  disabled={isDisabled}
-                />
-              </div>
-            )}
+      {/* Content Area - with proper spacing and overflow handling */}
+      <div className="space-y-1.5 sm:space-y-2 min-h-0 flex-1">
+        {/* Primary Location */}
+        {location1 && (
+          <div className="group">
+            <div className="flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors min-w-0">
+              <div 
+                className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full flex-shrink-0"
+                style={{ backgroundColor: (location1 as Location).color || '#6B7280' }}
+              />
+              <span className="text-xs sm:text-sm font-medium text-gray-900 truncate min-w-0 flex-1">
+                {(location1 as Location).name}
+              </span>
+            </div>
           </div>
-        ) : (
-          <div className="mt-1 text-xs">
-            {isListView ? (
-              // List view layout: locations on left, notes on right
-              <div className="flex gap-3">
-                <div className="flex-1">
-                  {location1 && <p className={`font-semibold ${textColor}`}>{location1.name}</p>}
-                  {location2 && <p className={`text-sm ${textColor}`}>→ {location2.name}</p>}
-                </div>
-                <div className="flex-1">
-                  <p className={`whitespace-pre-wrap ${textColor} opacity-80`}>{dayData?.notes || ''}</p>
+        )}
+
+        {/* Transfer Day - Show both locations with proper spacing */}
+        {isTransfer && location1 && location2 && (
+          <div className="space-y-1">
+            <div className="flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 min-w-0">
+              <div 
+                className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full flex-shrink-0"
+                style={{ backgroundColor: (location1 as Location).color || '#6B7280' }}
+              />
+              <span className="text-xs text-gray-700 truncate min-w-0 flex-1">
+                {(location1 as Location).name}
+              </span>
+              <div className="flex-shrink-0 flex items-center justify-center px-0.5 sm:px-1">
+                <div className="w-3 h-3 sm:w-4 sm:h-4 text-blue-500">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
                 </div>
               </div>
-            ) : (
-              // Calendar view layout: vertical stack
-              <>
-                {location1 && <p className={`font-semibold ${textColor}`}>{location1.name}</p>}
-                {location2 && <p className={`text-sm ${textColor}`}>→ {location2.name}</p>}
-                <p className={`mt-1 whitespace-pre-wrap ${textColor} opacity-80`}>{dayData?.notes || ''}</p>
-              </>
-            )}
+              <div 
+                className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full flex-shrink-0"
+                style={{ backgroundColor: (location2 as Location).color || '#6B7280' }}
+              />
+              <span className="text-xs text-gray-700 truncate min-w-0 flex-1">
+                {(location2 as Location).name}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Secondary Location (non-transfer) */}
+        {!isTransfer && location2 && (
+          <div className="group">
+            <div className="flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors min-w-0">
+              <div 
+                className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full flex-shrink-0"
+                style={{ backgroundColor: (location2 as Location).color || '#6B7280' }}
+              />
+              <span className="text-xs text-gray-700 truncate min-w-0 flex-1">
+                {(location2 as Location).name}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Notes - with proper text wrapping */}
+        {dayData?.notes && (
+          <div className="p-1.5 sm:p-2 rounded-lg bg-yellow-50 border border-yellow-200 min-w-0">
+            <p className="text-xs text-yellow-800 break-words leading-relaxed">
+              {dayData.notes}
+            </p>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!location1 && !location2 && !dayData?.notes && (
+          <div className="h-6 sm:h-8 flex items-center justify-center">
+            <span className="text-xs text-gray-400 text-center">
+              {isEditingCalendar ? "Click to add location" : "No plans"}
+            </span>
           </div>
         )}
       </div>
+
+      {/* Hover Actions */}
+      {isEditingCalendar && (
+        <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-5 transition-all duration-200 rounded-lg flex items-center justify-center opacity-0 hover:opacity-100">
+          <div className="bg-white rounded-lg shadow-lg p-2 border border-gray-200">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                // Open day editor
+              }}
+              className="p-2 hover:bg-gray-100 rounded transition-colors"
+              title="Edit day"
+            >
+              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

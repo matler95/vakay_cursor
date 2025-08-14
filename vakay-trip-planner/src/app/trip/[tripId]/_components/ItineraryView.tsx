@@ -5,10 +5,13 @@ import { getDatesInRange } from '@/lib/dateUtils';
 import { Database } from '@/types/database.types';
 import { DayCard } from './DayCard';
 import { ListView } from './ListView';
-import { useState, useEffect, useTransition } from 'react';
+import { CalendarGrid } from './CalendarGrid';
+import { LocationsSidebar } from './LocationsSidebar';
+import { UndoManager, useUndoManager } from './UndoManager';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Pencil, CheckCircle, AlertCircle, X, Calendar, List } from 'lucide-react';
+import { Pencil, CheckCircle, AlertCircle, X, Calendar, List, MapPin, Settings } from 'lucide-react';
 import { BulkActionPanel } from './BulkActionPanel';
 import { saveItineraryChanges } from '../actions';
 import { useActionState } from 'react';
@@ -28,12 +31,28 @@ interface ItineraryViewProps {
 
 
 export function ItineraryView({ trip, itineraryDays, locations, isEditing, setIsEditing }: ItineraryViewProps) {
+  return (
+    <UndoManager>
+      <ItineraryViewContent 
+        trip={trip}
+        itineraryDays={itineraryDays}
+        locations={locations}
+        isEditing={isEditing}
+        setIsEditing={setIsEditing}
+      />
+    </UndoManager>
+  );
+}
+
+// Separate component that can use the undo context
+function ItineraryViewContent({ trip, itineraryDays, locations, isEditing, setIsEditing }: ItineraryViewProps) {
   const [selectedDates, setSelectedDates] = useState<Set<string>>(new Set());
   const [draftItinerary, setDraftItinerary] = useState<Map<string, ItineraryDay>>(new Map());
-  const [isPending, startTransition] = useTransition();
   const [state, formAction] = useActionState(saveItineraryChanges, { message: '' });
   const [showMessage, setShowMessage] = useState(false);
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('list'); // Default to list on mobile
+  const [showLocationsSidebar, setShowLocationsSidebar] = useState(false);
+  const { addAction } = useUndoManager();
   
 
 
@@ -83,77 +102,159 @@ export function ItineraryView({ trip, itineraryDays, locations, isEditing, setIs
   };
 
   // --- NEW: Function to update the draft state from a child component ---
-  const handleUpdateDraft = (dateStr: string, updatedValues: Partial<ItineraryDay>) => {
-    setDraftItinerary(prevDraft => {
-      const newDraft = new Map(prevDraft);
-      const currentDay = newDraft.get(dateStr) || { 
-        date: dateStr, 
-        trip_id: trip.id, 
-        id: -1, // Temporary ID
-        location_1_id: null, location_2_id: null, notes: null, summary: null
-      };
-      newDraft.set(dateStr, { ...currentDay, ...updatedValues });
-      return newDraft;
+  const handleUpdateDraft = useCallback((dateStr: string, updatedValues: Partial<ItineraryDay>) => {
+    const previousData = draftItinerary.get(dateStr);
+    
+    setDraftItinerary(prev => {
+      const newMap = new Map(prev);
+      const existing = newMap.get(dateStr);
+      if (existing) {
+        newMap.set(dateStr, { ...existing, ...updatedValues });
+      } else {
+        newMap.set(dateStr, {
+          id: 0,
+          date: dateStr,
+          trip_id: trip.id,
+          location_1_id: null,
+          location_2_id: null,
+          notes: '',
+          summary: '',
+          ...updatedValues
+        });
+      }
+      return newMap;
     });
-  };
 
-  const handleBulkUpdate = (updates: Partial<ItineraryDay>) => {
-    setDraftItinerary(prevDraft => {
-      const newDraft = new Map(prevDraft);
-      selectedDates.forEach(dateStr => {
-        const currentDay = newDraft.get(dateStr) || {
-          date: dateStr, trip_id: trip.id, id: -1,
-          location_1_id: null, location_2_id: null, notes: null, summary: null
-        };
-        newDraft.set(dateStr, { ...currentDay, ...updates });
-      });
-      return newDraft;
+    // Add undo action
+    if (previousData) {
+      addAction(
+        `Updated day ${dateStr}`,
+        () => {
+          setDraftItinerary(prev => {
+            const newMap = new Map(prev);
+            newMap.set(dateStr, previousData);
+            return newMap;
+          });
+        },
+        { previousData, updatedValues }
+      );
+    }
+  }, [draftItinerary, trip.id, addAction]);
+
+  const handleBulkUpdate = useCallback((updates: Partial<ItineraryDay>) => {
+    const previousData = new Map<string, ItineraryDay>();
+    const selectedDatesArray = Array.from(selectedDates);
+    
+    // Store previous data for undo
+    selectedDatesArray.forEach(dateStr => {
+      const existing = draftItinerary.get(dateStr);
+      if (existing) {
+        previousData.set(dateStr, { ...existing });
+      }
     });
-  };
+
+    // Apply updates
+    setDraftItinerary(prev => {
+      const newMap = new Map(prev);
+      selectedDatesArray.forEach(dateStr => {
+        const existing = newMap.get(dateStr);
+        if (existing) {
+          newMap.set(dateStr, { ...existing, ...updates });
+        } else {
+          newMap.set(dateStr, {
+            id: 0,
+            date: dateStr,
+            trip_id: trip.id,
+            location_1_id: null,
+            location_2_id: null,
+            notes: '',
+            summary: '',
+            ...updates
+          });
+        }
+      });
+      return newMap;
+    });
+
+    // Add undo action for bulk update
+    if (previousData.size > 0) {
+      const actionDescription = selectedDatesArray.length === 1 
+        ? `Updated ${selectedDatesArray.length} day`
+        : `Updated ${selectedDatesArray.length} days`;
+      
+      addAction(
+        actionDescription,
+        () => {
+          setDraftItinerary(prev => {
+            const newMap = new Map(prev);
+            previousData.forEach((data, dateStr) => {
+              newMap.set(dateStr, data);
+            });
+            return newMap;
+          });
+        },
+        { previousData, updates, selectedDates: selectedDatesArray }
+      );
+    }
+
+    setSelectedDates(new Set());
+  }, [selectedDates, draftItinerary, trip.id, addAction]);
 
   // --- NEW: Function to clear the selection set ---
-  const handleClearSelection = () => {
+  const handleClearSelection = useCallback(() => {
+    const previousData = new Map<string, ItineraryDay>();
+    const selectedDatesArray = Array.from(selectedDates);
+    
+    // Store previous data for undo
+    selectedDatesArray.forEach(dateStr => {
+      const existing = draftItinerary.get(dateStr);
+      if (existing) {
+        previousData.set(dateStr, { ...existing });
+      }
+    });
+
+    // Clear selected dates
+    setDraftItinerary(prev => {
+      const newMap = new Map(prev);
+      selectedDatesArray.forEach(dateStr => {
+        newMap.set(dateStr, {
+          id: 0,
+          date: dateStr,
+          trip_id: trip.id,
+          location_1_id: null,
+          location_2_id: null,
+          notes: '',
+          summary: ''
+        });
+      });
+      return newMap;
+    });
+
+    // Add undo action for clear
+    if (previousData.size > 0) {
+      const actionDescription = selectedDatesArray.length === 1 
+        ? `Cleared ${selectedDatesArray.length} day`
+        : `Cleared ${selectedDatesArray.length} days`;
+      
+      addAction(
+        actionDescription,
+        () => {
+          setDraftItinerary(prev => {
+            const newMap = new Map(prev);
+            previousData.forEach((data, dateStr) => {
+              newMap.set(dateStr, data);
+            });
+            return newMap;
+          });
+        },
+        { previousData, selectedDates: selectedDatesArray }
+      );
+    }
+
     setSelectedDates(new Set());
-  };
+  }, [selectedDates, draftItinerary, trip.id, addAction]);
 
   // Quick action handlers
-
-
-  const handleCancel = () => {
-    const initialMap = new Map(itineraryDays.map(day => [day.date, day]));
-    setDraftItinerary(initialMap);
-    setSelectedDates(new Set()); // <-- Reset checkboxes on cancel
-    setIsEditing(false);
-    // Clear any status messages
-    setShowMessage(false);
-  };
-  
-  const handleSave = () => {
-    // Convert draft itinerary to array format for the server action
-    const itineraryDaysArray = Array.from(draftItinerary.values())
-      .filter(day => day && day.date) // Filter out invalid entries
-      .map(day => ({
-        ...day,
-        // Ensure we have the correct trip_id
-        trip_id: trip.id,
-      }));
-
-    // Create form data for the server action
-    const formData = new FormData();
-    formData.append('tripId', trip.id);
-    formData.append('itineraryDays', JSON.stringify(itineraryDaysArray));
-
-    // Use startTransition to properly handle the async action
-    startTransition(() => {
-      formAction(formData);
-      
-      // Success - reset the form state
-      setSelectedDates(new Set());
-      setIsEditing(false);
-    });
-  };
-
-
 
   if (!trip.start_date || !trip.end_date) {
     return <p>Please set a start and end date for this trip.</p>;
@@ -188,65 +289,78 @@ export function ItineraryView({ trip, itineraryDays, locations, isEditing, setIs
     <div>
       {/* Header with Trip Info and Actions */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-3">
-        <div className="flex gap-3 ml-auto">
-          {/* View Toggle Button */}
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setViewMode(viewMode === 'calendar' ? 'list' : 'calendar')}
-                  className="hidden md:flex items-center gap-2"
-                >
-                  {viewMode === 'calendar' ? (
-                    <>
-                      <List className="h-4 w-4" />
-                    </>
-                  ) : (
-                    <>
-                      <Calendar className="h-4 w-4" />
-                    </>
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Switch to {viewMode === 'calendar' ? 'list' : 'calendar'} view</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          {isEditing ? (
-            <>
-              <Button variant="outline" onClick={handleCancel} disabled={isPending}>
-                Cancel
-              </Button>
-              <Button onClick={handleSave} disabled={isPending} className="flex-1">
-              {isPending ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" /> : null}
-              {isPending ? (
-                  <>
-                    Saving...
-                  </>
-                ) : (
-                  'Save Changes'
-                )}
-              </Button>
-            </>
-          ) : (
+                  <div className="flex gap-3 ml-auto">
+            {/* View Toggle Button */}
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button 
                     variant="outline" 
-                    onClick={() => setIsEditing(true)}
-                    className="flex items-center gap-2"
+                    onClick={() => setViewMode(viewMode === 'calendar' ? 'list' : 'calendar')}
+                    className="hidden md:flex items-center gap-2"
                   >
-                    <Pencil className="h-4 w-4" />
+                    {viewMode === 'calendar' ? (
+                      <>
+                        <List className="h-4 w-4" />
+                      </>
+                    ) : (
+                      <>
+                        <Calendar className="h-4 w-4" />
+                      </>
+                    )}
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent><p>Edit trip plan</p></TooltipContent>
+                <TooltipContent>
+                  <p>Switch to {viewMode === 'calendar' ? 'list' : 'calendar'} view</p>
+                </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-          )}
+
+            {/* Locations Sidebar Toggle */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowLocationsSidebar(!showLocationsSidebar)}
+                    className="flex items-center gap-2"
+                  >
+                    <MapPin className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{showLocationsSidebar ? 'Hide' : 'Show'} locations sidebar</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            {/* Edit Button - always visible */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setIsEditing(!isEditing)}
+                    className="flex items-center gap-2"
+                  >
+                    {isEditing ? (
+                      <>
+                        <CheckCircle className="h-4 w-4" />
+                        Exit Edit
+                      </>
+                    ) : (
+                      <>
+                        <Pencil className="h-4 w-4" />
+                        Edit
+                      </>
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{isEditing ? 'Exit edit mode' : 'Edit trip plan'}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
         </div>
       </div>
       
@@ -277,50 +391,57 @@ export function ItineraryView({ trip, itineraryDays, locations, isEditing, setIs
       )}
       
       {/* View Content */}
-      {viewMode === 'calendar' ? (
-        <>
-          {/* Month indicator above weekdays */}
-          <div className="w-full flex justify-center mb-4">
-            <span className="text-base font-normal text-gray-400">
-              {monthLabel}
-            </span>
-          </div>
-          {/* Calendar grid */}
-          <div className="grid grid-cols-7 gap-1 sm:gap-2 rounded-xl sm:rounded-2xl bg-transparent text-xs sm:text-sm overflow-hidden">
-            {Array.from({ length: emptyCells }).map((_, i) => (
-              <div key={`empty-${i}`} className="min-h-32 sm:min-h-40"></div>
-            ))}
-            {tripDates.map((date) => {
-              const dateStr = date.toISOString().split('T')[0];
-              const dayData = draftItinerary.get(dateStr);
-              return (
-                <DayCard
-                  key={dateStr}
-                  date={date}
-                  dayData={dayData}
-                  locations={locations}
-                  isEditingCalendar={isEditing}
-                  isSelected={selectedDates.has(dateStr)}
-                  selectionCount={selectedDates.size}
-                  onSelectDate={() => handleSelectDate(dateStr)}
-                  onUpdateDraft={handleUpdateDraft}
-                />
-              );
-            })}
-          </div>
-        </>
-      ) : (
-        /* List view */
-        <ListView
-          tripDates={tripDates}
-          draftItinerary={draftItinerary}
-          locations={locations}
-          isEditingCalendar={isEditing}
-          selectedDates={selectedDates}
-          onSelectDate={handleSelectDate}
-          onUpdateDraft={handleUpdateDraft}
-        />
-      )}
+      <div className="flex">
+        <div className="flex-1">
+          {viewMode === 'calendar' ? (
+            <CalendarGrid
+              trip={trip}
+              itineraryDays={itineraryDays}
+              locations={locations}
+              isEditing={isEditing}
+              onUpdateDraft={handleUpdateDraft}
+              onBulkUpdate={handleBulkUpdate}
+              onExitEditMode={() => setIsEditing(false)}
+            />
+          ) : (
+            <ListView
+              tripDates={tripDates}
+              draftItinerary={draftItinerary}
+              locations={locations}
+              isEditingCalendar={isEditing}
+              selectedDates={selectedDates}
+              onSelectDate={handleSelectDate}
+              onUpdateDraft={handleUpdateDraft}
+            />
+          )}
+        </div>
+
+        {/* Locations Sidebar */}
+        {showLocationsSidebar && (
+          <LocationsSidebar
+            locations={locations}
+            itineraryDays={itineraryDays}
+            tripId={trip.id}
+            onLocationSelect={(location) => {
+              // Handle location selection - could open day editor or assign to selected dates
+              console.log('Location selected:', location);
+            }}
+            onEditLocation={(location) => {
+              // Handle location editing - could open edit modal
+              console.log('Edit location:', location);
+            }}
+            onDeleteLocation={(locationId) => {
+              // Handle location deletion
+              console.log('Delete location:', locationId);
+            }}
+            onCreateLocation={() => {
+              // Handle location creation - could open add location modal
+              console.log('Create location');
+            }}
+            className="w-80 border-l border-gray-200"
+          />
+        )}
+      </div>
 
       {/* Floating Bulk Action Panel */}
       {isEditing && selectedDates.size > 1 && (
@@ -332,7 +453,8 @@ export function ItineraryView({ trip, itineraryDays, locations, isEditing, setIs
         />
       )}
 
-
+      {/* Undo Manager */}
+      <UndoManager />
     </div>
   );
 }
