@@ -6,6 +6,7 @@ import { Database } from '@/types/database.types';
 import { DayCard } from './DayCard';
 import { CalendarGrid } from './CalendarGrid';
 import { MobileEditMode } from './MobileEditMode';
+import { DayDetailsModal } from './DayDetailsModal';
 import { LocationsSidebar } from './LocationsSidebar';
 import { UndoManager, useUndoManager } from './UndoManager';
 import { useState, useEffect, useCallback } from 'react';
@@ -20,11 +21,15 @@ import { saveItineraryChanges } from '../actions';
 type Trip = Database['public']['Tables']['trips']['Row'];
 type ItineraryDay = Database['public']['Tables']['itinerary_days']['Row'];
 type Location = Database['public']['Tables']['locations']['Row'];
+type Transportation = Database['public']['Tables']['transportation']['Row'];
+type Accommodation = Database['public']['Tables']['accommodations']['Row'];
 
 interface ItineraryViewProps {
   trip: Trip;
   itineraryDays: ItineraryDay[];
   locations: Location[];
+  transportation: Transportation[];
+  accommodations: Accommodation[];
   participants: Participant[];
   participantRole: string | null;
   isEditing: boolean;
@@ -33,13 +38,15 @@ interface ItineraryViewProps {
 
 type ItinerarySubTab = 'calendar' | 'locations' | 'participants';
 
-export function ItineraryView({ trip, itineraryDays, locations, participants, participantRole, isEditing, setIsEditing }: ItineraryViewProps) {
+export function ItineraryView({ trip, itineraryDays, locations, transportation, accommodations, participants, participantRole, isEditing, setIsEditing }: ItineraryViewProps) {
   return (
     <UndoManager>
       <ItineraryViewContent 
         trip={trip}
         itineraryDays={itineraryDays}
         locations={locations}
+        transportation={transportation}
+        accommodations={accommodations}
         participants={participants}
         participantRole={participantRole}
         isEditing={isEditing}
@@ -50,7 +57,7 @@ export function ItineraryView({ trip, itineraryDays, locations, participants, pa
 }
 
 // Separate component that can use the undo context
-function ItineraryViewContent({ trip, itineraryDays, locations, participants, participantRole, isEditing, setIsEditing }: ItineraryViewProps) {
+function ItineraryViewContent({ trip, itineraryDays, locations, transportation, accommodations, participants, participantRole, isEditing, setIsEditing }: ItineraryViewProps) {
   const [draftItinerary, setDraftItinerary] = useState<Map<string, ItineraryDay>>(new Map());
   const [state, setState] = useState<{ message: string }>({ message: '' });
   const [showMessage, setShowMessage] = useState(false);
@@ -61,6 +68,8 @@ function ItineraryViewContent({ trip, itineraryDays, locations, participants, pa
   const [isDeleteParticipantsMode, setIsDeleteParticipantsMode] = useState(false);
   const [isAddParticipantModalOpen, setIsAddParticipantModalOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isDayDetailsOpen, setIsDayDetailsOpen] = useState(false);
+  const [selectedDayDate, setSelectedDayDate] = useState<string>('');
   const { addAction } = useUndoManager();
 
   // Mobile detection
@@ -162,6 +171,25 @@ function ItineraryViewContent({ trip, itineraryDays, locations, participants, pa
       );
     }
   }, [draftItinerary, trip.id, addAction]);
+
+  // Handle day click for showing details (when not in edit mode)
+  const handleDayClick = useCallback((dateStr: string) => {
+    if (!isEditing) {
+      setSelectedDayDate(dateStr);
+      setIsDayDetailsOpen(true);
+    }
+  }, [isEditing]);
+
+  // Handle day details modal close
+  const handleDayDetailsClose = useCallback(() => {
+    setIsDayDetailsOpen(false);
+    setSelectedDayDate('');
+  }, []);
+
+  // Handle day update from modal
+  const handleDayUpdate = useCallback((dateStr: string, updatedValues: Partial<ItineraryDay>) => {
+    handleUpdateDraft(dateStr, updatedValues);
+  }, [handleUpdateDraft]);
 
   // Quick action handlers
 
@@ -430,8 +458,8 @@ function ItineraryViewContent({ trip, itineraryDays, locations, participants, pa
               trip={trip}
               itineraryDays={itineraryDays}
               locations={locations}
-              isEditing={isEditing}
-              onUpdateDraft={handleUpdateDraft}
+              transportation={transportation}
+              accommodations={accommodations}
               onExitEditMode={() => setIsEditing(false)}
               saveAction={formAction}
             />
@@ -448,6 +476,7 @@ function ItineraryViewContent({ trip, itineraryDays, locations, participants, pa
               onBulkUpdate={() => {}} // No longer needed
               onExitEditMode={() => setIsEditing(false)}
               saveAction={formAction}
+              onDayClick={handleDayClick}
             />
           )}
         </>
@@ -478,6 +507,21 @@ function ItineraryViewContent({ trip, itineraryDays, locations, participants, pa
             setIsAddParticipantModalOpen={setIsAddParticipantModalOpen}
           />
         </div>
+      )}
+      
+      {/* Day Details Modal - works for both mobile and desktop */}
+      {isDayDetailsOpen && selectedDayDate && (
+        <DayDetailsModal
+          isOpen={isDayDetailsOpen}
+          onClose={handleDayDetailsClose}
+          trip={trip}
+          itineraryDays={itineraryDays}
+          locations={locations}
+          transportation={transportation}
+          accommodations={accommodations}
+          currentDate={selectedDayDate}
+          onUpdateDay={handleDayUpdate}
+        />
       )}
     </div>
   );

@@ -26,6 +26,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { X, Save, RotateCcw } from 'lucide-react';
 import { getDatesInRange } from '@/lib/dateUtils';
 import { cn } from '@/lib/utils';
+import { DayDetailsModal } from './DayDetailsModal';
 
 type Trip = Database['public']['Tables']['trips']['Row'];
 type ItineraryDay = Database['public']['Tables']['itinerary_days']['Row'];
@@ -35,6 +36,8 @@ interface MobileEditModeProps {
   trip: Trip;
   itineraryDays: ItineraryDay[];
   locations: Location[];
+  transportation: Database['public']['Tables']['transportation']['Row'][];
+  accommodations: Database['public']['Tables']['accommodations']['Row'][];
   onExitEditMode: () => void;
   saveAction: (formData: FormData) => void;
 }
@@ -48,6 +51,8 @@ export function MobileEditMode({
   trip,
   itineraryDays,
   locations,
+  transportation,
+  accommodations,
   onExitEditMode,
   saveAction
 }: MobileEditModeProps) {
@@ -62,6 +67,10 @@ export function MobileEditMode({
   const [selectedLocation, setSelectedLocation] = useState<string>('none');
   const [transferLocation, setTransferLocation] = useState<string>('none');
   const [pressedDate, setPressedDate] = useState<string | null>(null);
+  
+  // Day details modal state
+  const [isDayDetailsOpen, setIsDayDetailsOpen] = useState(false);
+  const [selectedDayDate, setSelectedDayDate] = useState<string>('');
   
   const calendarRef = useRef<HTMLDivElement>(null);
   const touchStartRef = useRef<{ x: number; y: number; date: string } | null>(null);
@@ -120,6 +129,31 @@ export function MobileEditMode({
     
     setDraftItinerary(initialMap);
   }, [itineraryDays, tripDates, trip.id]);
+
+  // Handle day tap for showing details (when not in edit mode)
+  const handleDayTap = useCallback((dateStr: string) => {
+    setSelectedDayDate(dateStr);
+    setIsDayDetailsOpen(true);
+  }, []);
+
+  // Handle day details modal close
+  const handleDayDetailsClose = useCallback(() => {
+    setIsDayDetailsOpen(false);
+    setSelectedDayDate('');
+  }, []);
+
+  // Handle day update from modal
+  const handleDayUpdate = useCallback((dateStr: string, updatedValues: Partial<ItineraryDay>) => {
+    const newDraftItinerary = new Map(draftItinerary);
+    const existing = newDraftItinerary.get(dateStr);
+    
+    if (existing) {
+      const updatedDay = { ...existing, ...updatedValues };
+      newDraftItinerary.set(dateStr, updatedDay);
+      setDraftItinerary(newDraftItinerary);
+      setHasDraftChanges(true);
+    }
+  }, [draftItinerary]);
 
   // Touch event handlers for mobile
   const handleTouchStart = useCallback((e: React.TouchEvent, dateStr: string) => {
@@ -462,6 +496,7 @@ export function MobileEditMode({
                     onTouchStart={(e) => handleTouchStart(e, dateStr)}
                     onTouchMove={handleTouchMove}
                     onTouchEnd={handleTouchEnd}
+                    onClick={() => handleDayTap(dateStr)}
                   >
                     {/* Date */}
                     <div className="text-sm font-medium text-gray-900 mb-1">
@@ -596,6 +631,21 @@ export function MobileEditMode({
           )}
         </div>
       </div>
+
+      {/* Day Details Modal */}
+      {isDayDetailsOpen && selectedDayDate && (
+        <DayDetailsModal
+          isOpen={isDayDetailsOpen}
+          onClose={handleDayDetailsClose}
+          trip={trip}
+          itineraryDays={itineraryDays}
+          locations={locations}
+          transportation={transportation}
+          accommodations={accommodations}
+          currentDate={selectedDayDate}
+          onUpdateDay={handleDayUpdate}
+        />
+      )}
     </div>
   );
 }

@@ -109,6 +109,8 @@ export function TripPageClient({
                 trip={trip}
                 itineraryDays={itineraryDays || []}
                 locations={locations || []}
+                transportation={transportation || []}
+                accommodations={accommodations || []}
                 participants={participants || []}
                 participantRole={participantRole?.role || null}
                 isEditing={isEditing}

@@ -23,6 +23,7 @@ interface CalendarGridProps {
   onBulkUpdate: (updates: Partial<ItineraryDay>) => void;
   onExitEditMode: () => void;
   saveAction: (formData: FormData) => void; // Add this prop for saving to database
+  onDayClick?: (dateStr: string) => void; // Optional prop for handling day clicks when not editing
 }
 
 interface DateRange {
@@ -38,7 +39,8 @@ export function CalendarGrid({
   onUpdateDraft, 
   onBulkUpdate,
   onExitEditMode,
-  saveAction
+  saveAction,
+  onDayClick
 }: CalendarGridProps) {
   const [selectedRange, setSelectedRange] = useState<DateRange | null>(null);
   const [isSelecting, setIsSelecting] = useState(false);
@@ -315,7 +317,10 @@ export function CalendarGrid({
     console.log('Current selectedRange:', selectedRange);
     
     if (!isEditing) {
-      console.log('Not in edit mode, returning');
+      console.log('Not in edit mode, calling onDayClick');
+      if (onDayClick) {
+        onDayClick(dateStr);
+      }
       return;
     }
     
@@ -351,7 +356,7 @@ export function CalendarGrid({
     
     // Clear range selection when toggling individual days
     setSelectedRange(null);
-  }, [isEditing, isSelecting, isClickMode, selectedDates, selectedRange]);
+  }, [isEditing, isSelecting, isClickMode, selectedDates, selectedRange, onDayClick]);
 
   // Handle showing Save/Cancel buttons after "Done" is clicked
   const handleShowSaveCancel = useCallback(() => {
@@ -608,13 +613,17 @@ export function CalendarGrid({
           onMouseLeave={handleMouseUp}
           onMouseMove={handleMouseMove}
           onTouchEnd={(e) => {
-            e.preventDefault();
-            handleMouseUp();
+            // Only prevent default if we're actually handling the touch
+            if (isEditing && selectionStart) {
+              e.preventDefault();
+              handleMouseUp();
+            }
           }}
           onTouchMove={(e) => {
-            e.preventDefault();
-            // Touch move handling can be simplified for mobile
-            if (selectionStart && isEditing) {
+            // Only prevent default if we're actually handling the touch
+            if (isEditing && selectionStart) {
+              e.preventDefault();
+              // Touch move handling can be simplified for mobile
               const touch = e.touches[0];
               const element = document.elementFromPoint(touch.clientX, touch.clientY);
               if (element) {
