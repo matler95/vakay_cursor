@@ -219,6 +219,58 @@ export function MobileEditMode({
     return selectedDates.has(dateStr);
   }, [selectedRange, selectedDates]);
 
+  // Auto-fill selectors with existing data when selection changes
+  useEffect(() => {
+    if (selectedRange) {
+      // For range selection, check if all days have the same location
+      const rangeDates = getDatesInRange(new Date(selectedRange.start), new Date(selectedRange.end));
+      const dateStrs = rangeDates.map(d => d.toISOString().split('T')[0]);
+      
+      // Check if all selected days have the same location_1_id
+      const locationIds = dateStrs.map(dateStr => {
+        const dayData = draftItinerary.get(dateStr);
+        return dayData?.location_1_id;
+      });
+      
+      const allSameLocation = locationIds.every(id => id === locationIds[0]) && locationIds[0] !== null;
+      
+      if (allSameLocation) {
+        setSelectedLocation(locationIds[0]!.toString());
+      } else {
+        setSelectedLocation('none');
+      }
+      
+      // For transfer, check the last day
+      const lastDateStr = dateStrs[dateStrs.length - 1];
+      const lastDayData = draftItinerary.get(lastDateStr);
+      if (lastDayData?.location_2_id) {
+        setTransferLocation(lastDayData.location_2_id.toString());
+      } else {
+        setTransferLocation('none');
+      }
+    } else if (selectedDates.size === 1) {
+      // For single day selection, use that day's data
+      const dateStr = Array.from(selectedDates)[0];
+      const dayData = draftItinerary.get(dateStr);
+      
+      if (dayData?.location_1_id) {
+        setSelectedLocation(dayData.location_1_id.toString());
+      } else {
+        setSelectedLocation('none');
+      }
+      
+      if (dayData?.location_2_id) {
+        setTransferLocation(dayData.location_2_id.toString());
+      } else {
+        setTransferLocation('none');
+      }
+    } else if (selectedDates.size === 0 && !selectedRange) {
+      // Clear selection - reset selectors
+      setSelectedLocation('none');
+      setTransferLocation('none');
+    }
+  }, [selectedRange, selectedDates, draftItinerary]);
+
   // Clear selection
   const clearSelection = useCallback(() => {
     setSelectedRange(null);
@@ -226,6 +278,8 @@ export function MobileEditMode({
     setIsSelecting(false);
     setHasMoved(false);
     setIsClickMode(true);
+    setSelectedLocation('none');
+    setTransferLocation('none');
   }, []);
 
   // Handle location assignment
@@ -253,7 +307,7 @@ export function MobileEditMode({
         id: existing?.id || 0,
         date: dateStr,
         location_1_id: locationId,
-        location_2_id: null,
+        location_2_id: existing?.location_2_id || null, // Preserve existing transfer unless explicitly set
         notes: existing?.notes || null,
         summary: existing?.summary || null,
         trip_id: existing?.trip_id || trip.id || '',
