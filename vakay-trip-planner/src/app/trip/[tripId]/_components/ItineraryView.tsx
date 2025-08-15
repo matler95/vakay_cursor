@@ -5,6 +5,7 @@ import { getDatesInRange } from '@/lib/dateUtils';
 import { Database } from '@/types/database.types';
 import { DayCard } from './DayCard';
 import { CalendarGrid } from './CalendarGrid';
+import { MobileEditMode } from './MobileEditMode';
 import { LocationsSidebar } from './LocationsSidebar';
 import { UndoManager, useUndoManager } from './UndoManager';
 import { useState, useEffect, useCallback } from 'react';
@@ -59,7 +60,20 @@ function ItineraryViewContent({ trip, itineraryDays, locations, participants, pa
   const [isAddLocationModalOpen, setIsAddLocationModalOpen] = useState(false);
   const [isDeleteParticipantsMode, setIsDeleteParticipantsMode] = useState(false);
   const [isAddParticipantModalOpen, setIsAddParticipantModalOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const { addAction } = useUndoManager();
+
+  // Mobile detection
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768); // md breakpoint
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Reset delete mode when switching tabs
   useEffect(() => {
@@ -410,17 +424,32 @@ function ItineraryViewContent({ trip, itineraryDays, locations, participants, pa
       {/* The duplicated button controls have been REMOVED from here */}
       {activeSubTab === 'calendar' && (
         <>
-          {/* Removed viewMode === 'calendar' ? ( ... ) : ( ... ) */}
-          <CalendarGrid
-            trip={trip}
-            itineraryDays={itineraryDays}
-            locations={locations}
-            isEditing={isEditing}
-            onUpdateDraft={handleUpdateDraft}
-            onBulkUpdate={() => {}} // No longer needed
-            onExitEditMode={() => setIsEditing(false)}
-            saveAction={formAction}
-          />
+          {/* Mobile Edit Mode */}
+          {isMobile && isEditing && (
+            <MobileEditMode
+              trip={trip}
+              itineraryDays={itineraryDays}
+              locations={locations}
+              isEditing={isEditing}
+              onUpdateDraft={handleUpdateDraft}
+              onExitEditMode={() => setIsEditing(false)}
+              saveAction={formAction}
+            />
+          )}
+          
+          {/* Desktop Edit Mode */}
+          {(!isMobile || !isEditing) && (
+            <CalendarGrid
+              trip={trip}
+              itineraryDays={itineraryDays}
+              locations={locations}
+              isEditing={isEditing}
+              onUpdateDraft={handleUpdateDraft}
+              onBulkUpdate={() => {}} // No longer needed
+              onExitEditMode={() => setIsEditing(false)}
+              saveAction={formAction}
+            />
+          )}
         </>
       )}
 
