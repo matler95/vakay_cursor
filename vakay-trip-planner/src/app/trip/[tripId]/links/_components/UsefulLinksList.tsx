@@ -98,7 +98,7 @@ export function UsefulLinksList({
     return filtered.sort((a, b) => {
       if (a.is_favorite && !b.is_favorite) return -1;
       if (!a.is_favorite && b.is_favorite) return 1;
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      return new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime();
     });
   }, [usefulLinks, searchTerm]);
 
@@ -118,12 +118,7 @@ export function UsefulLinksList({
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="p-2 bg-purple-100 rounded-full">
-          <LinkIcon className="h-6 w-6 text-purple-600" />
-        </div>
-        <h3 className="text-lg font-semibold text-gray-900">Useful Links</h3>
-      </div>
+
 
       {/* Search */}
       <div className="mb-4">

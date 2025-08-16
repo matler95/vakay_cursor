@@ -72,56 +72,7 @@ export function UsefulLinksView({
         </div>
       </div>
 
-      {/* Useful Links Overview */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-xl shadow p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <LinkIcon className="h-5 w-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Links</p>
-              <p className="text-2xl font-bold text-gray-900">{usefulLinks.length}</p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white rounded-xl shadow p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-yellow-100 rounded-lg">
-              <Star className="h-5 w-5 text-yellow-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600">Favorites</p>
-              <p className="text-2xl font-bold text-gray-900">{getFavoriteCount()}</p>
-            </div>
-          </div>
-        </div>
 
-        <div className="bg-white rounded-xl shadow p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <MapPin className="h-5 w-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600">Restaurants</p>
-              <p className="text-2xl font-bold text-gray-900">{getCategoryCount('restaurant')}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-100 rounded-lg">
-              <span className="text-lg">🏨</span>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600">Accommodations</p>
-              <p className="text-2xl font-bold text-gray-900">{getCategoryCount('accommodation')}</p>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Useful Links List */}
       <div className="bg-white rounded-xl shadow">

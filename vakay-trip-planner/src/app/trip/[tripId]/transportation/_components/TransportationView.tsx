@@ -82,7 +82,7 @@ export function TransportationView({
               Transportation
             </h2>
             <p className="text-sm sm:text-base text-gray-600 mt-1">
-              Manage your trip transportation and travel details
+              Manage your trip transportation and details
             </p>
           </div>
           <div className="flex gap-3">
@@ -105,69 +105,6 @@ export function TransportationView({
         </div>
       </div>
 
-      {/* Transportation Overview */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-white rounded-xl shadow p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Plane className="h-5 w-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Trips</p>
-              <p className="text-2xl font-bold text-gray-900">{transportation.length}</p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white rounded-xl shadow p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <Plane className="h-5 w-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600">Flights</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {getTransportationTypeCount('flight')}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <Train className="h-5 w-5 text-purple-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600">Trains</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {getTransportationTypeCount('train')}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-orange-100 rounded-lg">
-              <MapPin className="h-5 w-5 text-orange-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600">Next Trip</p>
-              <p className="text-lg font-semibold text-gray-900">
-                {getNextTransportation() ? (
-                  new Date(getNextTransportation()!.departure_date).toLocaleDateString('en-US', { 
-                    month: 'short', 
-                    day: 'numeric' 
-                  })
-                ) : (
-                  'None'
-                )}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Transportation List */}
       <div className="bg-white rounded-xl shadow">

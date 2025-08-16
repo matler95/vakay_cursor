@@ -414,7 +414,8 @@ function ItineraryViewContent({ trip, itineraryDays, locations, transportation, 
               </Tooltip>
             </TooltipProvider>
           </div>
-        )}
+                   )}
+        </div>
       </div>
 
       {/* --- SUB-TABS NAVIGATION --- */}
@@ -509,7 +510,6 @@ function ItineraryViewContent({ trip, itineraryDays, locations, transportation, 
           />
         </div>
       )}
-        </div>
       
       {/* Day Details Modal - works for both mobile and desktop */}
       {isDayDetailsOpen && selectedDayDate && (

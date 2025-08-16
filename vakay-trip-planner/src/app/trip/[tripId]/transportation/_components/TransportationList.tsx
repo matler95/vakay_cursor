@@ -158,12 +158,6 @@ export function TransportationList({
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="p-2 bg-blue-100 rounded-full">
-          <Plane className="h-6 w-6 text-blue-600" />
-        </div>
-        <h3 className="text-lg font-semibold text-gray-900">Transportation</h3>
-      </div>
 
       {/* Search */}
       <div className="mb-4">
