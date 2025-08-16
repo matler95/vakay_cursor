@@ -80,7 +80,7 @@ export function ExpenseView({
               Expense Tracking
             </h2>
             <p className="text-sm sm:text-base text-gray-600 mt-1">
-              Track and manage trip expenses with auto rate conversion.
+              Track and manage trip expenses.
             </p>
           </div>
           <div className="flex gap-3">
