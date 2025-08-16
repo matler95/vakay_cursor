@@ -224,104 +224,115 @@ export function DayDetailsModal({
   if (!isOpen || tripDates.length === 0) return null;
 
   const currentDateObj = tripDates[currentDateIndex];
-  const location1 = getLocationById(currentDayData?.location_1_id);
-  const location2 = getLocationById(currentDayData?.location_2_id);
+  const location1 = getLocationById(currentDayData?.location_1_id || null);
+  const location2 = getLocationById(currentDayData?.location_2_id || null);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 backdrop-blur-sm bg-white/30 flex items-center justify-center p-4">
       <div 
         ref={modalRef}
-        className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-hidden shadow-2xl"
+        className="bg-white rounded-2xl w-full max-w-md h-[90vh] overflow-hidden shadow-2xl flex flex-col"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white">
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={goToPreviousDay}
-              disabled={currentDateIndex === 0}
-              variant="ghost"
-              size="sm"
-              className="p-1.5 disabled:opacity-50"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            
-            <div className="text-center">
-              <h2 className="text-lg font-semibold text-gray-900">
-                {formatDate(currentDateObj)}
-              </h2>
-              <p className="text-sm text-gray-600">
-                Day {currentDateIndex + 1} of {tripDates.length}
-              </p>
-            </div>
-            
-            <Button
-              onClick={goToNextDay}
-              disabled={currentDateIndex === tripDates.length - 1}
-              variant="ghost"
-              size="sm"
-              className="p-1.5 disabled:opacity-50"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-          
-          <Button
-            onClick={onClose}
-            variant="ghost"
-            size="sm"
-            className="p-1.5"
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
+                 {/* Header */}
+         <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white flex-shrink-0">
+           <div className="flex items-center gap-2 flex-1">
+             <Button
+               onClick={goToPreviousDay}
+               disabled={currentDateIndex === 0}
+               variant="ghost"
+               size="sm"
+               className="p-1.5 disabled:opacity-50 flex-shrink-0"
+             >
+               <ChevronLeft className="h-4 w-4" />
+             </Button>
+             
+             <div className="text-center flex-1 min-w-0">
+               <h2 className="text-lg font-semibold text-gray-900 truncate">
+                 {formatDate(currentDateObj)}
+               </h2>
+               <p className="text-sm text-gray-600 truncate">
+                 Day {currentDateIndex + 1} of {tripDates.length}
+               </p>
+             </div>
+             
+             <Button
+               onClick={goToNextDay}
+               disabled={currentDateIndex === tripDates.length - 1}
+               variant="ghost"
+               size="sm"
+               className="p-1.5 disabled:opacity-50 flex-shrink-0"
+             >
+               <ChevronRight className="h-4 w-4" />
+             </Button>
+           </div>
+           
+           <Button
+             onClick={onClose}
+             variant="ghost"
+             size="sm"
+             className="p-1.5 flex-shrink-0 ml-2"
+           >
+             <X className="h-4 w-4" />
+           </Button>
+         </div>
 
         {/* Content */}
-        <div className="p-4 space-y-4 max-h-[calc(90vh-80px)] overflow-y-auto">
-          {/* Location Section */}
+        <div className="p-4 space-y-4 flex-1 overflow-y-auto">
+          {/* Location Section - Inline Layout */}
           <div className="space-y-3">
             <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
               <MapPin className="h-4 w-4 text-blue-600" />
               Locations
             </h3>
             
-            {location1 ? (
-              <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-                <div className="flex items-center gap-2 mb-1">
-                  <div 
-                    className="w-3 h-3 rounded-full border border-gray-300"
-                    style={{ backgroundColor: location1.color || '#6B7280' }}
-                  />
-                  <span className="text-sm font-medium text-blue-900">
-                    {location1.name}
-                  </span>
+            <div className="flex items-center gap-2">
+              {location1 ? (
+                <div className="bg-blue-50 p-3 rounded-lg border border-blue-200 flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div 
+                      className="w-3 h-3 rounded-full border border-gray-300 flex-shrink-0"
+                      style={{ backgroundColor: location1.color || '#6B7280' }}
+                    />
+                    <span className="text-sm font-medium text-blue-900 truncate">
+                      {location1.name}
+                    </span>
+                  </div>
+                  {location1.description && (
+                    <p className="text-xs text-blue-700 line-clamp-2">{location1.description}</p>
+                  )}
                 </div>
-                {location1.description && (
-                  <p className="text-xs text-blue-700">{location1.description}</p>
-                )}
-              </div>
-            ) : (
-              <div className="text-sm text-gray-500 italic">No location assigned</div>
-            )}
-            
-            {location2 && (
-              <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
-                <div className="flex items-center gap-2 mb-1">
-                  <div 
-                    className="w-3 h-3 rounded-full border border-gray-300"
-                    style={{ backgroundColor: location2.color || '#6B7280' }}
-                  />
-                  <span className="text-sm font-medium text-purple-900">
-                    {location2.name} (Transfer)
-                  </span>
+              ) : (
+                <div className="text-sm text-gray-500 italic flex-1 text-center p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  No location assigned
                 </div>
-                {location2.description && (
-                  <p className="text-xs text-purple-700">{location2.description}</p>
-                )}
-              </div>
-            )}
+              )}
+              
+              {location2 && (
+                <>
+                  <div className="flex-shrink-0 text-gray-400">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </div>
+                  <div className="bg-purple-50 p-3 rounded-lg border border-purple-200 flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <div 
+                        className="w-3 h-3 rounded-full border border-gray-300 flex-shrink-0"
+                        style={{ backgroundColor: location2.color || '#6B7280' }}
+                      />
+                      <span className="text-sm font-medium text-purple-900 truncate">
+                        {location2.name}
+                      </span>
+                    </div>
+                    {location2.description && (
+                      <p className="text-xs text-purple-700 line-clamp-2">{location2.description}</p>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Transportation Section */}
@@ -422,7 +433,7 @@ export function DayDetailsModal({
             </div>
           )}
 
-          {/* Notes Section */}
+          {/* Notes Section - Limited Character Count */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-semibold text-gray-900">Notes</h3>
@@ -458,15 +469,21 @@ export function DayDetailsModal({
             </div>
             
             {isEditingNotes ? (
-              <Textarea
-                value={notes}
-                onChange={(e) => handleNotesChange(e.target.value)}
-                placeholder="Add notes for this day..."
-                className="min-h-[100px] resize-none"
-                autoFocus
-              />
+              <div className="space-y-2">
+                <Textarea
+                  value={notes}
+                  onChange={(e) => handleNotesChange(e.target.value)}
+                  placeholder="Add notes for this day..."
+                  className="min-h-[80px] max-h-[80px] resize-none"
+                  autoFocus
+                  maxLength={200}
+                />
+                <div className="text-xs text-gray-500 text-right">
+                  {notes.length}/200 characters
+                </div>
+              </div>
             ) : (
-              <div className="min-h-[100px] p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="min-h-[80px] max-h-[80px] p-3 bg-gray-50 rounded-lg border border-gray-200 overflow-y-auto">
                 {notes ? (
                   <p className="text-sm text-gray-700 whitespace-pre-wrap">{notes}</p>
                 ) : (
@@ -478,7 +495,7 @@ export function DayDetailsModal({
         </div>
 
         {/* Swipe indicator */}
-        <div className="p-4 text-center border-t border-gray-200 bg-gray-50">
+        <div className="p-4 text-center border-t border-gray-200 bg-gray-50 flex-shrink-0">
           <p className="text-xs text-gray-500">
             Swipe left/right to navigate between days
           </p>
