@@ -15,6 +15,7 @@ import { AccommodationView } from '../accommodation/_components/AccommodationVie
 import { TransportationView } from '../transportation/_components/TransportationView';
 import { UsefulLinksView } from '../links/_components/UsefulLinksView';
 import { ExpenseView } from '../expense/_components/ExpenseView';
+import { FloatingBottomNav } from './FloatingBottomNav';
 
 type Trip = Database['public']['Tables']['trips']['Row'];
 type ItineraryDay = Database['public']['Tables']['itinerary_days']['Row'];
@@ -293,49 +294,10 @@ export function TripPageClient({
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24 sm:pb-20 md:pb-6">
-        {/* Trip Navigation - Mobile Optimized */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-32 sm:pb-20 md:pb-6">
+        {/* Trip Navigation - Desktop Only */}
         <div className="border-b border-gray-200 mb-3 sm:mb-4 md:mb-6 relative">
-          {/* Mobile: Scrollable horizontal tabs */}
-          <div className="md:hidden overflow-x-auto scrollbar-hide">
-            <nav className="flex  pb-2" role="tablist" aria-label="Trip sections">
-              {tabs.map((tab) => {
-                const Icon = tab.icon;
-                const isActive = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    id={`tab-${tab.id}`}
-                    onClick={() => {
-                      if (activeTab !== tab.id) {
-                        setActiveTab(tab.id as TabType);
-                      }
-                    }}
-                    onKeyDown={(e) => handleKeyDown(e, tab.id as TabType)}
-                    aria-selected={isActive}
-                    aria-label={`${tab.name} tab`}
-                    role="tab"
-                    tabIndex={0}
-                    className={`
-                      flex-shrink-0 flex flex-col items-center gap-1 py-2 px-3 min-w-[70px] border-b-2 font-medium text-xs transition-all duration-200 cursor-pointer rounded-t-lg relative
-                      focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-                      ${isActive
-                        ? 'border-blue-500 text-blue-600 bg-blue-50 shadow-sm'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50'
-                      }
-                      transform active:scale-95 touch-manipulation
-                    `}
-                  >
-                    <Icon className={`h-4 w-4 transition-transform duration-200 ${isActive ? 'scale-110' : ''}`} />
-                    <span className="text-center leading-tight">{tab.name}</span>
-                    {isActive && (
-                      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500 rounded-full animate-pulse"></div>
-                    )}
-                  </button>
-                );
-              })}
-            </nav>
-          </div>
+          {/* Desktop: Full width tabs */}
 
           {/* Desktop: Full width tabs */}
           <nav className="hidden md:flex space-x-8" role="tablist" aria-label="Trip sections">
@@ -382,7 +344,7 @@ export function TripPageClient({
         {/* Tab Content with Smooth Transitions */}
         <div 
           key={activeTab}
-          className="transition-all duration-300 ease-in-out relative min-h-[400px]"
+          className="transition-all duration-300 ease-in-out relative min-h-[400px] mb-4 md:mb-0"
           role="tabpanel"
           aria-labelledby={`tab-${activeTab}`}
           id={`panel-${activeTab}`}
@@ -392,6 +354,12 @@ export function TripPageClient({
           </div>
         </div>
       </div>
+
+      {/* Floating Bottom Navigation for Mobile */}
+      <FloatingBottomNav 
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
 
       {/* Modals */}
       {isAddLocationModalOpen && (
