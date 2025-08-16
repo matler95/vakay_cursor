@@ -8,9 +8,10 @@ type TabType = 'plan' | 'accommodation' | 'transportation' | 'links' | 'expenses
 interface FloatingBottomNavProps {
   activeTab: TabType;
   onTabChange: (tab: TabType) => void;
+  isEditing: boolean;
 }
 
-export function FloatingBottomNav({ activeTab, onTabChange }: FloatingBottomNavProps) {
+export function FloatingBottomNav({ activeTab, onTabChange, isEditing }: FloatingBottomNavProps) {
   const tabs = [
     { id: 'plan', name: 'Plan', icon: Calendar },
     { id: 'accommodation', name: 'Sleep', icon: Bed },
@@ -18,6 +19,11 @@ export function FloatingBottomNav({ activeTab, onTabChange }: FloatingBottomNavP
     { id: 'links', name: 'Links', icon: LinkIcon },
     { id: 'expenses', name: 'Budget', icon: DollarSign },
   ];
+
+  // Hide navigation when in edit mode
+  if (isEditing) {
+    return null;
+  }
 
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-2xl pb-safe animate-in slide-in-from-bottom-2 duration-300">

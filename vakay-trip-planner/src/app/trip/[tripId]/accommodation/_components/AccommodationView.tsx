@@ -62,35 +62,35 @@ export function AccommodationView({
   return (
     <div className="space-y-6">
       {/* Secondary Header - Accommodation */}
-      <div className="flex justify-between items-center gap-4 mb-6">
-        <div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
-            Accommodation
-          </h2>
-          <p className="text-sm sm:text-base text-gray-600 mt-1">
-            Manage your trip accommodations.
-          </p>
-        </div>
-        <div className="flex gap-3">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  onClick={() => setIsAddAccommodationModalOpen(true)}
-                  className="flex items-center gap-2"
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Add new accommodation</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+      <div className="sticky top-16 z-30 bg-gray-50 -mx-4 px-4 py-3 border-b border-gray-200 shadow-sm">
+        <div className="flex justify-between items-center gap-4 mb-6">
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+              Accommodation
+            </h2>
+            <p className="text-sm sm:text-base text-gray-600 mt-1">
+              Manage your trip accommodations.
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={() => setIsAddAccommodationModalOpen(true)}
+                    className="flex items-center gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Add new accommodation</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         </div>
       </div>
-
-
 
       {/* Accommodation List */}
       <div className="bg-white rounded-xl shadow">

@@ -261,7 +261,8 @@ function ItineraryViewContent({ trip, itineraryDays, locations, transportation, 
       {/* --- HEADER SECTION --- */}
       {/* This is the main flex container. It holds the header text on the left
           and the conditionally rendered button group on the right. */}
-      <div className="flex justify-between items-center gap-4 mb-6">
+      <div className="sticky top-16 z-30 bg-gray-50 -mx-4 px-4 py-3 border-b border-gray-200 shadow-sm">
+        <div className="flex justify-between items-center gap-4 mb-6">
         
         {/* Left Side: Header Text */}
         <div>
@@ -508,6 +509,7 @@ function ItineraryViewContent({ trip, itineraryDays, locations, transportation, 
           />
         </div>
       )}
+        </div>
       
       {/* Day Details Modal - works for both mobile and desktop */}
       {isDayDetailsOpen && selectedDayDate && (

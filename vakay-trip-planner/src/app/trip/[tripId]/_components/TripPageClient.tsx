@@ -202,12 +202,14 @@ export function TripPageClient({
                       {trip.name}
                     </h1>
                     {!isHeaderCollapsed && (
-                      <div className="mt-2 space-y-1">
-                        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 text-gray-600 text-sm">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-4 w-4 text-blue-500" />
-                            {dateRange}
-                          </span>
+                      <div className="mt-2 space-y-2">
+                        {/* Dates on their own line */}
+                        <div className="flex items-center gap-1 text-gray-600 text-sm">
+                          <Calendar className="h-4 w-4 text-blue-500" />
+                          {dateRange}
+                        </div>
+                        {/* Location and duration inline */}
+                        <div className="flex flex-row items-center gap-3 text-gray-600 text-sm">
                           {trip.destination && (
                             <span className="flex items-center gap-1">
                               <MapPin className="h-4 w-4 text-pink-500" />
@@ -359,6 +361,7 @@ export function TripPageClient({
       <FloatingBottomNav 
         activeTab={activeTab}
         onTabChange={setActiveTab}
+        isEditing={isEditing}
       />
 
       {/* Modals */}

@@ -73,16 +73,17 @@ export function ExpenseView({
   return (
     <div className="space-y-6">
       {/* Secondary Header - Expense Tracking */}
-      <div className="flex justify-between items-center gap-4 mb-6">
-        <div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
-            Expense Tracking
-          </h2>
-          <p className="text-sm sm:text-base text-gray-600 mt-1">
-            Track and manage trip expenses with auto rate conversion.
-          </p>
-        </div>
-        <div className="flex gap-3">
+      <div className="sticky top-16 z-30 bg-gray-50 -mx-4 px-4 py-3 border-b border-gray-200 shadow-sm">
+        <div className="flex justify-between items-center gap-4 mb-6">
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+              Expense Tracking
+            </h2>
+            <p className="text-sm sm:text-base text-gray-600 mt-1">
+              Track and manage trip expenses with auto rate conversion.
+            </p>
+          </div>
+          <div className="flex gap-3">
           {userRole === 'admin' && (
             <>
           <TooltipProvider>
@@ -122,6 +123,7 @@ export function ExpenseView({
             </Tooltip>
           </TooltipProvider>
         </div>
+      </div>
       </div>
 
       {/* Expense Overview */}
