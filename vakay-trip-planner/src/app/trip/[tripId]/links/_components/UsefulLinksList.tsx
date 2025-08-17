@@ -144,9 +144,6 @@ export function UsefulLinksList({
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-lg">{getCategoryIcon(link.category)}</span>
                   <h4 className="font-medium text-gray-900 truncate">{link.title}</h4>
-                  {link.is_favorite && (
-                    <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                  )}
                 </div>
                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${getCategoryColor(link.category)}`}>
                   {getCategoryLabel(link.category)}

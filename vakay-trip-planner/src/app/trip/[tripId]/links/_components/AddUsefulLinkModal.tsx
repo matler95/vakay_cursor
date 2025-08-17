@@ -175,61 +175,6 @@ export function AddUsefulLinkModal({
             />
           </div>
 
-          {/* Address */}
-          <div className="space-y-2">
-            <Label htmlFor="address">Address</Label>
-            <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                id="address"
-                value={formData.address}
-                onChange={(e) => handleInputChange('address', e.target.value)}
-                placeholder="Street address"
-                className="pl-10"
-              />
-            </div>
-          </div>
-
-          {/* Phone */}
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone</Label>
-            <div className="relative">
-              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                id="phone"
-                value={formData.phone}
-                onChange={(e) => handleInputChange('phone', e.target.value)}
-                placeholder="Phone number"
-                className="pl-10"
-              />
-            </div>
-          </div>
-
-          {/* Notes */}
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea
-              id="notes"
-              value={formData.notes}
-              onChange={(e) => handleInputChange('notes', e.target.value)}
-              placeholder="Additional notes or tips"
-              rows={2}
-            />
-          </div>
-
-          {/* Favorite */}
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="is_favorite"
-              checked={formData.is_favorite}
-              onCheckedChange={(checked) => handleInputChange('is_favorite', checked as boolean)}
-            />
-            <Label htmlFor="is_favorite" className="flex items-center gap-2 cursor-pointer">
-              <Star className="h-4 w-4 text-yellow-500" />
-              Mark as favorite
-            </Label>
-          </div>
-
           {/* Actions */}
           <div className="flex gap-3 pt-4">
             <Button

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Database } from '@/types/database.types';
-import { X, Plane, Train, Bus, Car, Ship, Users, DollarSign } from 'lucide-react';
+import { X, Plane, Train, Bus, Car, Ship, Users, DollarSign, Calendar, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -308,49 +308,51 @@ export function AddTransportationModal({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="p-6 space-y-2">
           {/* Transportation Type */}
-          <div className="space-y-2">
-            <Label htmlFor="type">Transportation Type</Label>
-            <Select
-              value={formData.type}
-              onValueChange={(value) => handleInputChange('type', value)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {transportationTypes.map((type) => {
-                  const Icon = type.icon;
-                  return (
-                    <SelectItem key={type.value} value={type.value}>
-                      <div className="flex items-center gap-2">
-                        <Icon className="h-4 w-4" />
-                        {type.label}
-                      </div>
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Name */}
-          <div className="space-y-2">
-            <Label htmlFor="provider">Name</Label>
-            <Input
-              id="provider"
-              value={formData.provider}
-              onChange={(e) => handleInputChange('provider', e.target.value)}
-              placeholder="e.g., Delta Airlines, Amtrak, Hertz"
-              required
-            />
-          </div>
-
-          {/* Locations */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-2 gap-2">
             <div className="space-y-2">
-              <Label htmlFor="departure_location">Departure Location</Label>
+              <Label htmlFor="type">Type</Label>
+              <Select
+                value={formData.type}
+                onValueChange={(value) => handleInputChange('type', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {transportationTypes.map((type) => {
+                    const Icon = type.icon;
+                    return (
+                      <SelectItem key={type.value} value={type.value}>
+                        <div className="flex items-center gap-2">
+                          <Icon className="h-4 w-4" />
+                          {type.label}
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Name */}
+            <div className="space-y-2">
+              <Label htmlFor="provider">Name</Label>
+              <Input
+                id="provider"
+                value={formData.provider}
+                onChange={(e) => handleInputChange('provider', e.target.value)}
+                placeholder="e.g., Delta Airlines, Amtrak, Hertz"
+                required
+              />
+            </div>
+          </div>
+          {/* Locations */}
+          <div className="space-y-4">
+            {/* Departure Section */}
+            <div className="space-y-2">
+              <Label htmlFor="departure_location">Departure</Label>
               <div className="relative">
                 <Input
                   id="departure_location"
@@ -394,10 +396,30 @@ export function AddTransportationModal({
                   </div>
                 )}
               </div>
+              
+                             {/* Departure Date & Time */}
+               <div className="flex gap-2 w-full">
+                 <Input
+                   id="departure_date"
+                   type="date"
+                   value={formData.departure_date}
+                   onChange={(e) => handleInputChange('departure_date', e.target.value)}
+                   required
+                   className="flex-1"
+                 />
+                 <Input
+                   id="departure_time"
+                   type="time"
+                   value={formData.departure_time}
+                   onChange={(e) => handleInputChange('departure_time', e.target.value)}
+                   className="flex-1"
+                 />
+               </div>
             </div>
-            
+
+            {/* Arrival Section */}
             <div className="space-y-2">
-              <Label htmlFor="arrival_location">Arrival Location</Label>
+              <Label htmlFor="arrival_location">Arrival</Label>
               <div className="relative">
                 <Input
                   id="arrival_location"
@@ -441,59 +463,34 @@ export function AddTransportationModal({
                   </div>
                 )}
               </div>
+              
+                             {/* Arrival Date & Time */}
+               <div className="flex gap-2 w-full">
+                 <Input
+                   id="arrival_date"
+                   type="date"
+                   value={formData.arrival_date}
+                   onChange={(e) => handleInputChange('arrival_date', e.target.value)}
+                   required
+                   className="flex-1"
+                 />
+                 <Input
+                   id="arrival_time"
+                   type="time"
+                   value={formData.arrival_time}
+                   onChange={(e) => handleInputChange('arrival_time', e.target.value)}
+                   className="flex-1"
+                 />
+               </div>
             </div>
           </div>
 
-          {/* Dates */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="departure_date">Departure Date</Label>
-              <Input
-                id="departure_date"
-                type="date"
-                value={formData.departure_date}
-                onChange={(e) => handleInputChange('departure_date', e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="arrival_date">Arrival Date</Label>
-              <Input
-                id="arrival_date"
-                type="date"
-                value={formData.arrival_date}
-                onChange={(e) => handleInputChange('arrival_date', e.target.value)}
-                required
-              />
-            </div>
-          </div>
 
-          {/* Times */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="departure_time">Departure Time (Optional)</Label>
-              <Input
-                id="departure_time"
-                type="time"
-                value={formData.departure_time}
-                onChange={(e) => handleInputChange('departure_time', e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="arrival_time">Arrival Time (Optional)</Label>
-              <Input
-                id="arrival_time"
-                type="time"
-                value={formData.arrival_time}
-                onChange={(e) => handleInputChange('arrival_time', e.target.value)}
-              />
-            </div>
-          </div>
 
 
 
           {/* Participants Selection and Expense Section */}
-          <div className="space-y-2">
+          <div className="space-y-2 pt-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <DollarSign className="h-4 w-4 text-gray-500" />
@@ -596,7 +593,7 @@ export function AddTransportationModal({
 
 
           {/* Actions */}
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-3 pt-4 mb-20">
             <Button
               type="button"
               variant="outline"

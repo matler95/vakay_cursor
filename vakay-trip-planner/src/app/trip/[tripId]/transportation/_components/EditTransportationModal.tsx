@@ -341,49 +341,52 @@ export function EditTransportationModal({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="p-6 space-y-2">
           {/* Transportation Type */}
-          <div className="space-y-2">
-            <Label htmlFor="type">Transportation Type</Label>
-            <Select
-              value={formData.type}
-              onValueChange={(value) => handleInputChange('type', value)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {transportationTypes.map((type) => {
-                  const Icon = type.icon;
-                  return (
-                    <SelectItem key={type.value} value={type.value}>
-                      <div className="flex items-center gap-2">
-                        <Icon className="h-4 w-4" />
-                        {type.label}
-                      </div>
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
-          </div>
+          <div className="grid grid-cols-2 md:grid-cols-2 gap-2">
+            <div className="space-y-2">
+              <Label htmlFor="type">Type</Label>
+              <Select
+                value={formData.type}
+                onValueChange={(value) => handleInputChange('type', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {transportationTypes.map((type) => {
+                    const Icon = type.icon;
+                    return (
+                      <SelectItem key={type.value} value={type.value}>
+                        <div className="flex items-center gap-2">
+                          <Icon className="h-4 w-4" />
+                          {type.label}
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
 
-          {/* Name */}
-          <div className="space-y-2">
-            <Label htmlFor="provider"> Name </Label>
-            <Input
-              id="provider"
-              value={formData.provider}
-              onChange={(e) => handleInputChange('provider', e.target.value)}
-              placeholder="e.g., Delta Airlines, Amtrak, Hertz"
-              required
-            />
+            {/* Name */}
+            <div className="space-y-2">
+              <Label htmlFor="provider">Name</Label>
+              <Input
+                id="provider"
+                value={formData.provider}
+                onChange={(e) => handleInputChange('provider', e.target.value)}
+                placeholder="e.g., Delta Airlines, Amtrak, Hertz"
+                required
+              />
+            </div>
           </div>
 
           {/* Locations */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-4">
+            {/* Departure Section */}
             <div className="space-y-2">
-              <Label htmlFor="departure_location">Departure Location</Label>
+              <Label htmlFor="departure_location">Departure</Label>
               <div className="relative">
                 <Input
                   id="departure_location"
@@ -428,9 +431,10 @@ export function EditTransportationModal({
                 )}
               </div>
             </div>
-            
+
+            {/* Arrival Section */}
             <div className="space-y-2">
-              <Label htmlFor="arrival_location">Arrival Location</Label>
+              <Label htmlFor="arrival_location">Arrival</Label>
               <div className="relative">
                 <Input
                   id="arrival_location"
@@ -462,7 +466,7 @@ export function EditTransportationModal({
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
-                                <span className="font-medium text-gray-900 truncate">
+                                <span className="text-gray-900 truncate">
                                   {airport.display}
                                 </span>
                               </div>
@@ -477,49 +481,50 @@ export function EditTransportationModal({
             </div>
           </div>
 
-          {/* Dates */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Dates and Times */}
+          <div className="space-y-4">
+            {/* Departure Section */}
             <div className="space-y-2">
-              <Label htmlFor="departure_date">Departure Date</Label>
-              <Input
-                id="departure_date"
-                type="date"
-                value={formData.departure_date}
-                onChange={(e) => handleInputChange('departure_date', e.target.value)}
-                required
-              />
+              <Label htmlFor="departure_date">Departure</Label>
+              <div className="flex gap-2 w-full">
+                <Input
+                  id="departure_date"
+                  type="date"
+                  value={formData.departure_date}
+                  onChange={(e) => handleInputChange('departure_date', e.target.value)}
+                  required
+                  className="flex-1"
+                />
+                <Input
+                  id="departure_time"
+                  type="time"
+                  value={formData.departure_time}
+                  onChange={(e) => handleInputChange('departure_time', e.target.value)}
+                  className="flex-1"
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="arrival_date">Arrival Date</Label>
-              <Input
-                id="arrival_date"
-                type="date"
-                value={formData.arrival_date}
-                onChange={(e) => handleInputChange('arrival_date', e.target.value)}
-                required
-              />
-            </div>
-          </div>
 
-          {/* Times */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Arrival Section */}
             <div className="space-y-2">
-              <Label htmlFor="departure_time">Departure Time (Optional)</Label>
-              <Input
-                id="departure_time"
-                type="time"
-                value={formData.departure_time}
-                onChange={(e) => handleInputChange('departure_time', e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="arrival_time">Arrival Time (Optional)</Label>
-              <Input
-                id="arrival_time"
-                type="time"
-                value={formData.arrival_time}
-                onChange={(e) => handleInputChange('arrival_time', e.target.value)}
-              />
+              <Label htmlFor="arrival_date">Arrival</Label>
+              <div className="flex gap-2 w-full">
+                <Input
+                  id="arrival_date"
+                  type="date"
+                  value={formData.arrival_date}
+                  onChange={(e) => handleInputChange('arrival_date', e.target.value)}
+                  required
+                  className="flex-1"
+                />
+                <Input
+                  id="arrival_time"
+                  type="time"
+                  value={formData.arrival_time}
+                  onChange={(e) => handleInputChange('arrival_time', e.target.value)}
+                  className="flex-1"
+                />
+              </div>
             </div>
           </div>
 
@@ -528,7 +533,7 @@ export function EditTransportationModal({
 
           {/* Expense Section - Only show if no existing expense */}
           {!hasExistingExpense && (
-            <div className="space-y-2">
+            <div className="space-y-2 pt-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <DollarSign className="h-4 w-4 text-gray-500" />
@@ -643,20 +648,9 @@ export function EditTransportationModal({
             </div>
           )}
 
-          {/* Notes */}
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes (Optional)</Label>
-            <Textarea
-              id="notes"
-              value={formData.notes}
-              onChange={(e) => handleInputChange('notes', e.target.value)}
-              placeholder="Additional details, special instructions, etc."
-              rows={3}
-            />
-          </div>
 
           {/* Actions */}
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-3 pt-4 mb-20">
             <Button
               type="button"
               variant="outline"
