@@ -3,13 +3,18 @@
 import { Database } from '@/types/database.types';
 import { useState, useEffect } from 'react';
 import { updateTripDetails } from '../actions';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { X } from 'lucide-react';
 import Lottie from 'lottie-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CURRENCIES } from '@/lib/currency';
+import { 
+  FormModal, 
+  StandardInput, 
+  StandardDateInput, 
+  FormSection, 
+  FormRow, 
+  FormField 
+} from '@/components/ui';
 
 type Trip = Database['public']['Tables']['trips']['Row'];
 
@@ -45,13 +50,9 @@ export function EditTripModal({ trip, isOpen, onClose, onTripUpdated }: EditTrip
     loadAnimation();
   }, []);
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    
+  const handleSubmit = async (formData: FormData) => {
     setIsSubmitting(true);
     setError(null);
-    
-    const formData = new FormData(event.currentTarget);
     
     try {
       // Add a longer delay to ensure the spinner shows
@@ -98,12 +99,10 @@ export function EditTripModal({ trip, isOpen, onClose, onTripUpdated }: EditTrip
     }
   }, [isOpen]);
 
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20">
-      {showSuccess ? (
-        // Success animation view - no container
+  if (showSuccess) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20">
+        {/* Success animation view - no container */}
         <div className="flex flex-col items-center justify-center">
           <div className="w-32 h-32 mb-4">
             {animationData && (
@@ -118,130 +117,92 @@ export function EditTripModal({ trip, isOpen, onClose, onTripUpdated }: EditTrip
           </div>
           <h2 className="text-xl font-semibold text-green-800 mb-2">Success!</h2>
         </div>
-      ) : (
-        // Form view
-        <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6 border border-gray-200">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold">Edit Trip Details</h2>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
-              disabled={isSubmitting}
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
+      </div>
+    );
+  }
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <input type="hidden" name="trip_id" value={trip.id} />
+  return (
+    <FormModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Edit Trip Details"
+      description="Update your trip information and settings."
+      size="md"
+      onSubmit={handleSubmit}
+      submitText="Save Changes"
+      cancelText="Cancel"
+      loading={isSubmitting}
+    >
+      <div className="space-y-6">
+        <input type="hidden" name="trip_id" value={trip.id} />
+        
+        <FormSection title="Basic Information">
+          <StandardInput
+            label="Trip Name"
+            name="name"
+            defaultValue={trip.name}
+            required
+          />
+
+          <StandardInput
+            label="Destination"
+            name="destination"
+            defaultValue={trip.destination || ''}
+            placeholder="e.g., Rome, Italy"
+          />
+        </FormSection>
+
+        <FormSection title="Dates">
+          <FormRow cols={2}>
+            <StandardDateInput
+              label="Start Date"
+              name="start_date"
+              defaultValue={trip.start_date || ''}
+              required
+            />
             
-            <div className="space-y-2">
-              <Label htmlFor="name">Trip Name</Label>
-              <Input
-                id="name"
-                name="name"
-                defaultValue={trip.name}
-                required
-                disabled={isSubmitting}
-              />
-            </div>
+            <StandardDateInput
+              label="End Date"
+              name="end_date"
+              defaultValue={trip.end_date || ''}
+              required
+            />
+          </FormRow>
+        </FormSection>
 
-            <div className="space-y-2">
-              <Label htmlFor="destination">Destination</Label>
-              <Input
-                id="destination"
-                name="destination"
-                defaultValue={trip.destination || ''}
-                placeholder="e.g., Rome, Italy"
-                disabled={isSubmitting}
-              />
-            </div>
+        <FormSection title="Settings">
+          <FormField label="Main Currency">
+            <Select name="main_currency" defaultValue={trip.main_currency || 'USD'}>
+              <SelectTrigger className="h-10">
+                <SelectValue placeholder="Select currency" />
+              </SelectTrigger>
+              <SelectContent>
+                {CURRENCIES.map((currency) => (
+                  <SelectItem key={currency.code} value={currency.code}>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-sm">{currency.symbol}</span>
+                      <span>{currency.code}</span>
+                      <span className="text-gray-500">- {currency.name}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FormField>
+        </FormSection>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="start_date">Start Date</Label>
-                <Input
-                  id="start_date"
-                  name="start_date"
-                  type="date"
-                  defaultValue={trip.start_date || ''}
-                  required
-                  disabled={isSubmitting}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="end_date">End Date</Label>
-                <Input
-                  id="end_date"
-                  name="end_date"
-                  type="date"
-                  defaultValue={trip.end_date || ''}
-                  required
-                  disabled={isSubmitting}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="main_currency">Main Currency</Label>
-              <Select name="main_currency" defaultValue={trip.main_currency || 'USD'}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select currency" />
-                </SelectTrigger>
-                <SelectContent>
-                  {CURRENCIES.map((currency) => (
-                    <SelectItem key={currency.code} value={currency.code}>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-sm">{currency.symbol}</span>
-                        <span>{currency.code}</span>
-                        <span className="text-gray-500">- {currency.name}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {error && (
-              <p className="text-sm text-red-600">
-                {error}
-              </p>
-            )}
-            
-            {message && (
-              <p className={`text-sm ${message.includes('error') ? 'text-red-600' : 'text-green-600'}`}>
-                {message}
-              </p>
-            )}
-
-            <div className="flex gap-3 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onClose}
-                className="flex-1"
-                disabled={isSubmitting}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="flex-1"
-              >
-                {isSubmitting ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                    Saving...
-                  </>
-                ) : (
-                  'Save Changes'
-                )}
-              </Button>
-            </div>
-          </form>
-        </div>
-      )}
-    </div>
+        {error && (
+          <p className="text-sm text-red-600">
+            {error}
+          </p>
+        )}
+        
+        {message && (
+          <p className={`text-sm ${message.includes('error') ? 'text-red-600' : 'text-green-600'}`}>
+            {message}
+          </p>
+        )}
+      </div>
+    </FormModal>
   );
 }

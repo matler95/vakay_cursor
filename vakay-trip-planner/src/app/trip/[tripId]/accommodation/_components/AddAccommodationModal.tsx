@@ -2,14 +2,23 @@
 
 import { useEffect, useState } from 'react';
 import { Database } from '@/types/database.types';
-import { X, Bed, MapPin, Calendar, FileText, Phone, FileEdit, Users, DollarSign, Search } from 'lucide-react';
+import { Bed, MapPin, Calendar, FileText, Phone, FileEdit, Users, DollarSign, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { CURRENCIES } from '@/lib/currency';
+import { 
+  FormModal, 
+  StandardInput, 
+  StandardTextarea, 
+  StandardDateInput, 
+  StandardTimeInput, 
+  StandardUrlInput, 
+  StandardPhoneInput, 
+  FormSection, 
+  FormRow, 
+  FormField 
+} from '@/components/ui';
 
 interface AddAccommodationModalProps {
   tripId: string;
@@ -187,8 +196,7 @@ export function AddAccommodationModal({
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     setIsLoading(true);
 
     try {
@@ -209,6 +217,7 @@ export function AddAccommodationModal({
       if (response.ok) {
         try { localStorage.setItem('lastUsedCurrency', expenseCurrency); } catch {}
         onAccommodationAdded();
+        onClose();
       } else {
         console.error('Failed to add accommodation');
         alert('Failed to add accommodation. Please try again.');
@@ -221,179 +230,165 @@ export function AddAccommodationModal({
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Bed className="h-5 w-5 text-blue-600" />
-            </div>
-            <h2 className="text-xl font-semibold text-gray-900">Add Accommodation</h2>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            className="h-8 w-8 p-0"
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
+    <FormModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Add Accommodation"
+      description="Add new accommodation details for your trip."
+      size="xl"
+      onSubmit={handleSubmit}
+      submitText="Add Accommodation"
+      cancelText="Cancel"
+      loading={isLoading}
+    >
+      <div className="space-y-6">
+        <FormSection title="Basic Information">
+          <StandardUrlInput
+            label="Booking URL"
+            name="booking_url"
+            placeholder="https://www.booking.com/..."
+            value={formData.booking_url || ''}
+            onChange={(e) => handleInputChange('booking_url', e.target.value)}
+          />
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Basic Information */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900 flex items-center gap-2">
-              <FileEdit className="h-4 w-4" />
-              Basic Information
-            </h3>
-
-            {/* Booking URL */}
-            <div>
-              <Label htmlFor="booking_url">Booking URL</Label>
-              <Input
-                id="booking_url"
-                type="url"
-                value={formData.booking_url || ''}
-                onChange={(e) => handleInputChange('booking_url', e.target.value)}
-                placeholder="https://www.booking.com/..."
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="name">Accommodation Name *</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  placeholder="Hotel name, Airbnb, etc."
-                  required
-                />
-              </div>
-              
-              <div className="relative">
-                <Label htmlFor="address">Location *</Label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input
-                    id="address"
-                    value={formData.address}
-                    onChange={(e) => handleInputChange('address', e.target.value)}
-                    onFocus={handleAddressFocus}
-                    onBlur={handleAddressBlur}
-                    onKeyDown={handleAddressKeyDown}
-                    placeholder="Search trip locations or enter address"
-                    required
-                    className="pl-10 pr-4"
-                  />
-                </div>
-                
-                {/* Address Suggestions Dropdown */}
-                {showAddressSuggestions && addressSuggestions.length > 0 && (
-                  <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                    <div className="py-2">
-                      {addressSuggestions.map((location, index) => (
-                        <button
-                          key={location.id}
-                          type="button"
-                          onClick={() => handleAddressSelect(location)}
-                          className={`w-full px-4 py-3 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none transition-colors ${
-                            highlightedSuggestionIndex === index ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
-                          }`}
-                        >
-                          <div className="flex items-start gap-3">
-                            <div className="flex-shrink-0 mt-1">
-                              <MapPin className="h-4 w-4 text-blue-600" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium text-gray-900 truncate">
-                                  {location.name}
-                                </span>
-                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                  Trip Location
-                                </span>
-                              </div>
-                              {location.description && (
-                                <p className="text-sm text-gray-500 mt-1 line-clamp-2">
-                                  {location.description}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Check-in/Check-out */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900 flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Check-in & Check-out
-            </h3>
+          <FormRow cols={2}>
+            <StandardInput
+              label="Accommodation Name"
+              name="name"
+              placeholder="Hotel name, Airbnb, etc."
+              value={formData.name}
+              onChange={(e) => handleInputChange('name', e.target.value)}
+              required
+            />
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="check_in_date">Check-in Date *</Label>
-                <Input
-                  id="check_in_date"
-                  type="date"
-                  value={formData.check_in_date}
-                  onChange={(e) => handleInputChange('check_in_date', e.target.value)}
+            <FormField label="Location" required>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
+                <input
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pl-10 pr-4"
+                  value={formData.address}
+                  onChange={(e) => handleInputChange('address', e.target.value)}
+                  onFocus={handleAddressFocus}
+                  onBlur={handleAddressBlur}
+                  onKeyDown={handleAddressKeyDown}
+                  placeholder="Search trip locations or enter address"
                   required
                 />
               </div>
               
-              <div>
-                <Label htmlFor="check_out_date">Check-out Date *</Label>
-                <Input
-                  id="check_out_date"
-                  type="date"
-                  value={formData.check_out_date}
-                  onChange={(e) => handleInputChange('check_out_date', e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Expense Section */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-gray-500" />
-                <Label>Add as Expense</Label>
-              </div>
-              <Button
-                type="button"
-                variant={expenseEnabled ? 'secondary' : 'outline'}
-                size="sm"
-                onClick={() => setExpenseEnabled(prev => !prev)}
-              >
-                {expenseEnabled ? 'Remove Expense' : 'Add as Expense'}
-              </Button>
-            </div>
-            {expenseEnabled && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div>
-                  <Label>Amount</Label>
-                  <Input value={expenseAmount} onChange={(e) => setExpenseAmount(e.target.value)} placeholder="0.00" />
+              {/* Address Suggestions Dropdown */}
+              {showAddressSuggestions && addressSuggestions.length > 0 && (
+                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  <div className="py-2">
+                    {addressSuggestions.map((location, index) => (
+                      <button
+                        key={location.id}
+                        type="button"
+                        onClick={() => handleAddressSelect(location)}
+                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none transition-colors ${
+                          highlightedSuggestionIndex === index ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="flex-shrink-0 mt-1">
+                            <MapPin className="h-4 w-4 text-blue-600" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-gray-900 truncate">
+                                {location.name}
+                              </span>
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                Trip Location
+                              </span>
+                            </div>
+                            {location.description && (
+                              <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+                                {location.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div>
-                  <Label>Currency</Label>
+              )}
+            </FormField>
+          </FormRow>
+        </FormSection>
+
+        <FormSection title="Check-in & Check-out">
+          <FormRow cols={2}>
+            <StandardDateInput
+              label="Check-in Date"
+              name="check_in_date"
+              value={formData.check_in_date}
+              onChange={(e) => handleInputChange('check_in_date', e.target.value)}
+              required
+            />
+            
+            <StandardDateInput
+              label="Check-out Date"
+              name="check_out_date"
+              value={formData.check_out_date}
+              onChange={(e) => handleInputChange('check_out_date', e.target.value)}
+              required
+            />
+          </FormRow>
+
+          <FormRow cols={2}>
+            <StandardTimeInput
+              label="Check-in Time"
+              name="check_in_time"
+              value={formData.check_in_time}
+              onChange={(e) => handleInputChange('check_in_time', e.target.value)}
+            />
+            
+            <StandardTimeInput
+              label="Check-out Time"
+              name="check_out_time"
+              value={formData.check_out_time}
+              onChange={(e) => handleInputChange('check_out_time', e.target.value)}
+            />
+          </FormRow>
+        </FormSection>
+
+        {/* Expense Section */}
+        <FormSection title="Expense">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <DollarSign className="h-4 w-4 text-gray-500" />
+              <span className="text-sm font-medium">Add as Expense</span>
+            </div>
+            <Button
+              type="button"
+              variant={expenseEnabled ? 'secondary' : 'outline'}
+              size="sm"
+              onClick={() => setExpenseEnabled(prev => !prev)}
+            >
+              {expenseEnabled ? 'Remove Expense' : 'Add as Expense'}
+            </Button>
+          </div>
+          
+          {expenseEnabled && (
+            <div className="space-y-4">
+              <FormRow cols={3}>
+                <StandardInput
+                  label="Amount"
+                  name="expense_amount"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="0.00"
+                  value={expenseAmount}
+                  onChange={(e) => setExpenseAmount(e.target.value)}
+                />
+                
+                <FormField label="Currency">
                   <Select value={expenseCurrency} onValueChange={setExpenseCurrency}>
-                    <SelectTrigger>
+                    <SelectTrigger className="h-10">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -413,9 +408,9 @@ export function AddAccommodationModal({
                       Will be converted to {mainCurrency} (trip currency)
                     </p>
                   )}
-                </div>
-                <div>
-                  <Label>Payment Status *</Label>
+                </FormField>
+
+                <FormField label="Payment Status">
                   <div className="flex gap-4 mt-2">
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
@@ -438,104 +433,35 @@ export function AddAccommodationModal({
                       <span className="text-orange-600">Pending</span>
                     </label>
                   </div>
-                </div>
-              </div>
-            )}
-          </div>
+                </FormField>
+              </FormRow>
 
-          {/* Participants */}
-          {expenseEnabled && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-gray-500" />
-                <Label>Participants</Label>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {participantOptions.map(p => (
-                  <label key={p.id} className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={selectedParticipants.has(p.id)}
-                      onChange={() => toggleParticipant(p.id)}
-                    />
-                    <span>{p.name}</span>
-                  </label>
-                ))}
-                {participantOptions.length === 0 && (
-                  <p className="text-sm text-gray-500">No participants found</p>
-                )}
+              {/* Participants */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm font-medium">Participants</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {participantOptions.map(p => (
+                    <label key={p.id} className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={selectedParticipants.has(p.id)}
+                        onChange={() => toggleParticipant(p.id)}
+                      />
+                      <span>{p.name}</span>
+                    </label>
+                  ))}
+                  {participantOptions.length === 0 && (
+                    <p className="text-sm text-gray-500">No participants found</p>
+                  )}
+                </div>
               </div>
             </div>
           )}
-
-          {/* Additional Details */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900 flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              Additional Details
-            </h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="booking_confirmation">Booking Confirmation</Label>
-                <Input
-                  id="booking_confirmation"
-                  value={formData.booking_confirmation || ''}
-                  onChange={(e) => handleInputChange('booking_confirmation', e.target.value)}
-                  placeholder="Confirmation number"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="contact_phone">Contact Phone</Label>
-                <Input
-                  id="contact_phone"
-                  value={formData.contact_phone || ''}
-                  onChange={(e) => handleInputChange('contact_phone', e.target.value)}
-                  placeholder="Phone number"
-                />
-              </div>
-            </div>
-            
-            <div>
-              <Label htmlFor="notes">Notes</Label>
-              <Textarea
-                id="notes"
-                value={formData.notes}
-                onChange={(e) => handleInputChange('notes', e.target.value)}
-                placeholder="Additional notes, special requests, etc."
-                rows={3}
-              />
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              disabled={isLoading}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="flex items-center gap-2"
-            >
-              {isLoading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                  Saving...
-                </>
-              ) : (
-                'Add Accommodation'
-              )}
-            </Button>
-          </div>
-        </form>
+        </FormSection>
       </div>
-    </div>
+    </FormModal>
   );
 }

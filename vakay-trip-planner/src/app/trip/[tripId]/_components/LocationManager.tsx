@@ -11,6 +11,7 @@ import { Plus, Trash2, AlertTriangle, CopyCheck, X, MapPin, Edit } from 'lucide-
 import { AddLocationModal } from './AddLocationModal';
 import { EditLocationModal } from './EditLocationModal';
 import { MultiEditLocationsModal } from './MultiEditLocationsModal';
+import { ConfirmationModal } from '@/components/ui';
 
 type Location = Database['public']['Tables']['locations']['Row'];
 
@@ -301,35 +302,21 @@ export function LocationManager({ tripId, locations, onLocationsChange, isDelete
       )}
 
       {/* Delete Confirmation Modal */}
-      {locationToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6 border border-gray-200">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex-shrink-0">
-                <AlertTriangle className="h-6 w-6 text-red-600" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">Delete Location{locationToDelete.id === -1 ? 's' : ''}</h3>
-                <p className="text-sm text-gray-600">
-                  {locationToDelete.id === -1 
-                    ? `Are you sure you want to delete ${selectedLocations.size} location${selectedLocations.size !== 1 ? 's' : ''}? This action cannot be undone.`
-                    : `Are you sure you want to delete "${locationToDelete.name}"? This action cannot be undone.`
-                  }
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-3 pt-4">
-              <Button onClick={cancelDelete} variant="outline" className="flex-1" disabled={isDeleting}>
-                Cancel
-              </Button>
-              <Button onClick={confirmDelete} variant="destructive" className="flex-1" disabled={isDeleting}>
-                {isDeleting ? 'Deleting...' : 'Delete'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmationModal
+        isOpen={!!locationToDelete}
+        onClose={() => setLocationToDelete(null)}
+        title={`Delete Location${locationToDelete?.id === -1 ? 's' : ''}`}
+        description={
+          locationToDelete?.id === -1 
+            ? `Are you sure you want to delete ${selectedLocations.size} location${selectedLocations.size !== 1 ? 's' : ''}? This action cannot be undone.`
+            : `Are you sure you want to delete "${locationToDelete?.name}"? This action cannot be undone.`
+        }
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="destructive"
+        onConfirm={confirmDelete}
+        loading={isDeleting}
+      />
     </div>
   );
 }

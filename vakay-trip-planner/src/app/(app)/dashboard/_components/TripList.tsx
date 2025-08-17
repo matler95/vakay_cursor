@@ -4,11 +4,18 @@
 import { useRouter } from 'next/navigation';
 import { Database } from '@/types/database.types';
 import { deleteTrip } from '../actions';
-import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Plane } from 'lucide-react';
 import { useState } from 'react';
+import { 
+  StandardList, 
+  CompactRow, 
+  DeleteButton, 
+  ConfirmationModal,
+  LoadingState,
+  EmptyState
+} from '@/components/ui';
 
 import Lottie from 'lottie-react';
 import flightAnimation from '@/../public/Flight.json';
@@ -42,58 +49,44 @@ export function TripList({ trips }: TripListProps) {
     router.push(`/trip/${tripId}`);
   };
 
+  if (loadingTripId) {
+    return (
+      <LoadingState 
+        message="Loading trip..." 
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
+      />
+    );
+  }
+
   if (trips.length === 0) {
     return (
-      <div className="py-8 text-center text-gray-500">
-        You haven&apos;t created any trips yet.
-      </div>
+      <EmptyState
+        icon={Plane}
+        title="No trips yet"
+        description="You haven't created any trips yet. Start planning your next adventure!"
+      />
     );
   }
 
   return (
     <div className="space-y-4">
-      {loadingTripId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-          <div className="flex flex-col items-center">
-            <Lottie animationData={flightAnimation} loop style={{ width: 96, height: 96 }} />
-            <span className="mt-4 text-lg text-white font-semibold">Loading...</span>
-          </div>
-        </div>
-      )}
-      {trips.map((trip) => (
-        <Card key={trip.id} className="group relative transition-shadow hover:shadow-md">
-          <CardHeader>
-            <div className="flex items-start justify-between">
-              <div>
-                <CardTitle
-                  onClick={() => handleTripClick(trip.id)}
-                  className="cursor-pointer hover:underline"
-                >
-                  {trip.name}
-                </CardTitle>
-                {trip.start_date && trip.end_date && (
-                  <CardDescription>
-                    {new Date(trip.start_date).toLocaleDateString()} -{' '}
-                    {new Date(trip.end_date).toLocaleDateString()}
-                  </CardDescription>
-                )}
-              </div>
-
-              {trip.user_role === 'admin' && (
+      <StandardList>
+        {trips.map((trip) => (
+          <CompactRow
+            key={trip.id}
+            leftIcon={<Plane className="h-5 w-5 text-blue-500" />}
+            clickable
+            onClick={() => handleTripClick(trip.id)}
+            actions={
+              trip.user_role === 'admin' ? (
                 <div className="flex items-center gap-1">
                   <form id={`delete-form-${trip.id}`} action={deleteTrip.bind(null, trip.id)}>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-gray-400 hover:text-red-500 hover:bg-red-50"
+                        <DeleteButton
                           onClick={() => setPendingDeleteId(trip.id)}
-                          aria-label="Delete trip"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                          tooltip="Delete trip"
+                        />
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>Delete trip</p>
@@ -101,25 +94,39 @@ export function TripList({ trips }: TripListProps) {
                     </Tooltip>
                   </form>
                 </div>
-              )}
+              ) : undefined
+            }
+          >
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start justify-between">
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-medium text-gray-900 truncate">
+                    {trip.name}
+                  </h3>
+                  {trip.start_date && trip.end_date && (
+                    <p className="text-sm text-gray-600 truncate">
+                      {new Date(trip.start_date).toLocaleDateString()} - {new Date(trip.end_date).toLocaleDateString()}
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
-          </CardHeader>
-        </Card>
-      ))}
+          </CompactRow>
+        ))}
+      </StandardList>
 
       {/* Delete confirmation modal */}
-      {pendingDeleteId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20">
-          <div className="w-full max-w-md rounded-xl border border-gray-100 bg-white p-6 shadow-2xl">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete Trip</h3>
-            <p className="text-sm text-gray-600 mb-4">Are you sure you want to delete this trip? This action cannot be undone.</p>
-            <div className="flex gap-3">
-              <Button variant="outline" className="flex-1" onClick={() => setPendingDeleteId(null)} disabled={submitting}>Cancel</Button>
-              <Button variant="destructive" className="flex-1" onClick={onConfirmDelete} disabled={submitting}>{submitting ? 'Deleting...' : 'Delete'}</Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmationModal
+        isOpen={!!pendingDeleteId}
+        onClose={() => setPendingDeleteId(null)}
+        title="Delete Trip"
+        description="Are you sure you want to delete this trip? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="destructive"
+        onConfirm={onConfirmDelete}
+        loading={submitting}
+      />
     </div>
   );
 }

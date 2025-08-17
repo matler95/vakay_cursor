@@ -18,8 +18,9 @@ import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { Database } from '@/types/database.types';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { X, ChevronLeft, ChevronRight, MapPin, Plane, Train, Bus, Car, Ship, Building, Edit3, Save, RotateCcw } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MapPin, Plane, Train, Bus, Car, Ship, Building, Edit3, Save, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { StandardModal } from '@/components/ui';
 
 type Trip = Database['public']['Tables']['trips']['Row'];
 type ItineraryDay = Database['public']['Tables']['itinerary_days']['Row'];
@@ -221,63 +222,59 @@ export function DayDetailsModal({
     });
   }, []);
 
-  if (!isOpen || tripDates.length === 0) return null;
+  if (tripDates.length === 0) return null;
 
   const currentDateObj = tripDates[currentDateIndex];
   const location1 = getLocationById(currentDayData?.location_1_id || null);
   const location2 = getLocationById(currentDayData?.location_2_id || null);
 
   return (
-    <div className="fixed inset-0 z-50 backdrop-blur-sm bg-white/30 flex items-center justify-center p-4">
+    <StandardModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title=""
+      description=""
+      size="full"
+      hideCloseButton={true}
+      customHeader={
+        <div className="flex items-center gap-2 flex-1">
+          <Button
+            onClick={goToPreviousDay}
+            disabled={currentDateIndex === 0}
+            variant="ghost"
+            size="sm"
+            className="p-1.5 disabled:opacity-50 flex-shrink-0"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          
+          <div className="text-center flex-1 min-w-0">
+            <h2 className="text-lg font-semibold text-gray-900 truncate">
+              {formatDate(currentDateObj)}
+            </h2>
+            <p className="text-sm text-gray-600 truncate">
+              Day {currentDateIndex + 1} of {tripDates.length}
+            </p>
+          </div>
+          
+          <Button
+            onClick={goToNextDay}
+            disabled={currentDateIndex === tripDates.length - 1}
+            variant="ghost"
+            size="sm"
+            className="p-1.5 disabled:opacity-50 flex-shrink-0"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      }
+    >
       <div 
         ref={modalRef}
-        className="bg-white rounded-2xl w-full max-w-md h-[90vh] overflow-hidden shadow-2xl flex flex-col"
+        className="h-full overflow-hidden flex flex-col"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
-                 {/* Header */}
-         <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white flex-shrink-0">
-           <div className="flex items-center gap-2 flex-1">
-             <Button
-               onClick={goToPreviousDay}
-               disabled={currentDateIndex === 0}
-               variant="ghost"
-               size="sm"
-               className="p-1.5 disabled:opacity-50 flex-shrink-0"
-             >
-               <ChevronLeft className="h-4 w-4" />
-             </Button>
-             
-             <div className="text-center flex-1 min-w-0">
-               <h2 className="text-lg font-semibold text-gray-900 truncate">
-                 {formatDate(currentDateObj)}
-               </h2>
-               <p className="text-sm text-gray-600 truncate">
-                 Day {currentDateIndex + 1} of {tripDates.length}
-               </p>
-             </div>
-             
-             <Button
-               onClick={goToNextDay}
-               disabled={currentDateIndex === tripDates.length - 1}
-               variant="ghost"
-               size="sm"
-               className="p-1.5 disabled:opacity-50 flex-shrink-0"
-             >
-               <ChevronRight className="h-4 w-4" />
-             </Button>
-           </div>
-           
-           <Button
-             onClick={onClose}
-             variant="ghost"
-             size="sm"
-             className="p-1.5 flex-shrink-0 ml-2"
-           >
-             <X className="h-4 w-4" />
-           </Button>
-         </div>
-
         {/* Content */}
         <div className="p-4 space-y-4 flex-1 overflow-y-auto">
           {/* Location Section - Inline Layout */}
@@ -501,6 +498,6 @@ export function DayDetailsModal({
           </p>
         </div>
       </div>
-    </div>
+    </StandardModal>
   );
 }

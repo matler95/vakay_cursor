@@ -5,6 +5,11 @@ import { Database } from '@/types/database.types';
 import { EditDisplayNameModal } from './_components/EditDisplayNameModal';
 import { EditPasswordModal } from './_components/EditPasswordModal';
 import { DeleteAccountModal } from './_components/DeleteAccountModal';
+import { 
+  StandardPageLayout, 
+  PageHeader, 
+  ContentSection 
+} from '@/components/ui';
 
 export default async function ProfilePage() {
     const supabase = createServerComponentClient<Database>({ cookies });
@@ -18,46 +23,52 @@ export default async function ProfilePage() {
       .single();
 
     return (
-        <div className="container mx-auto max-w-2xl">
-            <h1 className="text-2xl font-bold text-gray-900">Your Profile</h1>
-            <div className="mt-6 space-y-4">
-              {/* Email section */}
-              <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-xs uppercase tracking-wide text-gray-500">Email</div>
-                    <div className="mt-1 text-gray-900 font-medium">{user?.email}</div>
+        <StandardPageLayout maxWidth="lg" background="gray">
+            <PageHeader
+                title="Your Profile"
+                description="Manage your account settings and preferences"
+            />
+            
+            <ContentSection>
+                <div className="space-y-4">
+                  {/* Email section */}
+                  <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-xs uppercase tracking-wide text-gray-500">Email</div>
+                        <div className="mt-1 text-gray-900 font-medium">{user?.email}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Display name section */}
+                  <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-xs uppercase tracking-wide text-gray-500">Display Name</div>
+                        <div className="mt-1 text-gray-900 font-medium">{profile?.full_name || 'New User'}</div>
+                      </div>
+                      <EditDisplayNameModal currentName={profile?.full_name || ''} />
+                    </div>
+                  </div>
+
+                  {/* Password section */}
+                  <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-xs uppercase tracking-wide text-gray-500">Password</div>
+                        <div className="mt-1 text-gray-900 font-medium">••••••••</div>
+                      </div>
+                      <EditPasswordModal />
+                    </div>
+                  </div>
+
+                  {/* Simple delete account button */}
+                  <div className="flex justify-end">
+                    <DeleteAccountModal />
                   </div>
                 </div>
-              </div>
-
-              {/* Display name section */}
-              <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-xs uppercase tracking-wide text-gray-500">Display Name</div>
-                    <div className="mt-1 text-gray-900 font-medium">{profile?.full_name || 'New User'}</div>
-                  </div>
-                  <EditDisplayNameModal currentName={profile?.full_name || ''} />
-                </div>
-              </div>
-
-              {/* Password section */}
-              <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-xs uppercase tracking-wide text-gray-500">Password</div>
-                    <div className="mt-1 text-gray-900 font-medium">••••••••</div>
-                  </div>
-                  <EditPasswordModal />
-                </div>
-              </div>
-
-              {/* Simple delete account button */}
-              <div className="flex justify-end">
-                <DeleteAccountModal />
-              </div>
-            </div>
-        </div>
+            </ContentSection>
+        </StandardPageLayout>
     );
 }

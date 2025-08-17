@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Plus, Trash2, AlertTriangle, User, Crown, CopyCheck, X, UsersRound } from 'lucide-react';
 import { AddParticipantModal } from './AddParticipantModal';
+import { ConfirmationModal } from '@/components/ui';
 
 
 export type Participant = {
@@ -257,46 +258,21 @@ export function ParticipantManager({ tripId, participants, currentUserRole, isDe
       />
 
       {/* Delete Confirmation Modal (admins only) */}
-      {isAdmin && participantToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6 border border-gray-200">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex-shrink-0">
-                <AlertTriangle className="h-6 w-6 text-red-600" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">Remove Participant{participantToDelete.profiles.id === '-1' ? 's' : ''}</h3>
-                <p className="text-sm text-gray-600">
-                  {participantToDelete.profiles.id === '-1' 
-                    ? `Are you sure you want to remove ${selectedParticipants.size} participant${selectedParticipants.size !== 1 ? 's' : ''} from this trip? This action cannot be undone.`
-                    : `Are you sure you want to remove "${participantToDelete.profiles?.full_name || 'this participant'}" from this trip? This action cannot be undone.`
-                  }
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-3 pt-4">
-              <Button
-                onClick={cancelDelete}
-                variant="outline"
-                className="flex-1"
-                disabled={isDeleting}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={confirmDelete}
-                variant="destructive"
-                className="flex-1"
-                disabled={isDeleting}
-              >
-                {isDeleting ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" /> : null}
-                {isDeleting ? 'Removing...' : 'Remove'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmationModal
+        isOpen={isAdmin && !!participantToDelete}
+        onClose={() => setParticipantToDelete(null)}
+        title={`Remove Participant${participantToDelete?.profiles.id === '-1' ? 's' : ''}`}
+        description={
+          participantToDelete?.profiles.id === '-1' 
+            ? `Are you sure you want to remove ${selectedParticipants.size} participant${selectedParticipants.size !== 1 ? 's' : ''} from this trip? This action cannot be undone.`
+            : `Are you sure you want to remove "${participantToDelete?.profiles?.full_name || 'this participant'}" from this trip? This action cannot be undone.`
+        }
+        confirmText="Remove"
+        cancelText="Cancel"
+        variant="destructive"
+        onConfirm={confirmDelete}
+        loading={isDeleting}
+      />
     </div>
   );
 }

@@ -16,6 +16,12 @@ import { TransportationView } from '../transportation/_components/Transportation
 import { UsefulLinksView } from '../links/_components/UsefulLinksView';
 import { ExpenseView } from '../expense/_components/ExpenseView';
 import { FloatingBottomNav } from './FloatingBottomNav';
+import { deleteExpense, addExpense, updateExpense, updateExpenseStatus, updateTripMainCurrency } from '../expense/actions';
+import { 
+  StandardPageLayout, 
+  PageHeader, 
+  ContentSection 
+} from '@/components/ui';
 
 type Trip = Database['public']['Tables']['trips']['Row'];
 type ItineraryDay = Database['public']['Tables']['itinerary_days']['Row'];
@@ -169,11 +175,11 @@ export function TripPageClient({
             tripParticipants={tripParticipants}
             userRole={participantRole?.role || null}
             currentUserId={currentUserId}
-            addExpenseAction={async () => ({ message: 'Not implemented' })}
-            updateExpenseStatusAction={async () => ({ message: 'Not implemented' })}
-            updateTripMainCurrencyAction={async () => ({ message: 'Not implemented' })}
-            deleteExpenseAction={async () => ({ message: 'Not implemented' })}
-            updateExpenseAction={async () => ({ message: 'Not implemented' })}
+            addExpenseAction={addExpense}
+            updateExpenseStatusAction={updateExpenseStatus}
+            updateTripMainCurrencyAction={updateTripMainCurrency}
+            deleteExpenseAction={deleteExpense}
+            updateExpenseAction={updateExpense}
           />
         );
 
@@ -183,8 +189,8 @@ export function TripPageClient({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Modern Trip Header */}
+    <StandardPageLayout maxWidth="full" background="gray" padding="none">
+      {/* Custom Trip Header - Preserving existing functionality */}
       <div className="mt-2 mb-2">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-3 sm:mb-6 rounded-xl sm:rounded-2xl shadow p-3 sm:p-6 bg-white">
@@ -296,66 +302,66 @@ export function TripPageClient({
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-32 sm:pb-20 md:pb-6">
-        {/* Trip Navigation - Desktop Only */}
-        <div className="border-b border-gray-200 mb-3 sm:mb-4 md:mb-6 relative">
-          {/* Desktop: Full width tabs */}
+      <ContentSection padding="none" shadow="none" border={false}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-32 sm:pb-20 md:pb-6">
+          {/* Trip Navigation - Desktop Only */}
+          <div className="border-b border-gray-200 mb-3 sm:mb-4 md:mb-6 relative">
+            {/* Desktop: Full width tabs */}
+            <nav className="hidden md:flex space-x-8" role="tablist" aria-label="Trip sections">
+              {tabs.map((tab) => {
+                const Icon = tab.icon;
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    id={`tab-${tab.id}`}
+                    onClick={() => {
+                      if (activeTab !== tab.id) {
+                        setActiveTab(tab.id as TabType);
+                      }
+                    }}
+                    onKeyDown={(e) => handleKeyDown(e, tab.id as TabType)}
+                    aria-selected={isActive}
+                    aria-label={`${tab.name} tab`}
+                    role="tab"
+                    tabIndex={0}
+                    className={`
+                      flex items-center gap-2 py-3 px-3 border-b-2 font-medium text-sm transition-all duration-200 cursor-pointer rounded-t-lg relative
+                      focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                      ${isActive
+                        ? 'border-blue-500 text-blue-600 bg-blue-50 shadow-sm'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50 hover:shadow-sm'
+                      }
+                      transform hover:scale-105 active:scale-95
+                    `}
+                  >
+                    <Icon className={`h-5 w-5 transition-transform duration-200 ${isActive ? 'scale-110' : ''}`} />
+                    <span>{tab.name}</span>
+                    {isActive && (
+                      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500 rounded-full animate-pulse"></div>
+                    )}
+                    {/* Subtle ripple effect */}
+                    <div className="absolute inset-0 rounded-t-lg bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
 
-          {/* Desktop: Full width tabs */}
-          <nav className="hidden md:flex space-x-8" role="tablist" aria-label="Trip sections">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  id={`tab-${tab.id}`}
-                  onClick={() => {
-                    if (activeTab !== tab.id) {
-                      setActiveTab(tab.id as TabType);
-                    }
-                  }}
-                  onKeyDown={(e) => handleKeyDown(e, tab.id as TabType)}
-                  aria-selected={isActive}
-                  aria-label={`${tab.name} tab`}
-                  role="tab"
-                  tabIndex={0}
-                  className={`
-                    flex items-center gap-2 py-3 px-3 border-b-2 font-medium text-sm transition-all duration-200 cursor-pointer rounded-t-lg relative
-                    focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-                    ${isActive
-                      ? 'border-blue-500 text-blue-600 bg-blue-50 shadow-sm'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50 hover:shadow-sm'
-                    }
-                    transform hover:scale-105 active:scale-95
-                  `}
-                >
-                  <Icon className={`h-5 w-5 transition-transform duration-200 ${isActive ? 'scale-110' : ''}`} />
-                  <span>{tab.name}</span>
-                  {isActive && (
-                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500 rounded-full animate-pulse"></div>
-                  )}
-                  {/* Subtle ripple effect */}
-                  <div className="absolute inset-0 rounded-t-lg bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
-                </button>
-              );
-            })}
-          </nav>
-        </div>
-
-        {/* Tab Content with Smooth Transitions */}
-        <div 
-          key={activeTab}
-          className="transition-all duration-300 ease-in-out relative min-h-[400px] mb-4 md:mb-0"
-          role="tabpanel"
-          aria-labelledby={`tab-${activeTab}`}
-          id={`panel-${activeTab}`}
-        >
-          <div className="animate-in fade-in-0 duration-200">
-            {renderTabContent()}
+          {/* Tab Content with Smooth Transitions */}
+          <div 
+            key={activeTab}
+            className="transition-all duration-300 ease-in-out relative min-h-[400px] mb-4 md:mb-0"
+            role="tabpanel"
+            aria-labelledby={`tab-${activeTab}`}
+            id={`panel-${activeTab}`}
+          >
+            <div className="animate-in fade-in-0 duration-200">
+              {renderTabContent()}
+            </div>
           </div>
         </div>
-      </div>
+      </ContentSection>
 
       {/* Floating Bottom Navigation for Mobile */}
       <FloatingBottomNav 
@@ -392,7 +398,7 @@ export function TripPageClient({
           />
         </div>
       )}
-    </div>
+    </StandardPageLayout>
   );
 }
 

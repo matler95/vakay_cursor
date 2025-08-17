@@ -3,13 +3,19 @@
 import { useState, useEffect } from 'react';
 import { Database } from '@/types/database.types';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Modal } from '@/components/ui/modal';
 import { Autocomplete, AutocompleteOption } from '@/components/ui/autocomplete';
-import { MapPin, ArrowRight, Clock, FileText, X, Plus, Globe } from 'lucide-react';
+import { MapPin, ArrowRight, Clock, FileText, Plus, Globe } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { 
+  FormModal, 
+  StandardInput, 
+  StandardTextarea, 
+  StandardTimeInput, 
+  FormSection, 
+  FormRow, 
+  FormField 
+} from '@/components/ui';
 
 type ItineraryDay = Database['public']['Tables']['itinerary_days']['Row'];
 type Location = Database['public']['Tables']['locations']['Row'];
@@ -169,30 +175,36 @@ export function DayEditor({
     });
   };
 
+  const handleSubmit = () => {
+    // All updates are handled in real-time, just close the modal
+    onClose();
+  };
+
   return (
-    <Modal
+    <FormModal
       isOpen={isOpen}
       onClose={onClose}
       title={`Edit ${formatDate(date)}`}
       description="Manage your day's itinerary and transfer details"
       size="lg"
+      onSubmit={handleSubmit}
+      submitText="Done"
+      cancelText="Cancel"
     >
       <div className="space-y-6">
         {/* Primary Location Assignment */}
-        <div className="space-y-3">
-          <label className="block text-sm font-medium text-gray-700">
-            Primary Location
-          </label>
-          
+        <FormSection title="Primary Location">
           {!showCustomLocationForm ? (
             <div className="space-y-2">
-              <Autocomplete
-                value={selectedLocation?.name || location1?.name || ''}
-                onChange={() => {}} // Controlled by onSelect
-                onSelect={handleLocationSelect}
-                placeholder="Search for a location..."
-                className="w-full"
-              />
+              <FormField label="Search Location">
+                <Autocomplete
+                  value={selectedLocation?.name || location1?.name || ''}
+                  onChange={() => {}} // Controlled by onSelect
+                  onSelect={handleLocationSelect}
+                  placeholder="Search for a location..."
+                  className="w-full"
+                />
+              </FormField>
               
               {/* Quick location selection from existing */}
               {locations.length > 0 && (
@@ -226,11 +238,12 @@ export function DayEditor({
                 <Globe className="h-4 w-4 text-blue-600" />
                 <span className="text-sm font-medium text-gray-700">Create New Location</span>
               </div>
-              <Input
+              <StandardInput
+                label="Location Name"
+                name="custom_location_name"
                 value={customLocationName}
                 onChange={(e) => setCustomLocationName(e.target.value)}
                 placeholder="Location name"
-                className="w-full"
               />
               <div className="flex gap-2">
                 <Button
@@ -256,10 +269,10 @@ export function DayEditor({
               </div>
             </div>
           )}
-        </div>
+        </FormSection>
 
         {/* Transfer Settings */}
-        <div className="space-y-3">
+        <FormSection title="Transfer Settings">
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
@@ -275,16 +288,13 @@ export function DayEditor({
 
           {transferSettings.isTransfer && (
             <div className="space-y-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    From Location
-                  </label>
+              <FormRow cols={2}>
+                <FormField label="From Location">
                   <Select 
                     value={transferSettings.fromLocationId?.toString() || ''} 
                     onValueChange={(value) => handleTransferChange('fromLocationId', value ? parseInt(value) : null)}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="h-10">
                       <SelectValue placeholder="Select location..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -301,16 +311,14 @@ export function DayEditor({
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    To Location
-                  </label>
+                </FormField>
+
+                <FormField label="To Location">
                   <Select 
                     value={transferSettings.toLocationId?.toString() || ''} 
                     onValueChange={(value) => handleTransferChange('toLocationId', value ? parseInt(value) : null)}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="h-10">
                       <SelectValue placeholder="Select location..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -327,19 +335,16 @@ export function DayEditor({
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-              </div>
+                </FormField>
+              </FormRow>
 
               {/* Transfer Type */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Transfer Type
-                </label>
+              <FormField label="Transfer Type">
                 <Select 
                   value={transferSettings.splitType} 
                   onValueChange={(value: 'full' | 'am-pm' | 'custom') => handleTransferChange('splitType', value)}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-10">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -348,11 +353,11 @@ export function DayEditor({
                     <SelectItem value="custom">Custom times</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
+              </FormField>
 
               {/* Time settings based on split type */}
               {transferSettings.splitType === 'am-pm' && (
-                <div className="grid grid-cols-2 gap-4">
+                <FormRow cols={2}>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Morning Location
@@ -375,61 +380,30 @@ export function DayEditor({
                       }
                     </div>
                   </div>
-                </div>
+                </FormRow>
               )}
 
               {transferSettings.splitType === 'custom' && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Start Time
-                    </label>
-                    <Input
-                      type="time"
-                      value={transferSettings.startTime}
-                      onChange={(e) => handleTransferChange('startTime', e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      End Time
-                    </label>
-                    <Input
-                      type="time"
-                      value={transferSettings.endTime}
-                      onChange={(e) => handleTransferChange('endTime', e.target.value)}
-                    />
-                  </div>
-                </div>
+                <FormRow cols={2}>
+                  <StandardTimeInput
+                    label="Start Time"
+                    name="start_time"
+                    value={transferSettings.startTime}
+                    onChange={(e) => handleTransferChange('startTime', e.target.value)}
+                  />
+                  
+                  <StandardTimeInput
+                    label="End Time"
+                    name="end_time"
+                    value={transferSettings.endTime}
+                    onChange={(e) => handleTransferChange('endTime', e.target.value)}
+                  />
+                </FormRow>
               )}
             </div>
           )}
-        </div>
-
-        {/* Notes */}
-        <div className="space-y-3">
-          <label className="block text-sm font-medium text-gray-700">
-            Notes
-          </label>
-          <Textarea
-            value={notes}
-            onChange={(e) => handleNotesChange(e.target.value)}
-            placeholder="Add notes, activities, or reminders for this day..."
-            rows={3}
-            className="w-full"
-          />
-        </div>
-
-        {/* Actions */}
-        <div className="flex gap-3 pt-4">
-          <Button
-            onClick={onClose}
-            className="flex-1"
-          >
-            Done
-          </Button>
-        </div>
+        </FormSection>
       </div>
-    </Modal>
+    </FormModal>
   );
 }

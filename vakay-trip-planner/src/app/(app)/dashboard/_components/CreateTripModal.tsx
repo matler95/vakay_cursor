@@ -5,17 +5,32 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Plus } from 'lucide-react';
-import { Modal } from '@/components/ui/modal';
 import { useActionState } from 'react';
 import { createTrip } from '../actions';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { 
+  FormModal, 
+  StandardInput, 
+  StandardDateInput,
+  FormSection,
+  FormRow,
+  FormField
+} from '@/components/ui';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CURRENCIES } from '@/lib/currency';
 
 export function CreateTripModal() {
   const [open, setOpen] = useState(false);
   const [state, formAction] = useActionState(createTrip, { message: '' });
+
+  const handleSubmit = () => {
+    // The form will be submitted via the form action
+    // We just need to close the modal after submission
+    setTimeout(() => {
+      if (state.message && !state.message.includes('error')) {
+        setOpen(false);
+      }
+    }, 1000);
+  };
 
   return (
     <>
@@ -30,56 +45,80 @@ export function CreateTripModal() {
         </TooltipContent>
       </Tooltip>
 
-      <Modal open={open} onClose={() => setOpen(false)} title="Create New Trip">
-        <form action={formAction} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Trip Name</Label>
-            <Input id="name" name="name" placeholder="e.g., Summer in Italy" required />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="destination">Destination</Label>
-            <Input id="destination" name="destination" placeholder="e.g., Rome, Italy" required />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="start_date">Start Date</Label>
-              <Input id="start_date" name="start_date" type="date" required />
+      <FormModal
+        isOpen={open}
+        onClose={() => setOpen(false)}
+        title="Create New Trip"
+        description="Plan your next adventure by creating a new trip."
+        size="lg"
+        onSubmit={handleSubmit}
+        submitText="Create Trip"
+        cancelText="Cancel"
+      >
+        <form action={formAction} className="space-y-6">
+          <FormSection title="Trip Details">
+            <StandardInput
+              label="Trip Name"
+              name="name"
+              placeholder="e.g., Summer in Italy"
+              required
+            />
+            
+            <StandardInput
+              label="Destination"
+              name="destination"
+              placeholder="e.g., Rome, Italy"
+              required
+            />
+          </FormSection>
+
+          <FormSection title="Dates">
+            <FormRow cols={2}>
+              <StandardDateInput
+                label="Start Date"
+                name="start_date"
+                required
+              />
+              <StandardDateInput
+                label="End Date"
+                name="end_date"
+                required
+              />
+            </FormRow>
+          </FormSection>
+
+          <FormSection title="Settings">
+            <FormField label="Main Currency" required>
+              <Select name="main_currency" defaultValue="USD">
+                <SelectTrigger className="h-10">
+                  <SelectValue placeholder="Select currency" />
+                </SelectTrigger>
+                <SelectContent>
+                  {CURRENCIES.map((currency) => (
+                    <SelectItem key={currency.code} value={currency.code}>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-sm">{currency.symbol}</span>
+                        <span>{currency.code}</span>
+                        <span className="text-gray-500">- {currency.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FormField>
+          </FormSection>
+
+          {state.message && (
+            <div className={`p-3 rounded-lg text-sm ${
+              state.message.includes('error') 
+                ? 'bg-red-50 text-red-700 border border-red-200' 
+                : 'bg-green-50 text-green-700 border border-red-200'
+            }`}>
+              {state.message}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="end_date">End Date</Label>
-              <Input id="end_date" name="end_date" type="date" required />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="main_currency">Main Currency</Label>
-            <Select name="main_currency" defaultValue="USD">
-              <SelectTrigger>
-                <SelectValue placeholder="Select currency" />
-              </SelectTrigger>
-              <SelectContent>
-                {CURRENCIES.map((currency) => (
-                  <SelectItem key={currency.code} value={currency.code}>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-sm">{currency.symbol}</span>
-                      <span>{currency.code}</span>
-                      <span className="text-gray-500">- {currency.name}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          {state.message && <p className="text-sm text-gray-600">{state.message}</p>}
-          <div className="mt-4 flex gap-3">
-            <Button type="button" variant="outline" className="flex-1" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" className="flex-1">
-              Save
-            </Button>
-          </div>
+          )}
         </form>
-      </Modal>
+      </FormModal>
     </>
   );
 }

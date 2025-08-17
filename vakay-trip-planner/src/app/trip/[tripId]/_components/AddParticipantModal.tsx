@@ -1,15 +1,17 @@
 'use client';
 
-
 import { useState } from 'react';
 import { inviteUser } from '../actions';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { X, Plus, Trash2, User, Crown } from 'lucide-react';
-
-
+import { Plus, Trash2, User, Crown } from 'lucide-react';
+import { 
+  FormModal, 
+  StandardInput, 
+  FormSection, 
+  FormRow, 
+  FormField 
+} from '@/components/ui';
 
 interface AddParticipantModalProps {
   tripId: string;
@@ -94,145 +96,105 @@ export function AddParticipantModal({ tripId, isOpen, onClose, onParticipantAdde
     }
   };
 
-
-
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20 p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl p-4 sm:p-6 border border-gray-200 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-4 sm:mb-6">
-          <h2 className="text-lg sm:text-xl font-semibold">Invite Participants</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <X className="h-4 w-4 sm:h-5 sm:w-5" />
-          </button>
+    <FormModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Invite Participants"
+      description="Invite friends and family to join your trip. They'll receive an email invitation."
+      size="lg"
+      onSubmit={handleSubmit}
+      submitText={`Send ${participants.filter(p => p.email.trim() !== '').length} Invite${participants.filter(p => p.email.trim() !== '').length !== 1 ? 's' : ''}`}
+      cancelText="Cancel"
+      loading={isSubmitting}
+    >
+      <div className="space-y-6">
+        <div className="space-y-4">
+          {participants.map((participant, index) => (
+            <div key={participant.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <FormSection title={`Participant ${index + 1}`}>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-sm font-medium text-gray-600">Participant Details</span>
+                  {participants.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeParticipantEntry(participant.id)}
+                      className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
+                
+                <StandardInput
+                  label="Email Address"
+                  name={`email-${participant.id}`}
+                  type="email"
+                  placeholder="friend@example.com"
+                  value={participant.email}
+                  onChange={(e) => updateParticipantEntry(participant.id, 'email', e.target.value)}
+                  required
+                />
+
+                <FormField label="Role">
+                  <Select
+                    value={participant.role}
+                    onValueChange={(value) => updateParticipantEntry(participant.id, 'role', value)}
+                  >
+                    <SelectTrigger className="h-10">
+                      <SelectValue>
+                        <div className="flex items-center gap-2">
+                          {(() => {
+                            const role = roles.find(r => r.value === participant.role);
+                            const Icon = role?.icon || User;
+                            return (
+                              <>
+                                <Icon className="h-4 w-4" />
+                                <span>{role?.label || 'Traveler'}</span>
+                              </>
+                            );
+                          })()}
+                        </div>
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {roles.map((role) => {
+                        const Icon = role.icon;
+                        return (
+                          <SelectItem key={role.value} value={role.value}>
+                            <div className="flex items-center gap-2">
+                              <Icon className="h-4 w-4" />
+                              <span>{role.label}</span>
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </FormField>
+              </FormSection>
+            </div>
+          ))}
         </div>
 
-        <form
-          onSubmit={async (e) => {
-            e.preventDefault();
-            await handleSubmit();
-          }}
-          className="space-y-4"
+        <Button
+          type="button"
+          variant="outline"
+          onClick={addParticipantEntry}
+          className="w-full"
         >
-          <div className="space-y-4">
-            {participants.map((participant, index) => (
-              <div key={participant.id} className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 border border-gray-200 rounded-lg bg-gray-50">
-                <div className="flex-grow space-y-2 sm:space-y-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-gray-600">Participant {index + 1}</span>
-                    {participants.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeParticipantEntry(participant.id)}
-                        className="h-5 w-5 sm:h-6 sm:w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor={`email-${participant.id}`}>Email Address</Label>
-                    <Input
-                      id={`email-${participant.id}`}
-                      name={`email-${participant.id}`}
-                      type="email"
-                      placeholder="friend@example.com"
-                      value={participant.email}
-                      onChange={(e) => updateParticipantEntry(participant.id, 'email', e.target.value)}
-                    />
-                  </div>
+          <Plus className="h-4 w-4 mr-2" />
+          Add Another Participant
+        </Button>
 
-                  <div className="space-y-2">
-                    <Label>Role</Label>
-                    <Select
-                      value={participant.role}
-                      onValueChange={(value) => updateParticipantEntry(participant.id, 'role', value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue>
-                          <div className="flex items-center gap-2">
-                            {(() => {
-                              const role = roles.find(r => r.value === participant.role);
-                              const Icon = role?.icon || User;
-                              return (
-                                <>
-                                  <Icon className="h-4 w-4" />
-                                  <span>{role?.label || 'Traveler'}</span>
-                                </>
-                              );
-                            })()}
-                          </div>
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {roles.map((role) => {
-                          const Icon = role.icon;
-                          return (
-                            <SelectItem key={role.value} value={role.value}>
-                              <div className="flex items-center gap-2">
-                                <Icon className="h-4 w-4" />
-                                <span>{role.label}</span>
-                              </div>
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <Button
-            type="button"
-            variant="outline"
-            onClick={addParticipantEntry}
-            className="w-full"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Another Participant
-          </Button>
-
-          {message && (
-            <p className={`text-sm ${message.includes('error') ? 'text-red-600' : 'text-green-600'}`}>
-              {message}
-            </p>
-          )}
-
-          <div className="flex gap-3 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              className="flex-1"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={isSubmitting || participants.every(p => p.email.trim() === '')}
-              className="flex-1"
-            >
-              {isSubmitting ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                  Sending...
-                </>
-              ) : (
-                `Send ${participants.filter(p => p.email.trim() !== '').length} Invite${participants.filter(p => p.email.trim() !== '').length !== 1 ? 's' : ''}`
-              )}
-            </Button>
-          </div>
-        </form>
+        {message && (
+          <p className={`text-sm ${message.includes('error') ? 'text-red-600' : 'text-green-600'}`}>
+            {message}
+          </p>
+        )}
       </div>
-    </div>
+    </FormModal>
   );
 }

@@ -3,12 +3,12 @@
 
 import { useState } from 'react';
 import { Database } from '@/types/database.types';
-import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { X, Settings, DollarSign } from 'lucide-react';
+import { Settings, DollarSign } from 'lucide-react';
 // Server action will be passed as prop
 import { CURRENCIES, formatCurrency } from '@/lib/currency';
+import { FormModal, FormSection } from '@/components/ui';
 
 type Trip = Database['public']['Tables']['trips']['Row'];
 
@@ -31,14 +31,11 @@ export function CurrencySettingsModal({
   const [message, setMessage] = useState('');
   const [selectedCurrency, setSelectedCurrency] = useState(trip.main_currency || 'USD');
 
-  if (!isOpen) return null;
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleSubmit = async (formData: FormData) => {
     setIsSubmitting(true);
     setMessage('');
 
-    const formData = new FormData();
+    // Add the additional fields to the FormData
     formData.append('trip_id', trip.id);
     formData.append('main_currency', selectedCurrency);
 
@@ -47,17 +44,26 @@ export function CurrencySettingsModal({
       if (result.message?.includes('success')) {
         setMessage('Main currency updated!');
         setTimeout(() => {
-        onSettingsUpdated();
-        onClose();
-        setMessage('');
-      }, 1500);
-    } else {
+          onSettingsUpdated();
+          onClose();
+          setMessage('');
+        }, 1500);
+      } else {
         setMessage(result.message || 'An error occurred');
       }
-    } catch {
+    } catch (error) {
       setMessage('An unexpected error occurred');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleFormSubmit = () => {
+    // Get the form element and create FormData from it
+    const form = document.getElementById('currency-settings-form') as HTMLFormElement;
+    if (form) {
+      const formData = new FormData(form);
+      handleSubmit(formData);
     }
   };
 
@@ -65,25 +71,19 @@ export function CurrencySettingsModal({
   const selectedCurrencyInfo = CURRENCIES.find(c => c.code === selectedCurrency);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20 p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 border border-gray-200">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-full">
-              <Settings className="h-5 w-5 text-blue-600" />
-            </div>
-            <h2 className="text-xl font-semibold">Currency Settings</h2>
-          </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-            disabled={isSubmitting}
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        <div className="mb-6">
+    <FormModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Currency Settings"
+      description="Update the main currency for this trip. All expenses will be converted to this currency for consistent tracking."
+      size="md"
+      onSubmit={handleFormSubmit}
+      submitText="Update Currency"
+      cancelText="Cancel"
+      loading={isSubmitting}
+    >
+      <form id="currency-settings-form" className="space-y-6">
+        <FormSection title="Current Currency">
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex items-start gap-3">
               <DollarSign className="h-5 w-5 text-blue-600 mt-0.5" />
@@ -96,24 +96,19 @@ export function CurrencySettingsModal({
               </div>
             </div>
           </div>
-        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Current Currency */}
-          <div>
-            <Label>Current Main Currency</Label>
-            <div className="mt-2 p-3 bg-gray-50 rounded-lg">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">{currentCurrency?.symbol}</span>
-                <div>
-                  <p className="font-medium">{currentCurrency?.code}</p>
-                  <p className="text-sm text-gray-600">{currentCurrency?.name}</p>
-                </div>
+          <div className="flex items-center gap-3 p-3 bg-white border border-blue-200 rounded-lg">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">{currentCurrency?.symbol}</span>
+              <div>
+                <p className="font-medium">{currentCurrency?.code}</p>
+                <p className="text-sm text-gray-600">{currentCurrency?.name}</p>
               </div>
             </div>
           </div>
+        </FormSection>
 
-          {/* New Currency Selection */}
+        <FormSection title="New Currency">
           <div>
             <Label htmlFor="main_currency">New Main Currency</Label>
             <Select value={selectedCurrency} onValueChange={setSelectedCurrency}>
@@ -163,42 +158,16 @@ export function CurrencySettingsModal({
               </div>
             </div>
           )}
+        </FormSection>
 
-          {message && (
-            <p className={`text-sm ${message.includes('error') ? 'text-red-600' : 'text-green-600'}`}>
-              {message}
-            </p>
-          )}
-
-          <div className="flex gap-3 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              className="flex-1"
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              className="flex-1"
-              disabled={isSubmitting || selectedCurrency === (trip.main_currency || 'USD')}
-            >
-              {isSubmitting ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                  Updating...
-                </>
-              ) : (
-                <>
-                  Update Currency
-                </>
-              )}
-            </Button>
+        {message && (
+          <div className={`p-3 rounded-lg text-sm ${
+            message.includes('error') ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200'
+          }`}>
+            {message}
           </div>
-        </form>
-      </div>
-    </div>
+        )}
+      </form>
+    </FormModal>
   );
 }
