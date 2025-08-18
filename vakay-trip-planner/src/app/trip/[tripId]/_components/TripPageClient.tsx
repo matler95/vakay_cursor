@@ -22,6 +22,7 @@ import {
   PageHeader, 
   ContentSection 
 } from '@/components/ui';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 type Trip = Database['public']['Tables']['trips']['Row'];
 type ItineraryDay = Database['public']['Tables']['itinerary_days']['Row'];
@@ -77,6 +78,82 @@ export function TripPageClient({
   const [isAddParticipantModalOpen, setIsAddParticipantModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
+  
+  // State for data that can be refreshed
+  const [currentAccommodations, setCurrentAccommodations] = useState(accommodations);
+  const [currentTransportation, setCurrentTransportation] = useState(transportation);
+  const [currentUsefulLinks, setCurrentUsefulLinks] = useState(usefulLinks);
+  const [currentExpenses, setCurrentExpenses] = useState(expenses);
+  const [currentLocations, setCurrentLocations] = useState(locations);
+  const [currentItineraryDays, setCurrentItineraryDays] = useState(itineraryDays);
+
+  // Refresh functions for different data types
+  const refreshAccommodations = async () => {
+    const supabase = createClientComponentClient<Database>();
+    const { data } = await supabase
+      .from('accommodations')
+      .select('*')
+      .eq('trip_id', trip.id)
+      .order('check_in_date', { ascending: true });
+    if (data) setCurrentAccommodations(data);
+  };
+
+  const refreshTransportation = async () => {
+    const supabase = createClientComponentClient<Database>();
+    const { data } = await supabase
+      .from('transportation')
+      .select('*')
+      .eq('trip_id', trip.id)
+      .order('departure_date', { ascending: true });
+    if (data) setCurrentTransportation(data);
+  };
+
+  const refreshUsefulLinks = async () => {
+    const supabase = createClientComponentClient<Database>();
+    const { data } = await supabase
+      .from('useful_links')
+      .select('*')
+      .eq('trip_id', trip.id)
+      .order('created_at', { ascending: false });
+    if (data) setCurrentUsefulLinks(data);
+  };
+
+  const refreshExpenses = async () => {
+    const supabase = createClientComponentClient<Database>();
+    const { data } = await supabase
+      .from('expenses')
+      .select(`
+        *,
+        expense_categories (
+          id,
+          name,
+          icon,
+          color
+        )
+      `)
+      .eq('trip_id', trip.id)
+      .order('created_at', { ascending: false });
+    if (data) setCurrentExpenses(data);
+  };
+
+  const refreshLocations = async () => {
+    const supabase = createClientComponentClient<Database>();
+    const { data } = await supabase
+      .from('locations')
+      .select('*')
+      .eq('trip_id', trip.id)
+      .order('name');
+    if (data) setCurrentLocations(data);
+  };
+
+  const refreshItineraryDays = async () => {
+    const supabase = createClientComponentClient<Database>();
+    const { data } = await supabase
+      .from('itinerary_days')
+      .select('*')
+      .eq('trip_id', trip.id);
+    if (data) setCurrentItineraryDays(data);
+  };
 
   // Keyboard navigation support
   const handleKeyDown = (e: React.KeyboardEvent, tabId: TabType) => {
@@ -114,14 +191,22 @@ export function TripPageClient({
             <div >
               <ItineraryView
                 trip={trip}
-                itineraryDays={itineraryDays || []}
-                locations={locations || []}
-                transportation={transportation || []}
-                accommodations={accommodations || []}
+                itineraryDays={currentItineraryDays || []}
+                locations={currentLocations || []}
+                transportation={currentTransportation || []}
+                accommodations={currentAccommodations || []}
                 participants={participants || []}
                 participantRole={participantRole?.role || null}
                 isEditing={isEditing}
                 setIsEditing={setIsEditing}
+                onDataRefresh={async () => {
+                  await Promise.all([
+                    refreshLocations(),
+                    refreshTransportation(),
+                    refreshAccommodations(),
+                    refreshItineraryDays()
+                  ]);
+                }}
               />
             </div>
           </>
@@ -131,10 +216,11 @@ export function TripPageClient({
         return (
           <AccommodationView
             trip={trip}
-            accommodations={accommodations || []}
+            accommodations={currentAccommodations || []}
             expenseStatus={accommodationExpenseStatus || {}}
             userRole={participantRole?.role || null}
             currentUserId={currentUserId}
+            onDataRefresh={refreshAccommodations}
           />
         );
 
@@ -142,10 +228,11 @@ export function TripPageClient({
         return (
           <TransportationView
             trip={trip}
-            transportation={transportation || []}
+            transportation={currentTransportation || []}
             expenseStatus={transportationExpenseStatus || {}}
             userRole={participantRole?.role || null}
             currentUserId={currentUserId}
+            onDataRefresh={refreshTransportation}
           />
         );
 
@@ -153,9 +240,10 @@ export function TripPageClient({
         return (
           <UsefulLinksView
             trip={trip}
-            usefulLinks={usefulLinks || []}
+            usefulLinks={currentUsefulLinks || []}
             userRole={participantRole?.role || null}
             currentUserId={currentUserId}
+            onDataRefresh={refreshUsefulLinks}
           />
         );
 
@@ -170,16 +258,17 @@ export function TripPageClient({
         return (
           <ExpenseView
             trip={trip}
-            expenses={expenses || []}
+            expenses={currentExpenses || []}
             categories={expenseCategories || []}
             tripParticipants={tripParticipants}
             userRole={participantRole?.role || null}
             currentUserId={currentUserId}
             addExpenseAction={addExpense}
             updateExpenseStatusAction={updateExpenseStatus}
-            updateTripMainCurrencyAction={updateTripMainCurrency}
-            deleteExpenseAction={deleteExpense}
             updateExpenseAction={updateExpense}
+            deleteExpenseAction={deleteExpense}
+            updateTripMainCurrencyAction={updateTripMainCurrency}
+            onDataRefresh={refreshExpenses}
           />
         );
 
@@ -377,9 +466,12 @@ export function TripPageClient({
             tripId={trip.id}
             isOpen={isAddLocationModalOpen}
             onClose={() => setIsAddLocationModalOpen(false)}
-            onLocationAdded={() => {
+            onLocationAdded={async () => {
               setIsAddLocationModalOpen(false);
-              window.location.reload();
+              await Promise.all([
+                refreshLocations(),
+                refreshItineraryDays(),
+              ]);
             }}
           />
         </div>
@@ -391,9 +483,10 @@ export function TripPageClient({
             tripId={trip.id}
             isOpen={isAddParticipantModalOpen}
             onClose={() => setIsAddParticipantModalOpen(false)}
-            onParticipantAdded={() => {
+            onParticipantAdded={async () => {
               setIsAddParticipantModalOpen(false);
-              window.location.reload();
+              // Refresh itinerary days in case assignments changed; participants list is static for now
+              await refreshItineraryDays();
             }}
           />
         </div>

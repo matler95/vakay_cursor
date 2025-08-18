@@ -13,22 +13,24 @@ type UsefulLink = Database['public']['Tables']['useful_links']['Row'];
 type Trip = Database['public']['Tables']['trips']['Row'];
 
 interface UsefulLinksViewProps {
-  trip: Trip;
-  usefulLinks: UsefulLink[];
+  trip: Database['public']['Tables']['trips']['Row'];
+  usefulLinks: Database['public']['Tables']['useful_links']['Row'][];
   userRole: string | null;
   currentUserId: string;
+  onDataRefresh: () => Promise<void>;
 }
 
 export function UsefulLinksView({ 
   trip, 
   usefulLinks, 
   userRole, 
-  currentUserId 
+  currentUserId,
+  onDataRefresh
 }: UsefulLinksViewProps) {
   const [isAddUsefulLinkModalOpen, setIsAddUsefulLinkModalOpen] = useState(false);
 
-  const refreshData = () => {
-    window.location.reload();
+  const refreshData = async () => {
+    await onDataRefresh();
   };
 
   const getCategoryCount = (category: string) => {

@@ -13,11 +13,12 @@ type Accommodation = Database['public']['Tables']['accommodations']['Row'];
 type Trip = Database['public']['Tables']['trips']['Row'];
 
 interface AccommodationViewProps {
-  trip: Trip;
-  accommodations: Accommodation[];
+  trip: Database['public']['Tables']['trips']['Row'];
+  accommodations: Database['public']['Tables']['accommodations']['Row'][];
   expenseStatus: Record<string, boolean>;
   userRole: string | null;
   currentUserId: string;
+  onDataRefresh: () => Promise<void>;
 }
 
 export function AccommodationView({ 
@@ -25,12 +26,13 @@ export function AccommodationView({
   accommodations, 
   expenseStatus,
   userRole, 
-  currentUserId 
+  currentUserId,
+  onDataRefresh
 }: AccommodationViewProps) {
   const [isAddAccommodationModalOpen, setIsAddAccommodationModalOpen] = useState(false);
 
-  const refreshData = () => {
-    window.location.reload();
+  const refreshData = async () => {
+    await onDataRefresh();
   };
 
   const copyToClipboard = async (text: string) => {

@@ -13,11 +13,12 @@ type Transportation = Database['public']['Tables']['transportation']['Row'];
 type Trip = Database['public']['Tables']['trips']['Row'];
 
 interface TransportationViewProps {
-  trip: Trip;
-  transportation: Transportation[];
+  trip: Database['public']['Tables']['trips']['Row'];
+  transportation: Database['public']['Tables']['transportation']['Row'][];
   expenseStatus: Record<string, boolean>;
   userRole: string | null;
   currentUserId: string;
+  onDataRefresh: () => Promise<void>;
 }
 
 export function TransportationView({ 
@@ -25,12 +26,13 @@ export function TransportationView({
   transportation, 
   expenseStatus,
   userRole, 
-  currentUserId 
+  currentUserId,
+  onDataRefresh
 }: TransportationViewProps) {
   const [isAddTransportationModalOpen, setIsAddTransportationModalOpen] = useState(false);
 
-  const refreshData = () => {
-    window.location.reload();
+  const refreshData = async () => {
+    await onDataRefresh();
   };
 
   const copyToClipboard = (text: string) => {

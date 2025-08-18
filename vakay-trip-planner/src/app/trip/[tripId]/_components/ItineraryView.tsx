@@ -34,11 +34,12 @@ interface ItineraryViewProps {
   participantRole: string | null;
   isEditing: boolean;
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>;
+  onDataRefresh: () => Promise<void>;
 }
 
 type ItinerarySubTab = 'calendar' | 'locations' | 'participants';
 
-export function ItineraryView({ trip, itineraryDays, locations, transportation, accommodations, participants, participantRole, isEditing, setIsEditing }: ItineraryViewProps) {
+export function ItineraryView({ trip, itineraryDays, locations, transportation, accommodations, participants, participantRole, isEditing, setIsEditing, onDataRefresh }: ItineraryViewProps) {
   return (
     <UndoManager>
       <ItineraryViewContent 
@@ -51,13 +52,14 @@ export function ItineraryView({ trip, itineraryDays, locations, transportation, 
         participantRole={participantRole}
         isEditing={isEditing}
         setIsEditing={setIsEditing}
+        onDataRefresh={onDataRefresh}
       />
     </UndoManager>
   );
 }
 
 // Separate component that can use the undo context
-function ItineraryViewContent({ trip, itineraryDays, locations, transportation, accommodations, participants, participantRole, isEditing, setIsEditing }: ItineraryViewProps) {
+function ItineraryViewContent({ trip, itineraryDays, locations, transportation, accommodations, participants, participantRole, isEditing, setIsEditing, onDataRefresh }: ItineraryViewProps) {
   const [draftItinerary, setDraftItinerary] = useState<Map<string, ItineraryDay>>(new Map());
   const [state, setState] = useState<{ message: string }>({ message: '' });
   const [showMessage, setShowMessage] = useState(false);

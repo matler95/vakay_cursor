@@ -35,7 +35,7 @@ type TripParticipant = {
 type Trip = Database['public']['Tables']['trips']['Row'];
 
 interface ExpenseViewProps {
-  trip: Trip;
+  trip: Database['public']['Tables']['trips']['Row'];
   expenses: Expense[];
   categories: Category[];
   tripParticipants: TripParticipant[];
@@ -43,31 +43,32 @@ interface ExpenseViewProps {
   currentUserId: string;
   addExpenseAction: (prevState: unknown, formData: FormData) => Promise<{ message?: string }>;
   updateExpenseStatusAction: (prevState: unknown, formData: FormData) => Promise<{ message?: string }>;
-  updateTripMainCurrencyAction: (prevState: unknown, formData: FormData) => Promise<{ message?: string }>;
-  deleteExpenseAction: (prevState: unknown, formData: FormData) => Promise<{ message?: string }>;
   updateExpenseAction: (prevState: unknown, formData: FormData) => Promise<{ message?: string }>;
+  deleteExpenseAction: (prevState: unknown, formData: FormData) => Promise<{ message?: string }>;
+  updateTripMainCurrencyAction: (prevState: unknown, formData: FormData) => Promise<{ message?: string }>;
+  onDataRefresh: () => Promise<void>;
 }
 
-export function ExpenseView({ 
-  trip, 
-  expenses, 
-  categories, 
-  tripParticipants, 
-  userRole, 
-  currentUserId, 
-  addExpenseAction, 
-  updateExpenseStatusAction, 
-  updateTripMainCurrencyAction,
+export function ExpenseView({
+  trip,
+  expenses,
+  categories,
+  tripParticipants,
+  userRole,
+  currentUserId,
+  addExpenseAction,
+  updateExpenseStatusAction,
+  updateExpenseAction,
   deleteExpenseAction,
-  updateExpenseAction
+  updateTripMainCurrencyAction,
+  onDataRefresh
 }: ExpenseViewProps) {
   const [isAddExpenseModalOpen, setIsAddExpenseModalOpen] = useState(false);
   const [isCurrencySettingsModalOpen, setIsCurrencySettingsModalOpen] = useState(false);
-  const [isEditTripModalOpen, setIsEditTripModalOpen] = useState(false);
+  const [isAnalyticsModalOpen, setIsAnalyticsModalOpen] = useState(false);
 
-  const refreshData = () => {
-    // This will be handled by Next.js revalidation from server actions
-    window.location.reload();
+  const refreshData = async () => {
+    await onDataRefresh();
   };
 
   return (
@@ -169,15 +170,6 @@ export function ExpenseView({
           trip={trip}
           onSettingsUpdated={refreshData}
           updateTripMainCurrencyAction={updateTripMainCurrencyAction}
-        />
-      )}
-
-      {isEditTripModalOpen && userRole === 'admin' && (
-        <EditTripModal
-          trip={trip}
-          isOpen={isEditTripModalOpen}
-          onClose={() => setIsEditTripModalOpen(false)}
-          onTripUpdated={refreshData}
         />
       )}
     </div>
