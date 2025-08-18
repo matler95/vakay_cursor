@@ -13,22 +13,24 @@ type UsefulLink = Database['public']['Tables']['useful_links']['Row'];
 type Trip = Database['public']['Tables']['trips']['Row'];
 
 interface UsefulLinksViewProps {
-  trip: Trip;
-  usefulLinks: UsefulLink[];
+  trip: Database['public']['Tables']['trips']['Row'];
+  usefulLinks: Database['public']['Tables']['useful_links']['Row'][];
   userRole: string | null;
   currentUserId: string;
+  onDataRefresh: () => Promise<void>;
 }
 
 export function UsefulLinksView({ 
   trip, 
   usefulLinks, 
   userRole, 
-  currentUserId 
+  currentUserId,
+  onDataRefresh
 }: UsefulLinksViewProps) {
   const [isAddUsefulLinkModalOpen, setIsAddUsefulLinkModalOpen] = useState(false);
 
-  const refreshData = () => {
-    window.location.reload();
+  const refreshData = async () => {
+    await onDataRefresh();
   };
 
   const getCategoryCount = (category: string) => {
@@ -42,84 +44,37 @@ export function UsefulLinksView({
   return (
     <div className="space-y-6">
       {/* Secondary Header - Useful Links */}
-      <div className="flex justify-between items-center gap-4 mb-6">
-        <div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
-            Useful Links
-          </h2>
-          <p className="text-gray-600 mt-1">
-            Store and organize your favorite links
-          </p>
-        </div>
-        <div className="flex gap-3">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  onClick={() => setIsAddUsefulLinkModalOpen(true)}
-                  className="flex items-center gap-2"
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Add new useful link</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-      </div>
-
-      {/* Useful Links Overview */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-xl shadow p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <LinkIcon className="h-5 w-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Links</p>
-              <p className="text-2xl font-bold text-gray-900">{usefulLinks.length}</p>
-            </div>
+      <div className="sticky top-16 z-30 bg-gray-50 -mx-4 px-4 py-3 border-b border-gray-200 shadow-sm">
+        <div className="flex justify-between items-center gap-4 mb-6">
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+              Useful Links
+            </h2>
+            <p className="text-sm sm:text-base text-gray-600 mt-1">
+              Store and organize your favorite links
+            </p>
           </div>
-        </div>
-        
-        <div className="bg-white rounded-xl shadow p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-yellow-100 rounded-lg">
-              <Star className="h-5 w-5 text-yellow-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600">Favorites</p>
-              <p className="text-2xl font-bold text-gray-900">{getFavoriteCount()}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <MapPin className="h-5 w-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600">Restaurants</p>
-              <p className="text-2xl font-bold text-gray-900">{getCategoryCount('restaurant')}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-100 rounded-lg">
-              <span className="text-lg">🏨</span>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600">Accommodations</p>
-              <p className="text-2xl font-bold text-gray-900">{getCategoryCount('accommodation')}</p>
-            </div>
+          <div className="flex gap-3">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={() => setIsAddUsefulLinkModalOpen(true)}
+                    className="flex items-center gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Add new useful link</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
       </div>
+
+
 
       {/* Useful Links List */}
       <div className="bg-white rounded-xl shadow">

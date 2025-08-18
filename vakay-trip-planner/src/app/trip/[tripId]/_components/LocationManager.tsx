@@ -11,6 +11,7 @@ import { Plus, Trash2, AlertTriangle, CopyCheck, X, MapPin, Edit } from 'lucide-
 import { AddLocationModal } from './AddLocationModal';
 import { EditLocationModal } from './EditLocationModal';
 import { MultiEditLocationsModal } from './MultiEditLocationsModal';
+import { ConfirmationModal } from '@/components/ui';
 
 type Location = Database['public']['Tables']['locations']['Row'];
 
@@ -18,18 +19,26 @@ interface LocationManagerProps {
   tripId: string;
   locations: Location[];
   onLocationsChange?: (locations: Location[]) => void;
+  isDeleteMode?: boolean;
+  setIsDeleteMode?: (value: boolean) => void;
+  isAddLocationModalOpen?: boolean;
+  setIsAddLocationModalOpen?: (value: boolean) => void;
 }
 
-export function LocationManager({ tripId, locations, onLocationsChange }: LocationManagerProps) {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+export function LocationManager({ tripId, locations, onLocationsChange, isDeleteMode, setIsDeleteMode, isAddLocationModalOpen, setIsAddLocationModalOpen }: LocationManagerProps) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [locationToEdit, setLocationToEdit] = useState<Location | null>(null);
   const [isMultiEditModalOpen, setIsMultiEditModalOpen] = useState(false);
-  const [isDeleteMode, setIsDeleteMode] = useState(false);
   const [selectedLocations, setSelectedLocations] = useState<Set<string>>(new Set());
   const [locationToDelete, setLocationToDelete] = useState<Location | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
+
+  // Use props if provided, otherwise fall back to internal state
+  const deleteMode = isDeleteMode ?? false;
+  const setDeleteMode = setIsDeleteMode ?? (() => {});
+  const addModalOpen = isAddLocationModalOpen ?? false;
+  const setAddModalOpen = setIsAddLocationModalOpen ?? (() => {});
 
   const handleLocationAdded = () => {
     // Refresh the page to get updated locations
@@ -85,7 +94,7 @@ export function LocationManager({ tripId, locations, onLocationsChange }: Locati
         await deleteLocation(parseInt(locationId), tripId);
       }
       setSelectedLocations(new Set());
-      setIsDeleteMode(false);
+      setDeleteMode(false);
     } else {
       // Single delete
       await deleteLocation(locationToDelete.id, tripId);
@@ -101,7 +110,7 @@ export function LocationManager({ tripId, locations, onLocationsChange }: Locati
   };
 
   const toggleDeleteMode = () => {
-    setIsDeleteMode(!isDeleteMode);
+    setDeleteMode(!deleteMode);
     setSelectedLocations(new Set());
   };
 
@@ -125,52 +134,10 @@ export function LocationManager({ tripId, locations, onLocationsChange }: Locati
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-          <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-pink-500" /> Locations
-        </h2>
-        <div className="flex items-center gap-1 sm:gap-2">
-          {locations.length > 0 && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                onClick={toggleDeleteMode}
-                size="sm"
-                variant="outline"
-                className="h-7 w-7 sm:h-8 sm:w-8 px-2 sm:px-3"
-              >
-                {isDeleteMode ? 
-                <X className="h-3 w-3 sm:h-4 sm:w-4"/>:
-                <CopyCheck className="h-3 w-3 sm:h-4 sm:w-4"/>}
-              </Button>
-              </TooltipTrigger>
-            <TooltipContent>
-              <p>{isDeleteMode ? 
-                'Cancel':
-                'Select locations'}
-              </p>
-            </TooltipContent>
-          </Tooltip>
-          )}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                onClick={() => setIsModalOpen(true)}
-                size="sm"
-                className="h-7 w-7 sm:h-8 sm:w-8 p-0"
-              >
-                <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Add locations</p>
-            </TooltipContent>
-          </Tooltip>
-          </div>
-        </div>
+
         
       {/* Floating toolbar - appears when selections are made */}
-      {isDeleteMode && selectedLocations.size > 0 && (
+      {deleteMode && selectedLocations.size > 0 && (
         <div className="fixed bottom-4 sm:bottom-6 left-1/2 transform -translate-x-1/2 z-40">
           <div className="bg-white rounded-xl shadow-2xl border border-gray-200 px-3 sm:px-4 py-2 sm:py-3 flex items-center gap-2 sm:gap-4 max-w-[calc(100vw-2rem)]">
             <div className="flex items-center gap-1 sm:gap-2">
@@ -225,13 +192,13 @@ export function LocationManager({ tripId, locations, onLocationsChange }: Locati
               <div
                 key={location.id}
                 className={`flex items-center justify-between p-2 sm:p-3 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors ${
-                  isDeleteMode && selectedLocations.has(location.id.toString()) 
+                  deleteMode && selectedLocations.has(location.id.toString()) 
                     ? 'bg-red-50 border-red-200' 
                     : ''
                 }`}
               >
                 <div className="flex items-center gap-2 sm:gap-3">
-                  {isDeleteMode && (
+                  {deleteMode && (
                     <input
                       type="checkbox"
                       checked={selectedLocations.has(location.id.toString())}
@@ -251,7 +218,7 @@ export function LocationManager({ tripId, locations, onLocationsChange }: Locati
                   </div>
                 </div>
 
-                {!isDeleteMode && (
+                {!deleteMode && (
                   <div className="flex items-center gap-1">
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -301,8 +268,8 @@ export function LocationManager({ tripId, locations, onLocationsChange }: Locati
       {/* Add Location Modal */}
       <AddLocationModal
         tripId={tripId}
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={addModalOpen}
+        onClose={() => setAddModalOpen(false)}
         onLocationAdded={handleLocationAdded}
       />
 
@@ -335,35 +302,21 @@ export function LocationManager({ tripId, locations, onLocationsChange }: Locati
       )}
 
       {/* Delete Confirmation Modal */}
-      {locationToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6 border border-gray-200">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex-shrink-0">
-                <AlertTriangle className="h-6 w-6 text-red-600" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">Delete Location{locationToDelete.id === -1 ? 's' : ''}</h3>
-                <p className="text-sm text-gray-600">
-                  {locationToDelete.id === -1 
-                    ? `Are you sure you want to delete ${selectedLocations.size} location${selectedLocations.size !== 1 ? 's' : ''}? This action cannot be undone.`
-                    : `Are you sure you want to delete "${locationToDelete.name}"? This action cannot be undone.`
-                  }
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-3 pt-4">
-              <Button onClick={cancelDelete} variant="outline" className="flex-1" disabled={isDeleting}>
-                Cancel
-              </Button>
-              <Button onClick={confirmDelete} variant="destructive" className="flex-1" disabled={isDeleting}>
-                {isDeleting ? 'Deleting...' : 'Delete'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmationModal
+        isOpen={!!locationToDelete}
+        onClose={() => setLocationToDelete(null)}
+        title={`Delete Location${locationToDelete?.id === -1 ? 's' : ''}`}
+        description={
+          locationToDelete?.id === -1 
+            ? `Are you sure you want to delete ${selectedLocations.size} location${selectedLocations.size !== 1 ? 's' : ''}? This action cannot be undone.`
+            : `Are you sure you want to delete "${locationToDelete?.name}"? This action cannot be undone.`
+        }
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="destructive"
+        onConfirm={confirmDelete}
+        loading={isDeleting}
+      />
     </div>
   );
 }

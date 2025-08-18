@@ -2,14 +2,21 @@
 
 import { useEffect, useState } from 'react';
 import { Database } from '@/types/database.types';
-import { X, Plane, Train, Bus, Car, Ship, Users, DollarSign } from 'lucide-react';
+import { Plane, Train, Bus, Car, Ship, Users, DollarSign, Calendar, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { CURRENCIES } from '@/lib/currency';
+import { 
+  FormModal, 
+  StandardInput, 
+  StandardTextarea, 
+  StandardDateInput, 
+  StandardTimeInput, 
+  FormSection, 
+  FormRow, 
+  FormField 
+} from '@/components/ui';
 
 type Transportation = Database['public']['Tables']['transportation']['Row'];
 
@@ -113,10 +120,7 @@ export function AddTransportationModal({
     loadMainCurrency();
   }, [isOpen, supabase, tripId]);
 
-  if (!isOpen) return null;
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     setIsSubmitting(true);
 
     try {
@@ -138,6 +142,7 @@ export function AddTransportationModal({
       if (response.ok) {
         try { localStorage.setItem('lastUsedCurrency', expenseCurrency); } catch {}
         onTransportationAdded();
+        onClose();
       } else {
         console.error('Failed to add transportation');
       }
@@ -287,335 +292,334 @@ export function AddTransportationModal({
     });
   };
 
-  const handleClose = () => {
-    onClose();
-  };
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white rounded-xl shadow-2xl">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">Add Transportation</h2>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleClose}
-            className="h-8 w-8"
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
+    <FormModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Add Transportation"
+      description="Add new transportation details for your trip."
+      size="xl"
+      onSubmit={handleSubmit}
+      submitText="Add Transportation"
+      cancelText="Cancel"
+      loading={isSubmitting}
+    >
+      <div className="space-y-6">
+        <FormSection title="Basic Information">
+          <FormRow cols={2}>
+            <FormField label="Type">
+              <Select
+                value={formData.type}
+                onValueChange={(value) => handleInputChange('type', value)}
+              >
+                <SelectTrigger className="h-10">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {transportationTypes.map((type) => {
+                    const Icon = type.icon;
+                    return (
+                      <SelectItem key={type.value} value={type.value}>
+                        <div className="flex items-center gap-2">
+                          <Icon className="h-4 w-4" />
+                          {type.label}
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            </FormField>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Transportation Type */}
-          <div className="space-y-2">
-            <Label htmlFor="type">Transportation Type</Label>
-            <Select
-              value={formData.type}
-              onValueChange={(value) => handleInputChange('type', value)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {transportationTypes.map((type) => {
-                  const Icon = type.icon;
-                  return (
-                    <SelectItem key={type.value} value={type.value}>
-                      <div className="flex items-center gap-2">
-                        <Icon className="h-4 w-4" />
-                        {type.label}
-                      </div>
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Name */}
-          <div className="space-y-2">
-            <Label htmlFor="provider">Name</Label>
-            <Input
-              id="provider"
+            <StandardInput
+              label="Provider Name"
+              name="provider"
+              placeholder="e.g., Delta Airlines, Amtrak, Hertz"
               value={formData.provider}
               onChange={(e) => handleInputChange('provider', e.target.value)}
-              placeholder="e.g., Delta Airlines, Amtrak, Hertz"
               required
             />
-          </div>
+          </FormRow>
+        </FormSection>
 
-          {/* Locations */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="departure_location">Departure Location</Label>
-              <div className="relative">
-                <Input
-                  id="departure_location"
-                  value={formData.departure_location}
-                  onChange={(e) => handleInputChange('departure_location', e.target.value)}
-                  onFocus={() => handleAirportFocus('departure')}
-                  onBlur={() => handleAirportBlur('departure')}
-                  onKeyDown={(e) => handleAirportKeyDown(e, 'departure')}
-                  placeholder={formData.type === 'flight' ? "Search airports..." : "e.g., JFK Airport, New York"}
-                  required
-                />
-                
-                {/* Departure Airport Suggestions Dropdown */}
-                {showDepartureSuggestions && departureAirports.length > 0 && (
-                  <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                    <div className="py-2">
-                      {departureAirports.map((airport, index) => (
-                        <button
-                          key={airport.id}
-                          type="button"
-                          onClick={() => handleAirportSelect(airport, 'departure')}
-                          className={`w-full px-4 py-3 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none transition-colors ${
-                            highlightedDepartureIndex === index ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
-                          }`}
-                        >
-                          <div className="flex items-start gap-3">
-                            <div className="flex-shrink-0 mt-1">
-                              <span className="text-lg">✈️</span>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium text-gray-900 truncate">
-                                  {airport.display}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="arrival_location">Arrival Location</Label>
-              <div className="relative">
-                <Input
-                  id="arrival_location"
-                  value={formData.arrival_location}
-                  onChange={(e) => handleInputChange('arrival_location', e.target.value)}
-                  onFocus={() => handleAirportFocus('arrival')}
-                  onBlur={() => handleAirportBlur('arrival')}
-                  onKeyDown={(e) => handleAirportKeyDown(e, 'arrival')}
-                  placeholder={formData.type === 'flight' ? "Search airports..." : "e.g., LAX Airport, Los Angeles"}
-                  required
-                />
-                
-                {/* Arrival Airport Suggestions Dropdown */}
-                {showArrivalSuggestions && arrivalAirports.length > 0 && (
-                  <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                    <div className="py-2">
-                      {arrivalAirports.map((airport, index) => (
-                        <button
-                          key={airport.id}
-                          type="button"
-                          onClick={() => handleAirportSelect(airport, 'arrival')}
-                          className={`w-full px-4 py-3 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none transition-colors ${
-                            highlightedArrivalIndex === index ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
-                          }`}
-                        >
-                          <div className="flex items-start gap-3">
-                            <div className="flex-shrink-0 mt-1">
-                              <span className="text-lg">✈️</span>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium text-gray-900 truncate">
-                                  {airport.display}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Dates */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="departure_date">Departure Date</Label>
-              <Input
-                id="departure_date"
-                type="date"
-                value={formData.departure_date}
-                onChange={(e) => handleInputChange('departure_date', e.target.value)}
+        <FormSection title="Departure Details">
+          <FormField label="Departure Location" required>
+            <div className="relative">
+              <input
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                value={formData.departure_location}
+                onChange={(e) => handleInputChange('departure_location', e.target.value)}
+                onFocus={() => handleAirportFocus('departure')}
+                onBlur={() => handleAirportBlur('departure')}
+                onKeyDown={(e) => handleAirportKeyDown(e, 'departure')}
+                placeholder={formData.type === 'flight' ? "Search airports..." : "e.g., JFK Airport, New York"}
                 required
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="arrival_date">Arrival Date</Label>
-              <Input
-                id="arrival_date"
-                type="date"
-                value={formData.arrival_date}
-                onChange={(e) => handleInputChange('arrival_date', e.target.value)}
-                required
-              />
-            </div>
-          </div>
-
-          {/* Times */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="departure_time">Departure Time (Optional)</Label>
-              <Input
-                id="departure_time"
-                type="time"
-                value={formData.departure_time}
-                onChange={(e) => handleInputChange('departure_time', e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="arrival_time">Arrival Time (Optional)</Label>
-              <Input
-                id="arrival_time"
-                type="time"
-                value={formData.arrival_time}
-                onChange={(e) => handleInputChange('arrival_time', e.target.value)}
-              />
-            </div>
-          </div>
-
-
-
-          {/* Participants Selection and Expense Section */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-gray-500" />
-                <Label>Add as Expense</Label>
-              </div>
-              <Button
-                type="button"
-                variant={expenseEnabled ? 'secondary' : 'outline'}
-                size="sm"
-                onClick={() => setExpenseEnabled(prev => !prev)}
-              >
-                {expenseEnabled ? 'Remove Expense' : 'Add as Expense'}
-              </Button>
-            </div>
-
-            {expenseEnabled && (
-              <div className="space-y-4">
-                {/* Amount/Currency/Status */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <div>
-                    <Label>Amount</Label>
-                    <Input value={expenseAmount} onChange={(e) => setExpenseAmount(e.target.value)} placeholder="0.00" />
-                  </div>
-                  <div>
-                    <Label>Currency</Label>
-                    <Select value={expenseCurrency} onValueChange={setExpenseCurrency}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {CURRENCIES.map((currency) => (
-                          <SelectItem key={currency.code} value={currency.code}>
+              
+              {/* Departure Airport Suggestions Dropdown */}
+              {showDepartureSuggestions && departureAirports.length > 0 && (
+                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  <div className="py-2">
+                    {departureAirports.map((airport, index) => (
+                      <button
+                        key={airport.id}
+                        type="button"
+                        onClick={() => handleAirportSelect(airport, 'departure')}
+                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none transition-colors ${
+                          highlightedDepartureIndex === index ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="flex-shrink-0 mt-1">
+                            <span className="text-lg">✈️</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="font-mono text-sm">{currency.symbol}</span>
-                              <span>{currency.code}</span>
-                              <span className="text-gray-500">- {currency.name}</span>
+                              <span className="font-medium text-gray-900 truncate">
+                                {airport.display}
+                              </span>
                             </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {expenseCurrency !== mainCurrency && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        Will be converted to {mainCurrency} (trip currency)
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <Label>Payment Status *</Label>
-                    <div className="flex gap-4 mt-2">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="payment_status_radio"
-                          checked={paymentStatus === 'paid'}
-                          onChange={() => setPaymentStatus('paid')}
-                          className="text-green-600"
-                        />
-                        <span className="text-green-600">Paid</span>
-                      </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="payment_status_radio"
-                          checked={paymentStatus === 'pending'}
-                          onChange={() => setPaymentStatus('pending')}
-                          className="text-orange-600"
-                        />
-                        <span className="text-orange-600">Pending</span>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Participants */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-gray-500" />
-                    <Label>Participants</Label>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {participantOptions.map(p => (
-                      <label key={p.id} className="flex items-center gap-2 text-sm">
-                        <input
-                          type="checkbox"
-                          checked={selectedParticipants.has(p.id)}
-                          onChange={() => toggleParticipant(p.id)}
-                        />
-                        <span>{p.name}</span>
-                      </label>
+                          </div>
+                        </div>
+                      </button>
                     ))}
-                    {participantOptions.length === 0 && (
-                      <p className="text-sm text-gray-500">No participants found</p>
-                    )}
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          </FormField>
 
+          <FormRow cols={2}>
+            <StandardDateInput
+              label="Departure Date"
+              name="departure_date"
+              value={formData.departure_date}
+              onChange={(e) => handleInputChange('departure_date', e.target.value)}
+              required
+            />
+            
+            <StandardTimeInput
+              label="Departure Time"
+              name="departure_time"
+              value={formData.departure_time}
+              onChange={(e) => handleInputChange('departure_time', e.target.value)}
+            />
+          </FormRow>
+        </FormSection>
 
-          {/* Actions */}
-          <div className="flex gap-3 pt-4">
+        <FormSection title="Arrival Details">
+          <FormField label="Arrival Location" required>
+            <div className="relative">
+              <input
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                value={formData.arrival_location}
+                onChange={(e) => handleInputChange('arrival_location', e.target.value)}
+                onFocus={() => handleAirportFocus('arrival')}
+                onBlur={() => handleAirportBlur('arrival')}
+                onKeyDown={(e) => handleAirportKeyDown(e, 'arrival')}
+                placeholder={formData.type === 'flight' ? "Search airports..." : "e.g., LAX Airport, Los Angeles"}
+                required
+              />
+              
+              {/* Arrival Airport Suggestions Dropdown */}
+              {showArrivalSuggestions && arrivalAirports.length > 0 && (
+                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  <div className="py-2">
+                    {arrivalAirports.map((airport, index) => (
+                      <button
+                        key={airport.id}
+                        type="button"
+                        onClick={() => handleAirportSelect(airport, 'arrival')}
+                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none transition-colors ${
+                          highlightedArrivalIndex === index ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="flex-shrink-0 mt-1">
+                            <span className="text-lg">✈️</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-gray-900 truncate">
+                                {airport.display}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </FormField>
+
+          <FormRow cols={2}>
+            <StandardDateInput
+              label="Arrival Date"
+              name="arrival_date"
+              value={formData.arrival_date}
+              onChange={(e) => handleInputChange('arrival_date', e.target.value)}
+              required
+            />
+            
+            <StandardTimeInput
+              label="Arrival Time"
+              name="arrival_time"
+              value={formData.arrival_time}
+              onChange={(e) => handleInputChange('arrival_time', e.target.value)}
+            />
+          </FormRow>
+        </FormSection>
+
+        {/* Flight-specific fields */}
+        {formData.type === 'flight' && (
+          <FormSection title="Flight Details">
+            <FormRow cols={2}>
+              <StandardInput
+                label="Flight Number"
+                name="flight_number"
+                placeholder="e.g., DL1234"
+                value={formData.flight_number}
+                onChange={(e) => handleInputChange('flight_number', e.target.value)}
+              />
+              
+              <StandardInput
+                label="Terminal"
+                name="terminal"
+                placeholder="e.g., Terminal 1"
+                value={formData.terminal}
+                onChange={(e) => handleInputChange('terminal', e.target.value)}
+              />
+            </FormRow>
+
+            <FormRow cols={2}>
+              <StandardInput
+                label="Gate"
+                name="gate"
+                placeholder="e.g., A12"
+                value={formData.gate}
+                onChange={(e) => handleInputChange('gate', e.target.value)}
+              />
+              
+              <StandardInput
+                label="Seat"
+                name="seat"
+                placeholder="e.g., 12A"
+                value={formData.seat}
+                onChange={(e) => handleInputChange('seat', e.target.value)}
+              />
+            </FormRow>
+          </FormSection>
+        )}
+
+        {/* Expense Section */}
+        <FormSection title="Expense">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <DollarSign className="h-4 w-4 text-gray-500" />
+              <span className="text-sm font-medium">Add as Expense</span>
+            </div>
             <Button
               type="button"
-              variant="outline"
-              onClick={handleClose}
-              className="flex-1"
-              disabled={isSubmitting}
+              variant={expenseEnabled ? 'secondary' : 'outline'}
+              size="sm"
+              onClick={() => setExpenseEnabled(prev => !prev)}
             >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              className="flex-1"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? 'Adding...' : 'Add Transportation'}
+              {expenseEnabled ? 'Remove Expense' : 'Add as Expense'}
             </Button>
           </div>
-        </form>
+          
+          {expenseEnabled && (
+            <div className="space-y-4">
+              <FormRow cols={3}>
+                <StandardInput
+                  label="Amount"
+                  name="expense_amount"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="0.00"
+                  value={expenseAmount}
+                  onChange={(e) => setExpenseAmount(e.target.value)}
+                />
+                
+                <FormField label="Currency">
+                  <Select value={expenseCurrency} onValueChange={setExpenseCurrency}>
+                    <SelectTrigger className="h-10">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CURRENCIES.map((currency) => (
+                        <SelectItem key={currency.code} value={currency.code}>
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-sm">{currency.symbol}</span>
+                            <span>{currency.code}</span>
+                            <span className="text-gray-500">- {currency.name}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {expenseCurrency !== mainCurrency && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Will be converted to {mainCurrency} (trip currency)
+                    </p>
+                  )}
+                </FormField>
+
+                <FormField label="Payment Status">
+                  <div className="flex gap-4 mt-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="payment_status_radio"
+                        checked={paymentStatus === 'paid'}
+                        onChange={() => setPaymentStatus('paid')}
+                        className="text-green-600"
+                      />
+                      <span className="text-green-600">Paid</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="payment_status_radio"
+                        checked={paymentStatus === 'pending'}
+                        onChange={() => setPaymentStatus('pending')}
+                        className="text-orange-600"
+                      />
+                      <span className="text-orange-600">Pending</span>
+                    </label>
+                  </div>
+                </FormField>
+              </FormRow>
+
+              {/* Participants */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm font-medium">Participants</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {participantOptions.map(p => (
+                    <label key={p.id} className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={selectedParticipants.has(p.id)}
+                        onChange={() => toggleParticipant(p.id)}
+                      />
+                      <span>{p.name}</span>
+                    </label>
+                  ))}
+                  {participantOptions.length === 0 && (
+                    <p className="text-sm text-gray-500">No participants found</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </FormSection>
       </div>
-    </div>
+    </FormModal>
   );
 }

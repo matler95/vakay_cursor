@@ -74,8 +74,14 @@ export async function createTrip(prevState: { message: string }, formData: FormD
 }
 
 // --- ADD THIS NEW FUNCTION ---
-export async function deleteTrip(tripId: string) {
+export async function deleteTrip(prevState: { message: string }, formData: FormData) {
   const supabase = createServerActionClient<Database>({ cookies });
+  
+  const tripId = formData.get('tripId');
+  
+  if (!tripId || typeof tripId !== 'string') {
+    return { message: 'Invalid trip ID provided.' };
+  }
   
   // RLS policy ensures only an admin can perform this delete.
   // The ON DELETE CASCADE rule in our database will automatically delete
@@ -87,10 +93,10 @@ export async function deleteTrip(tripId: string) {
 
   if (error) {
     console.error('Delete Trip Error:', error);
-    // In a real app, you'd want to return an error message.
-    return;
+    return { message: `Failed to delete trip: ${error.message}` };
   }
 
   // Refresh the dashboard to show the trip has been removed.
   revalidatePath('/dashboard');
+  return { message: 'Trip deleted successfully!' };
 }

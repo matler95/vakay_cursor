@@ -25,7 +25,7 @@ export function EditPasswordModal() {
       </Tooltip>
 
       <Modal
-        open={open}
+        isOpen={open}
         onClose={() => setOpen(false)}
         title="Update Password"
         description="Enter and confirm your new password."

@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Modal } from '@/components/ui/modal';
+import { ConfirmationModal } from '@/components/ui';
 import { AlertTriangle } from 'lucide-react';
 import { useActionState } from 'react';
 import { deleteAccount } from '../actions';
@@ -30,34 +30,55 @@ export function DeleteAccountModal() {
         Delete account
       </Button>
 
-      <Modal
-        open={open}
+      <ConfirmationModal
+        isOpen={open}
         onClose={() => setOpen(false)}
         title="Permanently delete account"
         description="This will remove your account and access to all trips. This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="destructive"
+        onConfirm={() => {
+          // The form will handle the submission
+          const form = document.getElementById('delete-account-form') as HTMLFormElement | null;
+          form?.requestSubmit();
+        }}
+        loading={false}
+        size="lg"
       >
-        <div className="flex items-start gap-3 mb-2 text-red-700">
-          <AlertTriangle className="h-5 w-5 mt-0.5" />
-          <p className="text-sm">To confirm, type <span className="font-semibold">delete</span> in the box below.</p>
-        </div>
-        <form action={formAction} className="space-y-4">
-          <input
-            type="text"
-            name="confirm"
-            value={confirmText}
-            onChange={(e) => setConfirmText(e.target.value)}
-            placeholder="delete"
-            className="block w-full rounded-md border-gray-300 shadow-sm"
-          />
-          {state?.message && <p className="text-sm text-gray-600">{state.message}</p>}
-          <div className="flex gap-3">
-            <Button type="button" variant="outline" className="flex-1" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
-            <DeleteButton disabled={confirmText !== 'delete'} />
+        <div className="space-y-4">
+          <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <AlertTriangle className="h-5 w-5 mt-0.5 text-red-600 flex-shrink-0" />
+            <p className="text-sm text-red-700">
+              To confirm, type <span className="font-semibold">delete</span> in the box below.
+            </p>
           </div>
-        </form>
-      </Modal>
+          
+          <form id="delete-account-form" action={formAction} className="space-y-4">
+            <div>
+              <label htmlFor="confirm" className="block text-sm font-medium text-gray-700 mb-2">
+                Type "delete" to confirm
+              </label>
+              <input
+                id="confirm"
+                type="text"
+                name="confirm"
+                value={confirmText}
+                onChange={(e) => setConfirmText(e.target.value)}
+                placeholder="delete"
+                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500"
+                required
+              />
+            </div>
+            
+            {state?.message && (
+              <p className="text-sm text-red-600 bg-red-50 p-3 rounded-md border border-red-200">
+                {state.message}
+              </p>
+            )}
+          </form>
+        </div>
+      </ConfirmationModal>
     </>
   );
 }

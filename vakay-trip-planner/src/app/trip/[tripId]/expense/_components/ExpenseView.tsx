@@ -35,7 +35,7 @@ type TripParticipant = {
 type Trip = Database['public']['Tables']['trips']['Row'];
 
 interface ExpenseViewProps {
-  trip: Trip;
+  trip: Database['public']['Tables']['trips']['Row'];
   expenses: Expense[];
   categories: Category[];
   tripParticipants: TripParticipant[];
@@ -43,46 +43,48 @@ interface ExpenseViewProps {
   currentUserId: string;
   addExpenseAction: (prevState: unknown, formData: FormData) => Promise<{ message?: string }>;
   updateExpenseStatusAction: (prevState: unknown, formData: FormData) => Promise<{ message?: string }>;
-  updateTripMainCurrencyAction: (prevState: unknown, formData: FormData) => Promise<{ message?: string }>;
-  deleteExpenseAction: (prevState: unknown, formData: FormData) => Promise<{ message?: string }>;
   updateExpenseAction: (prevState: unknown, formData: FormData) => Promise<{ message?: string }>;
+  deleteExpenseAction: (prevState: unknown, formData: FormData) => Promise<{ message?: string }>;
+  updateTripMainCurrencyAction: (prevState: unknown, formData: FormData) => Promise<{ message?: string }>;
+  onDataRefresh: () => Promise<void>;
 }
 
-export function ExpenseView({ 
-  trip, 
-  expenses, 
-  categories, 
-  tripParticipants, 
-  userRole, 
-  currentUserId, 
-  addExpenseAction, 
-  updateExpenseStatusAction, 
-  updateTripMainCurrencyAction,
+export function ExpenseView({
+  trip,
+  expenses,
+  categories,
+  tripParticipants,
+  userRole,
+  currentUserId,
+  addExpenseAction,
+  updateExpenseStatusAction,
+  updateExpenseAction,
   deleteExpenseAction,
-  updateExpenseAction
+  updateTripMainCurrencyAction,
+  onDataRefresh
 }: ExpenseViewProps) {
   const [isAddExpenseModalOpen, setIsAddExpenseModalOpen] = useState(false);
   const [isCurrencySettingsModalOpen, setIsCurrencySettingsModalOpen] = useState(false);
-  const [isEditTripModalOpen, setIsEditTripModalOpen] = useState(false);
+  const [isAnalyticsModalOpen, setIsAnalyticsModalOpen] = useState(false);
 
-  const refreshData = () => {
-    // This will be handled by Next.js revalidation from server actions
-    window.location.reload();
+  const refreshData = async () => {
+    await onDataRefresh();
   };
 
   return (
     <div className="space-y-6">
       {/* Secondary Header - Expense Tracking */}
-      <div className="flex justify-between items-center gap-4 mb-6">
-        <div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
-            Expense Tracking
-          </h2>
-          <p className="text-gray-600 mt-1">
-            Track and manage trip expenses with auto rate conversion.
-          </p>
-        </div>
-        <div className="flex gap-3">
+      <div className="sticky top-16 z-30 bg-gray-50 -mx-4 px-4 py-3 border-b border-gray-200 shadow-sm">
+        <div className="flex justify-between items-center gap-4 mb-6">
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+              Expense Tracking
+            </h2>
+            <p className="text-sm sm:text-base text-gray-600 mt-1">
+              Track and manage trip expenses.
+            </p>
+          </div>
+          <div className="flex gap-3">
           {userRole === 'admin' && (
             <>
           <TooltipProvider>
@@ -122,6 +124,7 @@ export function ExpenseView({
             </Tooltip>
           </TooltipProvider>
         </div>
+      </div>
       </div>
 
       {/* Expense Overview */}
@@ -167,15 +170,6 @@ export function ExpenseView({
           trip={trip}
           onSettingsUpdated={refreshData}
           updateTripMainCurrencyAction={updateTripMainCurrencyAction}
-        />
-      )}
-
-      {isEditTripModalOpen && userRole === 'admin' && (
-        <EditTripModal
-          trip={trip}
-          isOpen={isEditTripModalOpen}
-          onClose={() => setIsEditTripModalOpen(false)}
-          onTripUpdated={refreshData}
         />
       )}
     </div>

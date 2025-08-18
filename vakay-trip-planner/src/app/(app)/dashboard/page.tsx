@@ -6,6 +6,8 @@ import { Database } from '@/types/database.types';
 
 import { TripList } from './_components/TripList';
 import { CreateTripModal } from './_components/CreateTripModal';
+import { StandardPageLayout } from '@/components/ui';
+import { PageHeader } from '@/components/ui/design-system';
 
 export default async function Dashboard() {
   const supabase = createServerComponentClient<Database>({ cookies });
@@ -24,24 +26,21 @@ export default async function Dashboard() {
   })) ?? [];
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Your Trips</h2>
-          <p className="text-gray-600">Select a trip to view its itinerary or create a new one.</p>
-        </div>
-  
-        {/* Align CreateTripModal to the right */}
+    <StandardPageLayout
+      maxWidth="lg"
+      background="gray"
+    >
+      <PageHeader
+        title="Your Trips"
+        description="Select a trip to view its itinerary or create a new one."
+      >
         <CreateTripModal />
-      </div>
-  
-      <div>
-        <TripList trips={trips} />
-      </div>
-    </div>
+      </PageHeader>
+
+      <TripList trips={trips} />
+    </StandardPageLayout>
   );
-  }
+}
 
 // Add the Trip type definition here for clarity
 type Trip = Database['public']['Tables']['trips']['Row'];

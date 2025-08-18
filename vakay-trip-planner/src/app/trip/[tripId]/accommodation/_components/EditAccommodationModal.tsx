@@ -108,11 +108,8 @@ export function EditAccommodationModal({
       }
 
       // Load selected participants for this accommodation (only used if adding expense)
-      const { data: aps } = await supabase
-        .from('accommodation_participants')
-        .select('participant_user_id')
-        .eq('accommodation_id', accommodation.id);
-      setSelectedParticipants(new Set((aps || []).map(r => r.participant_user_id)));
+      // Note: accommodation_participants table doesn't exist, so we'll use trip participants
+      setSelectedParticipants(new Set(ids));
 
       // Check if accommodation already has an expense
       const expectedDescription = `${formData.name || accommodation.name} ${formData.address || accommodation.address}`;
@@ -408,47 +405,6 @@ export function EditAccommodationModal({
               </div>
             </div>
           )}
-
-          {/* Additional Details */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900 flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              Additional Details
-            </h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="booking_confirmation">Booking Confirmation</Label>
-                <Input
-                  id="booking_confirmation"
-                  value={formData.booking_confirmation || ''}
-                  onChange={(e) => handleInputChange('booking_confirmation', e.target.value)}
-                  placeholder="Confirmation number"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="contact_phone">Contact Phone</Label>
-                <Input
-                  id="contact_phone"
-                  value={formData.contact_phone || ''}
-                  onChange={(e) => handleInputChange('contact_phone', e.target.value)}
-                  placeholder="Phone number"
-                />
-              </div>
-            </div>
-            
-            <div>
-              <Label htmlFor="notes">Notes</Label>
-              <Textarea
-                id="notes"
-                value={formData.notes || ''}
-                onChange={(e) => handleInputChange('notes', e.target.value)}
-                placeholder="Additional notes, special requests, etc."
-                rows={3}
-              />
-            </div>
-          </div>
 
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">

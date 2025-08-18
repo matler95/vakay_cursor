@@ -1,6 +1,13 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Safe area utilities for mobile devices */
+@supports (padding: max(0px)) {
+  .pb-safe {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -98,25 +105,138 @@
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.551 0.027 264.364);
   --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
+  --chart-2: oklch(0.488 0.243 264.376);
+  --chart-3: oklch(0.488 0.243 264.376);
+  --chart-4: oklch(0.488 0.243 264.376);
+  --chart-5: oklch(0.488 0.243 264.376);
   --sidebar: oklch(0.208 0.042 265.755);
   --sidebar-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-primary: oklch(0.929 0.013 255.508);
+  --sidebar-primary-foreground: oklch(0.208 0.042 265.755);
   --sidebar-accent: oklch(0.279 0.041 260.031);
   --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.551 0.027 264.364);
 }
 
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
+/* Mobile-first responsive utilities */
+@media (max-width: 640px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
-  body {
-    @apply bg-background text-foreground;
+  
+  /* Ensure proper bottom spacing on mobile */
+  .pb-20 {
+    padding-bottom: 5rem;
+  }
+  
+  .pb-24 {
+    padding-bottom: 6rem;
+  }
+  
+  /* Safe area for mobile devices */
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 1rem);
+  }
+  
+  /* Additional mobile spacing for calendar */
+  .pb-16 {
+    padding-bottom: 4rem;
+  }
+  
+  .pb-8 {
+    padding-bottom: 2rem;
+  }
+  
+  /* Ensure calendar is visible on mobile */
+  .min-h-screen {
+    min-height: 100vh;
+    padding-bottom: 6rem;
+  }
+  
+  /* Mobile calendar specific spacing */
+  .space-y-4 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 1rem;
+  }
+  
+  .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 1.5rem;
+  }
+}
+
+/* Touch-friendly improvements */
+.touch-manipulation {
+  touch-action: manipulation;
+}
+
+/* Hide scrollbars for mobile tabs */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Safari and Chrome */
+}
+
+/* Mobile-optimized focus states */
+@media (max-width: 640px) {
+  .focus\:ring-2:focus {
+    --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+    --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(3px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+    box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+  }
+}
+
+/* Improved mobile button states */
+@media (max-width: 640px) {
+  .active\:scale-95:active {
+    transform: scale(0.95);
+  }
+  
+  .hover\:scale-105:hover {
+    transform: scale(1.05);
+  }
+}
+
+/* Mobile-optimized spacing */
+@media (max-width: 640px) {
+  .space-y-4 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 1rem;
+  }
+  
+  .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 1.5rem;
+  }
+  
+  .gap-3 {
+    gap: 0.75rem;
+  }
+  
+  .gap-4 {
+    gap: 1rem;
+  }
+  
+  /* Reduce spacing on mobile for less crowding */
+  .space-y-4 {
+    gap: 0.75rem;
+  }
+  
+  .space-y-6 {
+    gap: 1rem;
+  }
+  
+  /* Better mobile margins */
+  .mb-3 {
+    margin-bottom: 0.75rem;
+  }
+  
+  .mb-4 {
+    margin-bottom: 1rem;
+  }
+  
+  .mb-6 {
+    margin-bottom: 1.5rem;
   }
 }

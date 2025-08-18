@@ -5,8 +5,18 @@ import { addLocation } from '../actions';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import { Plus, X, Trash2, MapPin } from 'lucide-react';
 import { Autocomplete, AutocompleteOption } from '@/components/ui/autocomplete';
+import { 
+  FormModal, 
+  StandardInput, 
+  StandardTextarea,
+  FormSection,
+  FormRow,
+  FormField,
+  FormActions
+} from '@/components/ui';
 
 interface AddLocationModalProps {
   tripId: string;
@@ -23,21 +33,22 @@ interface LocationEntry {
   selectedDestination?: AutocompleteOption | null;
 }
 
-// Preset colors for the dropdown
 const presetColors = [
-  { name: 'Red', hex: '#FF383C' },
-  { name: 'Orange', hex: '#FF8D28' },
-  { name: 'Yellow', hex: '#FFCC00' },
-  { name: 'Green', hex: '#34C759' },
-  { name: 'Mint', hex: '#00C8B3' },
-  { name: 'Teal', hex: '#00C3D0' },
-  { name: 'Cyan', hex: '#00C0E8' },
-  { name: 'Blue', hex: '#0088FF' },
-  { name: 'Indigo', hex: '#6155F5' },
-  { name: 'Purple', hex: '#CB30E0' },
-  { name: 'Pink', hex: '#FF2D55' },
-  { name: 'Brown', hex: '#AC7F5E' },
-  { name: 'Gray', hex: '#8E8E93' }
+  { name: 'Soft Red', hex: '#FF6B6B' },
+  { name: 'Coral', hex: '#FF8E72' },
+  { name: 'Warm Orange', hex: '#FFB86B' },
+  { name: 'Vibrant Yellow', hex: '#FFD93D' },
+  { name: 'Soft Green', hex: '#A3DE83' },
+  { name: 'Mint Green', hex: '#6BCB77' },
+  { name: 'Sky Blue', hex: '#4D96FF' },
+  { name: 'Light Blue', hex: '#6BCBFF' },
+  { name: 'Aqua', hex: '#4BC0C8' },
+  { name: 'Turquoise', hex: '#4ECDC4' },
+  { name: 'Violet', hex: '#9B5DE5' },
+  { name: 'Purple', hex: '#845EC2' },
+  { name: 'Pink', hex: '#FF6FB5' },
+  { name: 'Soft Pink', hex: '#FF92A5' },
+  { name: 'Magenta', hex: '#D65DB1' }
 ];
 
 export function AddLocationModal({ tripId, isOpen, onClose, onLocationAdded }: AddLocationModalProps) {
@@ -112,157 +123,132 @@ export function AddLocationModal({ tripId, isOpen, onClose, onLocationAdded }: A
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl p-4 sm:p-6 border border-gray-200 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-4 sm:mb-6">
-          <h2 className="text-lg sm:text-xl font-semibold">Add Locations</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <X className="h-4 w-4 sm:h-5 sm:w-5" />
-          </button>
-        </div>
+    <FormModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Add Locations"
+      description="Add new locations to your trip itinerary."
+      size="xl"
+      onSubmit={handleSubmit}
+      submitText={`Save ${locations.filter(loc => loc.name.trim() !== '').length} Location${locations.filter(loc => loc.name.trim() !== '').length !== 1 ? 's' : ''}`}
+      cancelText="Cancel"
+      loading={isSubmitting}
+    >
+      <div className="space-y-6">
+        {locations.map((location, index) => (
+          <div key={location.id} className="bg-gray-50 rounded-lg p-4 sm:p-5 border border-gray-200">
+            <FormSection title={`Location ${index + 1}`}>
+              {/* Location Name */}
+              <FormField label="Location Name" required>
+                <Autocomplete
+                  value={location.name}
+                  onChange={(value) => updateLocationEntry(location.id, 'name', value)}
+                  onSelect={(destination) => handleDestinationSelect(location.id, destination)}
+                  placeholder="Search destinations (e.g., Paris, Angkor Wat, Bali)"
+                />
 
-        <form
-          onSubmit={async (e) => {
-            e.preventDefault();
-            await handleSubmit();
-          }}
-          className="space-y-4"
-        >
-          <div className="space-y-4">
-            {locations.map((location, index) => (
-              <div key={location.id} className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4">
-                <div className="flex-grow space-y-2 sm:space-y-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-gray-600">Location {index + 1}</span>
-                    {locations.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeLocationEntry(location.id)}
-                        className="h-5 w-5 sm:h-6 sm:w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    )}
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                    <div className="space-y-2 md:col-span-4">
-                      <Label htmlFor={`name-${location.id}`}>Location Name</Label>
-                      <Autocomplete
-                        value={location.name}
-                        onChange={(value) => updateLocationEntry(location.id, 'name', value)}
-                        onSelect={(destination) => handleDestinationSelect(location.id, destination)}
-                        placeholder="Search destinations (e.g., Paris, Angkor Wat, Bali)"
-                        className="w-full"
-                      />
-                    </div>
-
-                  {location.selectedDestination && (
-                    <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-sm text-blue-800">
-                          <MapPin className="h-4 w-4" />
-                          <span className="font-medium">{location.selectedDestination.name}</span>
-                          <span className="text-blue-600">
-                            ({location.selectedDestination.country})
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            // Clear the selected destination to allow manual editing
-                            updateLocationEntry(location.id, 'name', location.selectedDestination?.name || '');
-                            setLocations(locations.map(loc => 
-                              loc.id === location.id ? { ...loc, selectedDestination: null } : loc
-                            ));
-                          }}
-                          className="text-blue-600 hover:text-blue-800 text-xs"
-                        >
-                          Edit manually
-                        </button>
+                {location.selectedDestination && (
+                  <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <div className="flex items-center gap-2 text-sm text-blue-800">
+                        <MapPin className="h-4 w-4 flex-shrink-0" />
+                        <span className="font-medium">{location.selectedDestination.name}</span>
+                        <span className="text-blue-600">({location.selectedDestination.country})</span>
                       </div>
-                      <p className="text-xs text-blue-600 mt-1">
-                        {location.selectedDestination.display_name}
-                      </p>
-                    </div>
-                  )}
-
-                    <div className="space-y-2 md:col-span-1">
-                      <Label>Color</Label>
-                      <Select
-                        value={location.color}
-                        onValueChange={(value) => updateLocationEntry(location.id, 'color', value)}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          updateLocationEntry(location.id, 'name', location.selectedDestination?.name || '');
+                          setLocations(locations.map(loc => 
+                            loc.id === location.id ? { ...loc, selectedDestination: null } : loc
+                          ));
+                        }}
+                        className="text-blue-600 hover:text-blue-800 text-xs font-medium hover:bg-blue-100 px-2 py-1 rounded transition-colors"
                       >
-                        <SelectTrigger>
-                          <SelectValue>
-                            <div className="flex items-center gap-2">
-                              <div
-                                className="w-4 h-4 rounded-full border border-gray-300"
-                                style={{ backgroundColor: location.color }}
-                              />
-                              {/* <span>
-                                {presetColors.find(c => c.hex === location.color)?.name || 'Custom'}
-                              </span> */}
-                            </div>
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                          {presetColors.map((color) => (
-                            <SelectItem key={color.hex} value={color.hex}>
-                              <div className="flex items-center gap-2">
-                                <div
-                                  className="w-4 h-4 rounded-full border border-gray-300"
-                                  style={{ backgroundColor: color.hex }}
-                                />
-                                <span>{color.name}</span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        Edit manually
+                      </button>
                     </div>
+                    <p className="text-xs text-blue-600 mt-2">{location.selectedDestination.display_name}</p>
                   </div>
+                )}
+              </FormField>
 
-                </div>
-              </div>
-            ))}
+              {/* Color and Remove */}
+              <FormRow cols={2}>
+                <FormField label="Color">
+                  <Select
+                    value={location.color}
+                    onValueChange={(value) => updateLocationEntry(location.id, 'color', value)}
+                  >
+                    <SelectTrigger className="h-10">
+                      <SelectValue>
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-5 h-5 rounded-full border-2 border-gray-300"
+                            style={{ backgroundColor: location.color }}
+                          />
+                          <span className="text-sm">Select color</span>
+                        </div>
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {presetColors.map((color) => (
+                        <SelectItem key={color.hex} value={color.hex}>
+                          <div className="flex items-center gap-3 py-2">
+                            <div
+                              className="w-6 h-6 rounded-full border-2 border-gray-300"
+                              style={{ backgroundColor: color.hex }}
+                            />
+                            <span className="text-sm">{color.name}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormField>
+
+                {locations.length > 1 && (
+                  <div className="flex items-end">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeLocationEntry(location.id)}
+                      className="h-10 w-full p-0 text-gray-400 hover:text-red-500 hover:bg-red-50 flex items-center justify-center transition-all duration-200"
+                      aria-label="Remove location"
+                    >
+                      <Trash2 className="h-5 w-5" />
+                    </Button>
+                  </div>
+                )}
+              </FormRow>
+            </FormSection>
           </div>
+        ))}
 
-          <Button
-            type="button"
-            variant="outline"
-            onClick={addLocationEntry}
-            className="w-full"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Another Location
-          </Button>
+        {/* Add Another Location Button */}
+        <Button
+          type="button"
+          variant="outline"
+          onClick={addLocationEntry}
+          className="w-full h-10 text-sm font-medium"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Add Another Location
+        </Button>
 
-          {message && (
-            <p className={`text-sm ${message.includes('error') ? 'text-red-600' : 'text-green-600'}`}>
-              {message}
-            </p>
-          )}
-
-          <div className="flex gap-3 pt-4">
-            <Button type="button" variant="outline" className="flex-1" onClick={onClose} disabled={isSubmitting}>
-              Cancel
-            </Button>
-            <Button type="submit" className="flex-1" disabled={isSubmitting || locations.every(loc => loc.name.trim() === '')}>
-              {isSubmitting ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" /> : null}
-              {isSubmitting ? `Saving...` : `Save ${locations.filter(loc => loc.name.trim() !== '').length} Location${locations.filter(loc => loc.name.trim() !== '').length !== 1 ? 's' : ''}`}
-            </Button>
+        {/* Message Display */}
+        {message && (
+          <div className={`p-3 rounded-lg text-sm ${
+            message.includes('error') 
+              ? 'bg-red-50 text-red-700 border border-red-200' 
+              : 'bg-green-50 text-green-700 border border-green-200'
+          }`}>
+            {message}
           </div>
-        </form>
+        )}
       </div>
-    </div>
+    </FormModal>
   );
 }

@@ -13,11 +13,12 @@ type Accommodation = Database['public']['Tables']['accommodations']['Row'];
 type Trip = Database['public']['Tables']['trips']['Row'];
 
 interface AccommodationViewProps {
-  trip: Trip;
-  accommodations: Accommodation[];
+  trip: Database['public']['Tables']['trips']['Row'];
+  accommodations: Database['public']['Tables']['accommodations']['Row'][];
   expenseStatus: Record<string, boolean>;
   userRole: string | null;
   currentUserId: string;
+  onDataRefresh: () => Promise<void>;
 }
 
 export function AccommodationView({ 
@@ -25,12 +26,13 @@ export function AccommodationView({
   accommodations, 
   expenseStatus,
   userRole, 
-  currentUserId 
+  currentUserId,
+  onDataRefresh
 }: AccommodationViewProps) {
   const [isAddAccommodationModalOpen, setIsAddAccommodationModalOpen] = useState(false);
 
-  const refreshData = () => {
-    window.location.reload();
+  const refreshData = async () => {
+    await onDataRefresh();
   };
 
   const copyToClipboard = async (text: string) => {
@@ -62,94 +64,32 @@ export function AccommodationView({
   return (
     <div className="space-y-6">
       {/* Secondary Header - Accommodation */}
-      <div className="flex justify-between items-center gap-4 mb-6">
-        <div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
-            Accommodation
-          </h2>
-          <p className="text-gray-600 mt-1">
-            Manage your trip accommodations and lodging details
-          </p>
-        </div>
-        <div className="flex gap-3">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  onClick={() => setIsAddAccommodationModalOpen(true)}
-                  className="flex items-center gap-2"
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Add new accommodation</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-      </div>
-
-      {/* Accommodation Overview */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-white rounded-xl shadow p-4">
-          <div className="flex items-center gap-3">
-            {/* <div className="p-2 bg-blue-100 rounded-lg">
-              <MapPin className="h-5 w-5 text-blue-600" />
-            </div> */}
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Stays</p>
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-5 w-5 text-blue-600" />
-                  <p className="text-2xl font-bold text-gray-900">{accommodations.length}</p>
-                </div>
-            </div>
+      <div className="sticky top-16 z-30 bg-gray-50 -mx-4 px-4 py-3 border-b border-gray-200 shadow-sm">
+        <div className="flex justify-between items-center gap-4 mb-6">
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+              Accommodation
+            </h2>
+            <p className="text-sm sm:text-base text-gray-600 mt-1">
+              Manage your trip accommodations.
+            </p>
           </div>
-        </div>
-        
-        <div className="bg-white rounded-xl shadow p-4">
-          <div className="flex items-center gap-3">
-            {/* <div className="p-2 bg-green-100 rounded-lg">
-              <MapPin className="h-5 w-5 text-green-600" />
-            </div> */}
-            <div>
-              <p className="text-sm font-medium text-gray-600">Nights</p>
-              <div className="flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-green-600" />
-                <p className="text-2xl font-bold text-gray-900">
-                  {accommodations.reduce((total, acc) => {
-                    const checkIn = new Date(acc.check_in_date);
-                    const checkOut = new Date(acc.check_out_date);
-                    const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
-                    return total + nights;
-                  }, 0)}
-                </p>
-              </div>    
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow p-4">
-          <div className="flex items-center gap-3">
-            {/* <div className="p-2 bg-purple-100 rounded-lg">
-              <MapPin className="h-5 w-5 text-purple-600" />
-            </div> */}
-            <div>
-              <p className="text-sm font-medium text-gray-600">Next Stay</p>
-              <div className="flex items-center gap-2">
-                {/* <MapPin className="h-5 w-5 text-purple-600" /> */}
-                <p className="text-lg font-semibold text-gray-900">
-                  {accommodations.length > 0 ? (
-                    new Date(accommodations[0].check_in_date).toLocaleDateString('en-US', { 
-                      month: 'short', 
-                      day: 'numeric' 
-                    })
-                  ) : (
-                    'None'
-                  )}
-                </p>
-              </div>
-            </div>
+          <div className="flex gap-3">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={() => setIsAddAccommodationModalOpen(true)}
+                    className="flex items-center gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Add new accommodation</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
       </div>

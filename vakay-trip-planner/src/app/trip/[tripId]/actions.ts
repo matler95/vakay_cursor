@@ -101,7 +101,6 @@ export async function saveItineraryChanges(prevState: { message: string }, formD
     // Revalidate the trip page to show updated data
     revalidatePath(`/trip/${tripIdStr}`);
     
-    return { message: 'Itinerary saved successfully!' };
   } catch (error) {
     console.error('Unexpected error saving itinerary:', error);
     return { message: 'An unexpected error occurred while saving the itinerary.' };
@@ -298,7 +297,14 @@ export async function inviteUser(prevState: unknown, formData: FormData) {
   }
 }
 
-export async function updateTripDetails(prevState: unknown, formData: FormData) {
+export async function updateTripDetails(
+  trip_id: string,
+  name: string,
+  destination: string | undefined,
+  start_date: string,
+  end_date: string,
+  main_currency: string
+) {
   const schema = z.object({
     trip_id: z.string().uuid(),
     name: z.string().min(3, { message: 'Trip name must be at least 3 characters.' }),
@@ -308,14 +314,21 @@ export async function updateTripDetails(prevState: unknown, formData: FormData) 
     main_currency: z.string().min(3, { message: 'Main currency is required.' }),
   });
 
-  const validatedFields = schema.safeParse(Object.fromEntries(formData.entries()));
+  const validatedFields = schema.safeParse({
+    trip_id,
+    name,
+    destination,
+    start_date,
+    end_date,
+    main_currency,
+  });
 
   if (!validatedFields.success) {
     return { status: 'error', message: 'Invalid data provided.' };
   }
   
   // --- FIX: Separate the ID from the data we want to update ---
-  const { trip_id, ...updateData } = validatedFields.data;
+  const { trip_id: validatedTripId, ...updateData } = validatedFields.data;
 
   const supabase = createServerActionClient({ cookies });
 
@@ -326,7 +339,7 @@ export async function updateTripDetails(prevState: unknown, formData: FormData) 
   const { data: participant } = await supabase
     .from('trip_participants')
     .select('role')
-    .eq('trip_id', trip_id)
+    .eq('trip_id', validatedTripId)
     .eq('user_id', user.id)
     .single();
 
@@ -338,13 +351,13 @@ export async function updateTripDetails(prevState: unknown, formData: FormData) 
   const { error } = await supabase
     .from('trips')
     .update(updateData)
-    .eq('id', trip_id);
+    .eq('id', validatedTripId);
   
   if (error) {
     return { status: 'error', message: `Failed to update trip: ${error.message}` };
   }
   
-  revalidatePath(`/trip/${trip_id}`);
+  revalidatePath(`/trip/${validatedTripId}`);
   revalidatePath('/dashboard'); // Also revalidate the dashboard
   return { status: 'success', message: 'Trip details updated!' };
 }

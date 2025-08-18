@@ -6,8 +6,16 @@ import { Database } from '@/types/database.types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Trash2, Edit, MapPin, CreditCard, Clock, Search, Filter, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Trash2, Edit, MapPin, CreditCard, Clock, Search, Filter, ArrowUpDown, ArrowUp, ArrowDown, ChevronDown, ChevronRight, Check } from 'lucide-react';
 import { formatCurrency, getCurrencySymbol } from '@/lib/currency';
+import { 
+  StandardList, 
+  CompactRow, 
+  ListHeader, 
+  EditButton, 
+  DeleteButton,
+  ContentSection
+} from '@/components/ui';
 // Server actions will be passed as props
 import { DeleteExpenseModal } from './DeleteExpenseModal';
 import { EditExpenseModal } from './EditExpenseModal';
@@ -67,6 +75,7 @@ export function ExpensesList({
   const [isUpdatingStatus, setIsUpdatingStatus] = useState<number | null>(null);
   const [deleteExpense, setDeleteExpense] = useState<Expense | null>(null);
   const [editExpense, setEditExpense] = useState<Expense | null>(null);
+  const [isFiltersExpanded, setIsFiltersExpanded] = useState(false);
 
   // Helper function to get participant name
   const getParticipantName = (userId: string) => {
@@ -147,332 +156,240 @@ export function ExpensesList({
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="p-2 bg-green-100 rounded-full">
-          <CreditCard className="h-6 w-6 text-green-600" />
-        </div>
-        <h3 className="text-lg font-semibold text-gray-900">Expense History</h3>
-      </div>
+    <ContentSection>
 
       {/* Filters, Search, Sorting */}
       <div className="mb-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-6 md:justify-between">
-          {/* Search (constrained width on desktop) */}
-          <div className="w-full ">
+        {/* Search and Filters in horizontal layout */}
+        <div className="flex items-start gap-3">
+          {/* Search - Always visible */}
+          <div className="flex-1">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
                 placeholder="Search expenses..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 h-11"
               />
             </div>
           </div>
 
-          {/* Right controls: Filters + Sorting */}
-          <div className="flex flex-col items-center gap-3 md:flex-row md:items-center md:gap-4 md:justify-end">
-            {/* Filters group */}
-            <div className="flex w-full items-center gap-2">
-              <Filter className="h-5 w-5 text-gray-500 flex-shrink-0" />
-              <div className="flex flex-grow gap-2">
-                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="All" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All categories</SelectItem>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id.toString()}>
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: category.color }} />
-                          {category.name}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="All" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All status</SelectItem>
-                    <SelectItem value="paid">Paid</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                  </SelectContent>
-                </Select>
+          {/* Expandable Filters and Sorting Section */}
+          <div className="bg-white rounded-lg border border-gray-200 min-w-0">
+            <div
+              className="flex items-center justify-between p-3 cursor-pointer whitespace-nowrap"
+              onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
+            >
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-gray-500" />
+                <span className="text-sm font-medium text-gray-700">Filters</span>
               </div>
+              {isFiltersExpanded ? (
+                <ChevronDown className="h-4 w-4 text-gray-500" />
+              ) : (
+                <ChevronRight className="h-4 w-4 text-gray-500" />
+              )}
             </div>
 
-            {/* Sorting group */}
-            <div className="flex w-full items-center gap-2">
-              <ArrowUpDown className="h-5 w-5 text-gray-500 flex-shrink-0" />
-              <Select value={sortBy} onValueChange={(value) => setSortBy(value as 'created_at' | 'amount' | 'description')}>
-                <SelectTrigger className="w-full">
-                  <div className="flex items-center gap-2">
-                    {/* <ArrowUpDown className="h-4 w-4 text-gray-500" /> */}
-                    <SelectValue placeholder="Sort by" />
+            {isFiltersExpanded && (
+              <div className="px-3 pb-3 border-t border-gray-100">
+                <div className="space-y-3 pt-3">
+                  {/* Filters - Compact horizontal layout */}
+                  <div className="space-y-2">
+                    <span className="text-xs font-medium text-gray-600">Category & Status</span>
+                    <div className="flex gap-2">
+                      <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                        <SelectTrigger className="h-9 text-xs">
+                          <SelectValue placeholder="Category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All categories</SelectItem>
+                          {categories.map((category) => (
+                            <SelectItem key={category.id} value={category.id.toString()}>
+                              <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: category.color }} />
+                                {category.name}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <SelectTrigger className="h-9 text-xs">
+                          <SelectValue placeholder="Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All status</SelectItem>
+                          <SelectItem value="paid">Paid</SelectItem>
+                          <SelectItem value="pending">Pending</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="created_at">Date Created</SelectItem>
-                  <SelectItem value="amount">Amount</SelectItem>
-                  <SelectItem value="description">Description</SelectItem>
-                </SelectContent>
-              </Select>
 
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))}
-                aria-pressed={sortOrder === 'desc'}
-                title={sortOrder === 'asc' ? 'Ascending' : 'Descending'}
-                className="flex items-center gap-2"
-              >
-                {sortOrder === 'asc' ? (
-                  <>
-                    <ArrowUp className="h-4 w-4" />
-                  </>
-                ) : (
-                  <>
-                    <ArrowDown className="h-4 w-4" />
-                  </>
-                )}
-              </Button>
-            </div>
+                  {/* Sorting - Compact horizontal layout */}
+                  <div className="space-y-2">
+                    <span className="text-xs font-medium text-gray-600">Sort</span>
+                    <div className="flex gap-2">
+                      <Select value={sortBy} onValueChange={(value) => setSortBy(value as 'created_at' | 'amount' | 'description')}>
+                        <SelectTrigger className="h-9 text-xs">
+                          <SelectValue placeholder="Sort by" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="created_at">Date Created</SelectItem>
+                          <SelectItem value="amount">Amount</SelectItem>
+                          <SelectItem value="description">Description</SelectItem>
+                        </SelectContent>
+                      </Select>
+
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))}
+                        aria-pressed={sortOrder === 'desc'}
+                        title={sortOrder === 'asc' ? 'Ascending' : 'Descending'}
+                        className="h-9 w-9 p-0 flex-shrink-0"
+                      >
+                        {sortOrder === 'asc' ? (
+                          <ArrowUp className="h-4 w-4 text-gray-500" />
+                        ) : (
+                          <ArrowDown className="h-4 w-4 text-gray-500" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Mobile View */}
-      <div className="sm:hidden space-y-4">
-        {filteredExpenses.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            No expenses found
-          </div>
-        ) : (
-          filteredExpenses.map((expense) => (
-            <div key={expense.id} className="border border-gray-200 rounded-lg p-4 space-y-3">
+      {/* Expenses List */}
+      <div className="space-y-4">
+        {filteredExpenses.map((expense) => (
+          <div
+            key={expense.id}
+            className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden"
+          >
+            {/* Header with amount and status */}
+            <div className="p-4 border-b border-gray-100">
               <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h4 className="font-medium text-gray-900">{expense.description}</h4>
-                  <p className="text-sm text-gray-500">
-                    By {getParticipantName(expense.user_id)}
-                  </p>
+                <div className="flex-1 min-w-0 pr-4">
+                  <h4 className="font-semibold text-gray-900 text-base leading-tight mb-2">
+                    {expense.description}
+                  </h4>
+                  <div className="flex items-center gap-3">
+                    {expense.expense_categories && (
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: expense.expense_categories.color }}
+                        />
+                        <span className="text-sm text-gray-600">{expense.expense_categories.name}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <span>By</span>
+                      <span className="font-medium text-gray-700">{getParticipantName(expense.user_id)}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-semibold text-lg">
+                <div className="text-right flex-shrink-0">
+                  <p className="font-bold text-xl text-gray-900">
                     {formatCurrency(Number(expense.amount), mainCurrency)}
                   </p>
                   {expense.original_currency !== mainCurrency && (
-                    <p className="text-xs text-gray-500">
+                    <p className="text-sm text-gray-500">
                       {getCurrencySymbol(expense.original_currency || '')}{expense.original_amount}
                     </p>
                   )}
                 </div>
               </div>
-
-              {expense.expense_categories && (
-                <div className="flex items-center gap-2">
-                  <div
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: expense.expense_categories.color }}
-                  />
-                  <span className="text-sm text-gray-600">{expense.expense_categories.name}</span>
+              {/* Location and date */}
+              <div className="flex flex-col gap-3 mt-4">
+                {expense.location && (
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <MapPin className="h-4 w-4 flex-shrink-0" />
+                    <span className="truncate">{expense.location}</span>
+                  </div>
+                )}
+                <div className="text-sm text-gray-500">
+                  {formatDateTime(expense.created_at)}
                 </div>
-              )}
+              </div>
+            </div>
 
-              {expense.location && (
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <MapPin className="h-4 w-4" />
-                  {expense.location}
-                </div>
-              )}
+            {/* Content section */}
+            <div>
 
-              <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                <Button
-                  variant={expense.payment_status === 'paid' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => handleStatusToggle(expense)}
-                  disabled={!canEditExpense(expense) || isUpdatingStatus === expense.id}
-                  className={expense.payment_status === 'paid' ? 'bg-green-600 hover:bg-green-700' : 'text-orange-600 border-orange-600 hover:bg-orange-50'}
-                >
-                  {isUpdatingStatus === expense.id ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
-                  ) : expense.payment_status === 'paid' ? (
-                    <>
-                      <CreditCard className="h-4 w-4 mr-1" />
-                      Paid
-                    </>
-                  ) : (
-                    <>
-                      <Clock className="h-4 w-4 mr-1" />
-                      Pending
-                    </>
-                  )}
-                </Button>
+              {/* Action buttons */}
+              <div className="p-4">
+                <div className="flex items-center justify-between gap-2">
+                  {/* Left side: Status toggle button */}
+                  <Button
+                    variant={expense.payment_status === 'paid' ? 'outline' : 'outline'}
+                    size="sm"
+                    onClick={() => handleStatusToggle(expense)}
+                    disabled={!canEditExpense(expense) || isUpdatingStatus === expense.id}
+                    className={`h-11 sm:w-auto w-11 p-0 ${
+                      expense.payment_status === 'paid' 
+                        ? 'border-green-600 text-green-600 hover:bg-green-50' 
+                        : 'text-orange-600 border-orange-600 hover:bg-orange-50'
+                    }`}
+                  >
+                    {isUpdatingStatus === expense.id ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
+                    ) : expense.payment_status === 'paid' ? (
+                      <>
+                        <Check className="h-4 w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Paid</span>
+                      </>
+                    ) : (
+                      <>
+                        <Clock className="h-4 w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Pending</span>
+                      </>
+                    )}
+                  </Button>
 
-                <div className="flex gap-2">
+                  {/* Right side: Edit/Delete buttons */}
                   {canEditExpense(expense) && (
-                    <>
+                    <div className="flex gap-2">
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-7 w-7 sm:h-8 sm:w-8 p-0 text-gray-400"
                         onClick={() => setEditExpense(expense)}
+                        className="h-11 w-11 p-0"
+                        title="Edit expense"
                       >
-                        <Edit className="h-4 w-4" />
+                        <Edit className="h-4 w-4 text-gray-500" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-7 w-7 sm:h-8 sm:w-8 p-0 text-gray-400 hover:text-red-500 hover:bg-red-50"
                         onClick={() => setDeleteExpense(expense)}
+                        className="h-11 w-11 p-0 text-red-600 border-red-300 hover:bg-red-50"
+                        title="Delete expense"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
-                    </>
+                    </div>
                   )}
                 </div>
               </div>
             </div>
-          ))
-        )}
-      </div>
-
-      {/* Desktop Table View */}
-      <div className="hidden sm:block">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-200">
-                <th className="text-left py-3 px-4 font-medium text-gray-700">Description</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">Category</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">Amount</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">Created By</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">Status</th>
-                <th className="text-right py-3 px-4 font-medium text-gray-700">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredExpenses.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="text-center py-8 text-gray-500">
-                    No expenses found
-                  </td>
-                </tr>
-              ) : (
-                filteredExpenses.map((expense) => (
-                  <tr key={expense.id} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="py-3 px-4">
-                      <div>
-                        <p className="font-medium">{expense.description}</p>
-                        {expense.location && (
-                          <div className="flex items-center gap-1 text-sm text-gray-500 mt-1">
-                            <MapPin className="h-3 w-3" />
-                            {expense.location}
-                          </div>
-                        )}
-                        <p className="text-xs text-gray-500 mt-1">
-                          {formatDateTime(expense.created_at)}
-                        </p>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4">
-                      {expense.expense_categories ? (
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="w-3 h-3 rounded-full"
-                            style={{ backgroundColor: expense.expense_categories.color }}
-                          />
-                          <span className="text-sm">{expense.expense_categories.name}</span>
-                        </div>
-                      ) : (
-                        <span className="text-gray-400 text-sm">No category</span>
-                      )}
-                    </td>
-                    <td className="py-3 px-4">
-                      <div>
-                        <p className="font-semibold">
-                          {formatCurrency(Number(expense.amount), mainCurrency)}
-                        </p>
-                        {expense.original_currency !== mainCurrency && (
-                          <p className="text-xs text-gray-500">
-                            {getCurrencySymbol(expense.original_currency || '')}{expense.original_amount} {expense.original_currency}
-                          </p>
-                        )}
-                      </div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-2">
-                        {/* <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
-                          {getParticipantName(expense.user_id).charAt(0).toUpperCase()}
-                        </div> */}
-                        <span className="text-sm">{getParticipantName(expense.user_id)}</span>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <Button
-                        variant={expense.payment_status === 'paid' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => handleStatusToggle(expense)}
-                        disabled={!canEditExpense(expense) || isUpdatingStatus === expense.id}
-                        className={expense.payment_status === 'paid' ? 'bg-green-600 hover:bg-green-700' : 'text-orange-600 border-orange-600 hover:bg-orange-50'}
-                      >
-                        {isUpdatingStatus === expense.id ? (
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
-                        ) : expense.payment_status === 'paid' ? (
-                          <>
-                            <CreditCard className="h-4 w-4 mr-1" />
-                            Paid
-                          </>
-                        ) : (
-                          <>
-                            <Clock className="h-4 w-4 mr-1" />
-                            Pending
-                          </>
-                        )}
-                      </Button>
-                    </td>
-                    <td className="py-3 px-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        {canEditExpense(expense) && (
-                          <>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 w-7 sm:h-8 sm:w-8 p-0 text-gray-400"
-                              onClick={() => setEditExpense(expense)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 w-7 sm:h-8 sm:w-8 p-0 text-gray-400 hover:text-red-500 hover:bg-red-50"
-                              onClick={() => setDeleteExpense(expense)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+          </div>
+        ))}
       </div>
 
       {/* Modals */}
       {deleteExpense && (
         <DeleteExpenseModal
           expense={deleteExpense}
+          isOpen={!!deleteExpense}
           onClose={() => setDeleteExpense(null)}
           onDeleted={() => {
             setDeleteExpense(null);
@@ -485,6 +402,7 @@ export function ExpensesList({
       {editExpense && (
         <EditExpenseModal
           expense={editExpense}
+          isOpen={!!editExpense}
           categories={categories}
           onClose={() => setEditExpense(null)}
           onUpdated={() => {
@@ -494,6 +412,6 @@ export function ExpensesList({
           updateExpenseAction={updateExpenseAction}
         />
       )}
-    </div>
+    </ContentSection>
   );
 }

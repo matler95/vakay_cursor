@@ -2,8 +2,11 @@
 'use client';
 
 import { Database } from '@/types/database.types';
-import { Users, DollarSign, CreditCard, Clock } from 'lucide-react';
+import { Users, DollarSign, CreditCard, Clock, Check, ChevronDown, ChevronRight, BarChart3, ArrowRight } from 'lucide-react';
 import { formatCurrency } from '@/lib/currency';
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation';
 
 type Expense = Database['public']['Tables']['expenses']['Row'] & {
   expense_categories: {
@@ -30,6 +33,7 @@ interface ExpenseOverviewProps {
 }
 
 export function ExpenseOverview({ expenses, tripParticipants, mainCurrency }: ExpenseOverviewProps) {
+  const router = useRouter();
   // Ensure props are always arrays/valid values
   const safeExpenses = expenses || [];
   const safeTripParticipants = tripParticipants || [];
@@ -76,115 +80,45 @@ export function ExpenseOverview({ expenses, tripParticipants, mainCurrency }: Ex
       };
     }).sort((a, b) => b.totalAmount - a.totalAmount);
 
+  const [expandedParticipant, setExpandedParticipant] = useState<string | null>(null);
+  const [isParticipantSectionExpanded, setIsParticipantSectionExpanded] = useState(false);
+
+  const handleViewAnalytics = () => {
+    // Extract tripId from current URL
+    const pathParts = window.location.pathname.split('/');
+    const tripIdIndex = pathParts.findIndex(part => part === 'trip') + 1;
+    const tripId = pathParts[tripIdIndex];
+    router.push(`/trip/${tripId}/expense/analytics`);
+  };
+
   return (
-    <div className="space-y-6">
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Total Expenses */}
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-full">
-              <DollarSign className="h-6 w-6 text-blue-600" />
-            </div>
-            <div>
-              <h3 className="text-sm font-medium text-gray-600">Total Expenses</h3>
-              <p className="text-2xl font-bold text-gray-900">
-                {formatCurrency(totalExpenses, safeMainCurrency)}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Paid Expenses */}
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-100 rounded-full">
-              <CreditCard className="h-6 w-6 text-green-600" />
-            </div>
-            <div>
-              <h3 className="text-sm font-medium text-gray-600">Paid</h3>
-              <p className="text-2xl font-bold text-green-700">
-                {formatCurrency(paidExpenses, safeMainCurrency)}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Pending Expenses */}
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-orange-100 rounded-full">
-              <Clock className="h-6 w-6 text-orange-600" />
-            </div>
-            <div>
-              <h3 className="text-sm font-medium text-gray-600">Pending</h3>
-              <p className="text-2xl font-bold text-orange-700">
-                {formatCurrency(pendingExpenses, safeMainCurrency)}
-              </p>
-            </div>
-          </div>
-        </div>
+<div className="space-y-4">
+  {/* Summary Cards */}
+  <div className="grid grid-cols-2 gap-4">
+    {/* Total Expenses */}
+    <div className="bg-white rounded-lg shadow-sm p-3 border border-gray-200 flex flex-col justify-center items-center">
+      <div className="flex items-center gap-2 mb-2">
+        <DollarSign className="h-4 w-4 text-blue-600" />
+        <h3 className="text-xs sm:text-xl font-medium text-gray-600">Total</h3>
       </div>
-
-      {/* Expenses per Participant */}
-      <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-purple-100 rounded-full">
-            <Users className="h-6 w-6 text-purple-600" />
-          </div>
-          <h3 className="text-lg font-semibold text-gray-900">Expenses per Participant</h3>
-        </div>
-
-        {participantExpenses.length === 0 ? (
-          <p className="text-gray-500 text-center py-8">No expenses recorded yet</p>
-        ) : (
-          <div className="space-y-4">
-            {participantExpenses.map(({ participant, totalAmount, paidAmount, pendingAmount, expenseCount }, index) => {
-              // Ensure we have a unique key
-              const uniqueKey = participant.user_id || `participant-${index}`;
-              
-              return (
-                <div key={uniqueKey} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-3">
-                  {/* <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
-                    {(participant.profiles.full_name || 'Unknown').charAt(0).toUpperCase()}
-                  </div> */}
-                  <div>
-                    <p className="font-medium text-gray-900">
-                      {participant.profiles?.full_name || 'Unknown User'}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {expenseCount} expense{expenseCount !== 1 ? 's' : ''}
-                      {participant.role === 'admin' && (
-                        <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
-                          Admin
-                        </span>
-                      )}
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="text-right">
-                  <p className="font-semibold text-gray-900">
-                    {formatCurrency(totalAmount, safeMainCurrency)}
-                  </p>
-                  <div className="flex gap-4 text-sm">
-                    <span className="text-sm text-green-600">
-                      Paid: {formatCurrency(paidAmount, safeMainCurrency)}
-                    </span>
-                    {pendingAmount > 0 && (
-                      <span className="text-sm text-orange-600">
-                        Pending: {formatCurrency(pendingAmount, safeMainCurrency)}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-            })}
-          </div>
-        )}
-      </div>
+      <p className="text-sm sm:text-2xl font-bold text-gray-900 leading-tight text-center">
+        {formatCurrency(totalExpenses, safeMainCurrency)}
+      </p>
     </div>
+
+    {/* Analytics Button */}
+    <Button
+      onClick={handleViewAnalytics}
+      variant="ghost"
+      className="bg-white rounded-lg shadow-sm p-3 border border-gray-200 flex-1 min-w-0 h-full flex justify-center items-center hover:bg-gray-50"
+    >
+      <div className="flex items-center gap-2">
+        <BarChart3 className="h-4 w-4 text-blue-600" />
+        <h3 className="text-xs sm:text-xl font-medium text-gray-600">Analytics</h3>
+        <ArrowRight className="h-4 w-4 text-blue-600" />
+      </div>
+    </Button>
+  </div>
+</div>
   );
 }
