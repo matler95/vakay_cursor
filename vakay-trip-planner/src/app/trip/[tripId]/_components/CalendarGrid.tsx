@@ -375,20 +375,33 @@ export function CalendarGrid({
     
     draftItinerary.forEach((dayData, dateStr) => {
       const originalDay = itineraryDays.find(d => d.date === dateStr);
-      if (originalDay && JSON.stringify(originalDay) !== JSON.stringify(dayData)) {
-        console.log(`Saving changes for ${dateStr}:`, {
-          original: originalDay,
-          updated: dayData,
-          changes: {
-            location_1_id: originalDay.location_1_id !== dayData.location_1_id,
-            location_2_id: originalDay.location_2_id !== dayData.location_2_id,
-            notes: originalDay.notes !== dayData.notes,
-            summary: originalDay.summary !== dayData.summary
-          }
-        });
-        
-        // Add to changed days array
-        changedDays.push(dayData);
+
+      const normalizedUpdated: ItineraryDay = {
+        ...dayData,
+        id: dayData?.id || 0,
+        date: dateStr,
+        trip_id: dayData?.trip_id || trip.id || '',
+        location_1_id: dayData?.location_1_id ?? null,
+        location_2_id: dayData?.location_2_id ?? null,
+        notes: (dayData?.notes ?? null),
+        summary: (dayData?.summary ?? null),
+      } as ItineraryDay;
+
+      if (originalDay) {
+        // Existing day: only save if changed
+        if (JSON.stringify(originalDay) !== JSON.stringify(normalizedUpdated)) {
+          changedDays.push(normalizedUpdated);
+        }
+      } else {
+        // New day: save if it has meaningful content
+        const hasMeaningfulData =
+          normalizedUpdated.location_1_id !== null ||
+          normalizedUpdated.location_2_id !== null ||
+          (typeof normalizedUpdated.notes === 'string' && normalizedUpdated.notes.trim() !== '') ||
+          (typeof normalizedUpdated.summary === 'string' && normalizedUpdated.summary.trim() !== '');
+        if (hasMeaningfulData) {
+          changedDays.push(normalizedUpdated);
+        }
       }
     });
     
@@ -781,7 +794,14 @@ export function CalendarGrid({
       {(selectedRange || selectedDates.size > 0) && !showSaveCancel && (
         <>
           <RangeActionBar
-            selectedRange={selectedRange || { start: '', end: '' }}
+            selectedRange={selectedRange || (
+              selectedDates.size > 0
+                ? {
+                    start: Array.from(selectedDates)[0],
+                    end: Array.from(selectedDates)[selectedDates.size - 1],
+                  }
+                : { start: '', end: '' }
+            )}
             locations={locations}
             onAssignLocation={handleBulkLocationAssign}
             onAssignTransfer={handleBulkTransferAssign}

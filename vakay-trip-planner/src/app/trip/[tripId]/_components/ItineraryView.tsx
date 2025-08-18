@@ -104,10 +104,16 @@ function ItineraryViewContent({ trip, itineraryDays, locations, transportation, 
   const formAction = async (formData: FormData) => {
     try {
       const result = await saveItineraryChanges(state, formData);
+      // If the action returned a message, treat it as an error/info
       if (result?.message) {
         setState({ message: result.message });
+        return result;
       }
-      return result;
+      // No message means success in our current action implementation
+      setState({ message: 'Itinerary saved successfully.' });
+      // Refresh parent data so props update and persist after exiting edit mode
+      await onDataRefresh();
+      return { message: 'success' } as any;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An error occurred';
       setState({ message: errorMessage });
@@ -117,10 +123,13 @@ function ItineraryViewContent({ trip, itineraryDays, locations, transportation, 
   
 
 
+  // Keep draft itinerary in sync with props when not editing
   useEffect(() => {
-    const initialMap = new Map((itineraryDays || []).map(day => [day.date, day]));
-    setDraftItinerary(initialMap);
-  }, [itineraryDays]);
+    if (!isEditing) {
+      const latestMap = new Map((itineraryDays || []).map(day => [day.date, day]));
+      setDraftItinerary(latestMap);
+    }
+  }, [itineraryDays, isEditing]);
 
   // Auto-dismiss status messages after 3 seconds
   useEffect(() => {
@@ -192,6 +201,14 @@ function ItineraryViewContent({ trip, itineraryDays, locations, transportation, 
   const handleDayUpdate = useCallback((dateStr: string, updatedValues: Partial<ItineraryDay>) => {
     handleUpdateDraft(dateStr, updatedValues);
   }, [handleUpdateDraft]);
+
+  // Handle explicit cancellation of editing
+  const handleCancelEdit = useCallback(() => {
+    // Reset draft to original data
+    const originalMap = new Map((itineraryDays || []).map(day => [day.date, day]));
+    setDraftItinerary(originalMap);
+    setIsEditing(false);
+  }, [itineraryDays]);
 
   // Quick action handlers
 
@@ -288,7 +305,7 @@ function ItineraryViewContent({ trip, itineraryDays, locations, transportation, 
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button 
-                    onClick={() => setIsEditing(!isEditing)}
+                    onClick={() => isEditing ? handleCancelEdit() : setIsEditing(true)}
                     variant={isEditing ? "default" : "default"}
                     className="flex items-center gap-2"
                     >
@@ -464,7 +481,7 @@ function ItineraryViewContent({ trip, itineraryDays, locations, transportation, 
               locations={locations}
               transportation={transportation}
               accommodations={accommodations}
-              onExitEditMode={() => setIsEditing(false)}
+              onExitEditMode={handleCancelEdit}
               saveAction={formAction}
             />
           )}
@@ -478,7 +495,7 @@ function ItineraryViewContent({ trip, itineraryDays, locations, transportation, 
               isEditing={isEditing}
               onUpdateDraft={handleUpdateDraft}
               onBulkUpdate={() => {}} // No longer needed
-              onExitEditMode={() => setIsEditing(false)}
+              onExitEditMode={handleCancelEdit}
               saveAction={formAction}
               onDayClick={handleDayClick}
             />
