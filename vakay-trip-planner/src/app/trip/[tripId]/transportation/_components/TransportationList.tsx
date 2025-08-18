@@ -175,8 +175,8 @@ export function TransportationList({
         </div>
       </div>
 
-      {/* Standardized List */}
-      <StandardList>
+      {/* Mobile-Optimized List */}
+      <div className="space-y-4">
         {filteredSorted.map((transport) => {
           const Icon = getTransportationIcon(transport.type);
           const typeLabel = getTransportationTypeLabel(transport.type);
@@ -185,78 +185,102 @@ export function TransportationList({
           const expenseChip = getExpenseStatusChip(expenseStatus[transport.id] || false);
           
           return (
-            <CompactRow
+            <div
               key={transport.id}
-              leftIcon={<Icon className="h-5 w-5 text-blue-500" />}
-              clickable={false}
-              actions={
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onOpenInMaps(transport.departure_location)}
-                    className="p-0 text-gray-500"
-                  >
-                    <MapPinned className="h-4 w-4" />
-                    Navigate
-                  </Button>
-                  <EditButton 
-                    onClick={() => setEditingTransportation(transport)}
-                    tooltip="Edit transportation"
-                  />
-                  <DeleteButton 
-                    onClick={() => setDeletingTransportation(transport)}
-                    tooltip="Delete transportation"
-                  />
-                </div>
-              }
+              className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden"
             >
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <h4 className="font-medium text-gray-900 truncate">{transport.provider}</h4>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${chip.className}`}>
-                    {chip.label}
-                  </span>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${expenseChip.className} flex items-center gap-1`}>
-                    {expenseChip.icon && <expenseChip.icon className="h-3 w-3" />}
-                    {expenseChip.label}
-                  </span>
+              {/* Header with provider and status */}
+              <div className="p-4 border-b border-gray-100">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1 min-w-0 pr-4">
+                    <h4 className="font-semibold text-gray-900 text-base leading-tight mb-2">
+                      {transport.provider}
+                    </h4>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${chip.className}`}>
+                        {chip.label}
+                      </span>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${expenseChip.className} flex items-center gap-1`}>
+                        {expenseChip.icon && <expenseChip.icon className="h-3 w-3" />}
+                        {expenseChip.label}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex-shrink-0">
+                    <Icon className="h-6 w-6 text-blue-500" />
+                  </div>
                 </div>
                 
-                <p className="text-sm text-gray-500 mb-2">{typeLabel}</p>
+                <p className="text-sm text-gray-600 mb-2">{typeLabel}</p>
                 
                 {transport.booking_reference && (
-                  <p className="text-xs text-gray-400 mb-2">#{transport.booking_reference}</p>
+                  <p className="text-xs text-gray-500 mb-3">#{transport.booking_reference}</p>
                 )}
                 
-                <div className="space-y-1 mb-2">
-                  <div className="flex items-center gap-2 text-xs text-gray-700">
-                    <Navigation className="h-3.5 w-3.5 text-gray-500" />
+                <div className="space-y-2 mb-3">
+                  <div className="flex items-center gap-2 text-sm text-gray-700">
+                    <Navigation className="h-4 w-4 text-gray-500" />
                     <span className="font-medium">From:</span>
                     <span className="truncate">{formatLocationDisplay(transport.departure_location, transport.type)}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-gray-700">
-                    <MapPin className="h-3.5 w-3.5 text-gray-500" />
+                  <div className="flex items-center gap-2 text-sm text-gray-700">
+                    <MapPin className="h-4 w-4 text-gray-500" />
                     <span className="font-medium">To:</span>
                     <span className="truncate">{formatLocationDisplay(transport.arrival_location, transport.type)}</span>
                   </div>
                 </div>
                 
-                <div className="flex flex-wrap items-center gap-2 text-xs text-gray-700">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2 py-1">
-                    <Calendar className="h-3.5 w-3.5 text-gray-500" />
+                <div className="flex items-center gap-2 text-sm text-gray-700">
+                  {/* <Calendar className="h-4 w-4 text-gray-500" /> */}
+                  <span>
                     {formatDate(transport.departure_date)}
                     {transport.departure_time && <span className="ml-1 text-gray-500">{formatTime(transport.departure_time)}</span>}
-                    <span className="mx-1 text-gray-400">–</span>
+                    <span className="mx-2 text-gray-400">–</span>
                     {formatDate(transport.arrival_date)}
                     {transport.arrival_time && <span className="ml-1 text-gray-500">{formatTime(transport.arrival_time)}</span>}
                   </span>
                 </div>
               </div>
-            </CompactRow>
+
+              {/* Action buttons */}
+              <div className="p-4">
+                <div className="flex items-center justify-between gap-2">
+                  {/* Left side: Navigate button */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onOpenInMaps(transport.departure_location)}
+                    className="h-11"
+                  >
+                    <MapPinned className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Navigate</span>
+                  </Button>
+
+                  {/* Right side: Edit/Delete buttons */}
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setEditingTransportation(transport)}
+                      className="h-11 w-11 p-0"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setDeletingTransportation(transport)}
+                      className="h-11 w-11 p-0 text-red-600 border-red-300 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
           );
         })}
-      </StandardList>
+      </div>
 
       {/* Modals */}
       {editingTransportation && (

@@ -136,69 +136,93 @@ export function UsefulLinksList({
         </div>
       </div>
 
-      {/* Standardized List */}
-      <StandardList>
+      {/* Mobile-Optimized List */}
+      <div className="space-y-4">
         {filteredSorted.map((link) => (
-          <CompactRow
+          <div
             key={link.id}
-            leftIcon={<span className="text-lg">{getCategoryIcon(link.category)}</span>}
-            clickable={false}
-            actions={
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => window.open(link.url, '_blank')}
-                  className="p-0 text-gray-500"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                  Visit
-                </Button>
-                <EditButton 
-                  onClick={() => setEditingLink(link)}
-                  tooltip="Edit link"
-                />
-                <DeleteButton 
-                  onClick={() => setDeletingLink(link)}
-                  tooltip="Delete link"
-                />
-              </div>
-            }
+            className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden"
           >
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <h4 className="font-medium text-gray-900 truncate">{link.title}</h4>
-                {link.is_favorite && (
-                  <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                )}
+            {/* Header with title and category */}
+            <div className="p-4 border-b border-gray-100">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex-1 min-w-0 pr-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <h4 className="font-semibold text-gray-900 text-base leading-tight">
+                      {link.title}
+                    </h4>
+                    {link.is_favorite && (
+                      <Heart className="h-4 w-4 text-red-500 fill-current" />
+                    )}
+                  </div>
+                  
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(link.category)}`}>
+                    {getCategoryLabel(link.category)}
+                  </span>
+                </div>
+                <div className="flex-shrink-0">
+                  <span className="text-2xl">{getCategoryIcon(link.category)}</span>
+                </div>
               </div>
-              
-              <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${getCategoryColor(link.category)} mb-2 inline-block`}>
-                {getCategoryLabel(link.category)}
-              </span>
               
               {link.description && (
-                <p className="text-sm text-gray-600 mb-2">{link.description}</p>
+                <p className="text-sm text-gray-600 mb-3">{link.description}</p>
               )}
               
-              <div className="space-y-1">
+              <div className="space-y-2">
                 {link.address && (
-                  <div className="flex items-center gap-2 text-xs text-gray-700">
-                    <MapPin className="h-3.5 w-3.5 text-gray-500" />
+                  <div className="flex items-center gap-2 text-sm text-gray-700">
+                    <MapPin className="h-4 w-4 text-gray-500 flex-shrink-0" />
                     <span className="truncate">{link.address}</span>
                   </div>
                 )}
                 {link.phone && (
-                  <div className="flex items-center gap-2 text-xs text-gray-700">
-                    <Phone className="h-3.5 w-3.5 text-gray-500" />
+                  <div className="flex items-center gap-2 text-sm text-gray-700">
+                    <Phone className="h-4 w-4 text-gray-500 flex-shrink-0" />
                     <span>{link.phone}</span>
                   </div>
                 )}
               </div>
             </div>
-          </CompactRow>
+
+            {/* Action buttons */}
+            <div className="p-4">
+              <div className="flex items-center justify-between gap-2">
+                {/* Left side: Visit button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open(link.url, '_blank')}
+                  className="h-11"
+                >
+                  <ExternalLink className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Visit Link</span>
+                </Button>
+
+                {/* Right side: Edit/Delete buttons */}
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditingLink(link)}
+                    className="h-11 w-11 p-0"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setDeletingLink(link)}
+                    className="h-11 w-11 p-0 text-red-600 border-red-300 hover:bg-red-50"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
         ))}
-      </StandardList>
+      </div>
 
       {/* Modals */}
       {editingLink && (
