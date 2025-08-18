@@ -4,21 +4,20 @@
 import { useRouter } from 'next/navigation';
 import { Database } from '@/types/database.types';
 import { deleteTrip } from '../actions';
-import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Trash2, Plane } from 'lucide-react';
+import { Plane, Edit } from 'lucide-react'; // Edit icon imported
 import { useState } from 'react';
 import { 
   StandardList, 
   CompactRow, 
   DeleteButton, 
+  EditButton, // EditButton imported
   ConfirmationModal,
   LoadingState,
   EmptyState
 } from '@/components/ui';
-
-import Lottie from 'lottie-react';
-import flightAnimation from '@/../public/Flight.json';
+import { EditTripModal } from './EditTripModal'; // EditTripModal imported
+import { DeleteTripModal } from './DeleteTripModal'; // DeleteTripModal imported
 
 type TripWithRole = Database['public']['Tables']['trips']['Row'] & {
   user_role: string | null;
@@ -30,33 +29,22 @@ interface TripListProps {
 
 export function TripList({ trips }: TripListProps) {
   const router = useRouter();
-  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const [editingTrip, setEditingTrip] = useState<TripWithRole | null>(null); // State for edit modal
+  const [deletingTrip, setDeletingTrip] = useState<TripWithRole | null>(null); // State for delete modal
   const [loadingTripId, setLoadingTripId] = useState<string | null>(null);
 
-  const onConfirmDelete = async () => {
-    if (!pendingDeleteId) return;
-    setSubmitting(true);
-    // Submit via form action programmatically
-    const form = document.getElementById(`delete-form-${pendingDeleteId}`) as HTMLFormElement | null;
-    form?.requestSubmit();
-    setSubmitting(false);
-    setPendingDeleteId(null);
+  const handleTripUpdated = () => {
+    window.location.reload(); // Refresh page after update
+  };
+
+  const handleTripDeleted = () => {
+    window.location.reload(); // Refresh page after deletion
   };
 
   const handleTripClick = (tripId: string) => {
-    setLoadingTripId(tripId);
+    setLoadingTripId(tripId); // Show loading immediately
     router.push(`/trip/${tripId}`);
   };
-
-  if (loadingTripId) {
-    return (
-      <LoadingState 
-        message="Loading trip..." 
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
-      />
-    );
-  }
 
   if (trips.length === 0) {
     return (
@@ -71,62 +59,91 @@ export function TripList({ trips }: TripListProps) {
   return (
     <div className="space-y-4">
       <StandardList>
-        {trips.map((trip) => (
-          <CompactRow
-            key={trip.id}
-            leftIcon={<Plane className="h-5 w-5 text-blue-500" />}
-            clickable
-            onClick={() => handleTripClick(trip.id)}
-            actions={
-              trip.user_role === 'admin' ? (
-                <div className="flex items-center gap-1">
-                  <form id={`delete-form-${trip.id}`} action={deleteTrip.bind(null, trip.id)}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <DeleteButton
-                          onClick={() => setPendingDeleteId(trip.id)}
-                          tooltip="Delete trip"
-                        />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Delete trip</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </form>
-                </div>
-              ) : undefined
-            }
-          >
-            <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-medium text-gray-900 truncate">
-                    {trip.name}
-                  </h3>
-                  {trip.start_date && trip.end_date && (
-                    <p className="text-sm text-gray-600 truncate">
-                      {new Date(trip.start_date).toLocaleDateString()} - {new Date(trip.end_date).toLocaleDateString()}
-                    </p>
-                  )}
+        {trips.map((trip) => {
+          const isLoading = loadingTripId === trip.id;
+          return (
+            <CompactRow
+              key={trip.id}
+              leftIcon={isLoading ? (
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
+              ) : (
+                <Plane className="h-5 w-5 text-blue-500" />
+              )}
+              clickable={!isLoading}
+              onClick={() => !isLoading && handleTripClick(trip.id)}
+              actions={
+                trip.user_role === 'admin' ? (
+                  <div className="flex items-center gap-1">
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <EditButton
+                            onClick={() => setEditingTrip(trip)}
+                            tooltip="Edit trip"
+                            disabled={isLoading}
+                          />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Edit trip</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <DeleteButton
+                            onClick={() => setDeletingTrip(trip)}
+                            tooltip="Delete trip"
+                            disabled={isLoading}
+                          />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Delete trip</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                  </div>
+                ) : undefined
+              }
+            >
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    <h3 className={`text-sm font-medium truncate ${isLoading ? 'text-gray-400' : 'text-gray-900'}`}>
+                      {trip.name}
+                    </h3>
+                    {trip.start_date && trip.end_date && (
+                      <p className={`text-sm truncate ${isLoading ? 'text-gray-300' : 'text-gray-600'}`}>
+                        {new Date(trip.start_date).toLocaleDateString()} - {new Date(trip.end_date).toLocaleDateString()}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          </CompactRow>
-        ))}
+            </CompactRow>
+          );
+        })}
       </StandardList>
 
-      {/* Delete confirmation modal */}
-      <ConfirmationModal
-        isOpen={!!pendingDeleteId}
-        onClose={() => setPendingDeleteId(null)}
-        title="Delete Trip"
-        description="Are you sure you want to delete this trip? This action cannot be undone."
-        confirmText="Delete"
-        cancelText="Cancel"
-        variant="destructive"
-        onConfirm={onConfirmDelete}
-        loading={submitting}
-      />
+      {/* Edit Trip Modal */}
+      {editingTrip && (
+        <EditTripModal
+          trip={editingTrip}
+          isOpen={!!editingTrip}
+          onClose={() => setEditingTrip(null)}
+          onTripUpdated={handleTripUpdated}
+        />
+      )}
+
+      {/* Delete Trip Modal */}
+      {deletingTrip && (
+        <DeleteTripModal
+          trip={deletingTrip}
+          isOpen={!!deletingTrip}
+          onClose={() => setDeletingTrip(null)}
+          onDeleted={handleTripDeleted}
+        />
+      )}
     </div>
   );
 }

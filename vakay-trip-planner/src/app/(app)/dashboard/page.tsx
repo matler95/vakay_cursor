@@ -6,7 +6,8 @@ import { Database } from '@/types/database.types';
 
 import { TripList } from './_components/TripList';
 import { CreateTripModal } from './_components/CreateTripModal';
-import { StandardPageLayout, PageHeader } from '@/components/ui';
+import { StandardPageLayout } from '@/components/ui';
+import { PageHeader } from '@/components/ui/design-system';
 
 export default async function Dashboard() {
   const supabase = createServerComponentClient<Database>({ cookies });

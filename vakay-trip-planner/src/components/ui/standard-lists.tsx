@@ -221,6 +221,7 @@ export function ActionButton({
 
   return (
     <Button
+      type="button"
       variant={variant}
       size="sm"
       onClick={onClick}

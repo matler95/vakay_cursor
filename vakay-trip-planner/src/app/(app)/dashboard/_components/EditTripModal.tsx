@@ -1,18 +1,18 @@
 'use client';
 
-import { Database } from '@/types/database.types';
 import { useState } from 'react';
-import { updateTripDetails } from '../actions';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CURRENCIES } from '@/lib/currency';
+import { Database } from '@/types/database.types';
 import { 
   FormModal, 
   StandardInput, 
-  StandardDateInput, 
+  StandardDateInput,
   FormSection, 
   FormRow, 
   FormField 
 } from '@/components/ui';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { updateTripDetails } from '../../../trip/[tripId]/actions';
+import { CURRENCIES } from '@/lib/currency';
 
 type Trip = Database['public']['Tables']['trips']['Row'];
 
@@ -30,7 +30,7 @@ export function EditTripModal({ trip, isOpen, onClose, onTripUpdated }: EditTrip
   const handleSubmit = async (formData: FormData) => {
     setIsSubmitting(true);
     setError(null);
-    
+
     try {
       const result = await updateTripDetails(
         trip.id,
@@ -41,11 +41,15 @@ export function EditTripModal({ trip, isOpen, onClose, onTripUpdated }: EditTrip
         formData.get('main_currency') as string
       );
       
-      if (result.status === 'success') {
-        onTripUpdated();
-        onClose();
+      if (result && typeof result === 'object' && 'status' in result) {
+        if (result.status === 'success') {
+          onTripUpdated();
+          onClose();
+        } else {
+          setError(result.message || 'Failed to update trip');
+        }
       } else {
-        setError(result.message || 'Failed to update trip');
+        setError('Failed to update trip');
       }
     } catch {
       setError('An unexpected error occurred');
@@ -66,7 +70,7 @@ export function EditTripModal({ trip, isOpen, onClose, onTripUpdated }: EditTrip
       onClose={onClose}
       title="Edit Trip Details"
       description="Update your trip information and settings."
-      size="md"
+      size="lg"
       onSubmit={handleFormSubmit}
       submitText="Save Changes"
       cancelText="Cancel"
