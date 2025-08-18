@@ -77,51 +77,45 @@ export function ExpenseOverview({ expenses, tripParticipants, mainCurrency }: Ex
     }).sort((a, b) => b.totalAmount - a.totalAmount);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="flex gap-1 overflow-x-auto">
         {/* Total Expenses */}
-        <div className="bg-white rounded-xl shadow-sm p-2 border border-gray-200">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-full">
-              <DollarSign className="h-4 w-4" />
+        <div className="bg-white rounded-lg shadow-sm p-2 border border-gray-200 flex-1 min-w-0">
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2 mb-2">
+              <DollarSign className="h-4 w-4 text-blue-600" />
+              <h3 className="text-xs font-medium text-gray-600">Total</h3>
             </div>
-            <div>
-              <h3 className="text-sm font-medium text-gray-600">Total</h3>
-              <p className="text-sml font-bold text-gray-900">
-                {formatCurrency(totalExpenses, safeMainCurrency)}
-              </p>
-            </div>
+            <p className="text-sm font-bold text-gray-900 leading-tight text-center">
+              {formatCurrency(totalExpenses, safeMainCurrency)}
+            </p>
           </div>
         </div>
 
         {/* Paid Expenses */}
-        <div className="bg-white rounded-xl shadow-sm p-2 border border-gray-200">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-100 rounded-full">
+        <div className="bg-white rounded-lg shadow-sm p-2 border border-gray-200 flex-1 min-w-0">
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2 mb-2">
               <Check className="h-4 w-4 text-green-600" />
+              <h3 className="text-xs font-medium text-gray-600">Paid</h3>
             </div>
-            <div>
-              <h3 className="text-sm font-medium text-gray-600">Paid</h3>
-              <p className="text-sml font-bold text-green-700">
-                {formatCurrency(paidExpenses, safeMainCurrency)}
-              </p>
-            </div>
+            <p className="text-sm font-bold text-green-700 leading-tight text-center">
+              {formatCurrency(paidExpenses, safeMainCurrency)}
+            </p>
           </div>
         </div>
 
         {/* Pending Expenses */}
-        <div className="bg-white rounded-xl shadow-sm p-2 border border-gray-200">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-orange-100 rounded-full">
+        <div className="bg-white rounded-lg shadow-sm p-2 border border-gray-200 flex-1 min-w-0">
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2 mb-2">
               <Clock className="h-4 w-4 text-orange-600" />
+              <h3 className="text-xs font-medium text-gray-600">Pending</h3>
             </div>
-            <div>
-              <h3 className="text-sm font-medium text-gray-600">Pending</h3>
-              <p className="text-sml font-bold text-orange-700">
-                {formatCurrency(pendingExpenses, safeMainCurrency)}
-              </p>
-            </div>
+            <p className="text-sm font-bold text-orange-700 leading-tight text-center">
+              {formatCurrency(pendingExpenses, safeMainCurrency)}
+            </p>
           </div>
         </div>
       </div>
