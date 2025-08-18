@@ -5,7 +5,7 @@ import { fetchExchangeRates, convertCurrency } from '@/lib/currency';
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = createRouteHandlerClient({ cookies });
@@ -44,7 +44,7 @@ export async function PUT(
     const { data: accommodation } = await supabase
       .from('accommodations')
       .select('trip_id')
-      .eq('id', params.id)
+      .eq('id', (await params).id)
       .single();
 
     if (!accommodation) {
@@ -78,7 +78,7 @@ export async function PUT(
         notes: notes || null,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', params.id)
+      .eq('id', (await params).id)
       .select()
       .single();
 
@@ -92,16 +92,17 @@ export async function PUT(
 
     // Replace participants associations if provided
     if (Array.isArray(participants)) {
+      const accommodationId = (await params).id;
       const { error: delErr } = await supabase
         .from('accommodation_participants')
         .delete()
-        .eq('accommodation_id', params.id);
+        .eq('accommodation_id', accommodationId);
       if (delErr) {
         console.error('Failed to clear accommodation participants:', delErr);
       }
       if (participants.length > 0) {
         const inserts = participants.map((pid: string) => ({
-          accommodation_id: Number(params.id),
+          accommodation_id: Number(accommodationId),
           participant_user_id: pid,
         }));
         const { error: insErr } = await supabase
@@ -173,7 +174,7 @@ export async function PUT(
             exchange_rate: exchangeRate,
             description: expectedDescription,
             payment_status: expense.payment_status || 'pending',
-            accommodation_id: Number(params.id),
+            accommodation_id: Number((await params).id),
           })
           .select()
           .single();
@@ -244,7 +245,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = createRouteHandlerClient({ cookies });
@@ -257,7 +258,7 @@ export async function DELETE(
     const { data: accommodation } = await supabase
       .from('accommodations')
       .select('trip_id')
-      .eq('id', params.id)
+      .eq('id', (await params).id)
       .single();
 
     if (!accommodation) {
@@ -279,12 +280,12 @@ export async function DELETE(
     await supabase
       .from('expenses')
       .delete()
-      .eq('accommodation_id', params.id);
+      .eq('accommodation_id', (await params).id);
 
     const { error } = await supabase
       .from('accommodations')
       .delete()
-      .eq('id', params.id);
+      .eq('id', (await params).id);
 
     if (error) {
       console.error('Error deleting accommodation:', error);

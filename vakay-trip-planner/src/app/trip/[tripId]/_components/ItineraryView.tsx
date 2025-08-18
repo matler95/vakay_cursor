@@ -113,7 +113,7 @@ function ItineraryViewContent({ trip, itineraryDays, locations, transportation, 
       setState({ message: 'Itinerary saved successfully.' });
       // Refresh parent data so props update and persist after exiting edit mode
       await onDataRefresh();
-      return { message: 'success' } as any;
+      return { message: 'success' };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An error occurred';
       setState({ message: errorMessage });

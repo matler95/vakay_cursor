@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { Database } from '@/types/database.types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { EditButton, DeleteButton } from '@/components/ui';
 import { Badge } from '@/components/ui/badge';
@@ -219,15 +220,15 @@ export function LocationsSidebar({
 
       {/* Filter Tabs */}
       <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
-        {[
-          { key: 'all', label: 'All' },
-          { key: 'used', label: 'Used' },
-          { key: 'unused', label: 'Unused' },
-          { key: 'favorites', label: 'Favorites' }
-        ].map((filter) => (
+        {([
+          { key: 'all' as const, label: 'All' },
+          { key: 'used' as const, label: 'Used' },
+          { key: 'unused' as const, label: 'Unused' },
+          { key: 'favorites' as const, label: 'Favorites' }
+        ] as const).map((filter) => (
           <button
             key={filter.key}
-            onClick={() => setFilterType(filter.key as any)}
+            onClick={() => setFilterType(filter.key)}
             className={cn(
               "flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors",
               filterType === filter.key

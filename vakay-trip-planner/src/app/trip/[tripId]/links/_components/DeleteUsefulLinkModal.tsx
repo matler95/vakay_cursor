@@ -48,40 +48,12 @@ export function DeleteUsefulLinkModal({
       isOpen={isOpen}
       onClose={onClose}
       title="Delete Useful Link"
-      description={`Are you sure you want to delete this useful link? This action cannot be undone. The link "${link.title}" will be permanently removed.`}
+      description={`Are you sure you want to delete the useful link "${link.title}"? This action cannot be undone. The link will be permanently removed.${link.description ? ` Description: ${link.description}` : ''}${link.category ? ` Category: ${link.category}` : ''}${link.url ? ` URL: ${link.url}` : ''}`}
       confirmText="Delete Link"
       cancelText="Cancel"
       variant="destructive"
       onConfirm={handleDelete}
       loading={isLoading}
-    >
-      {/* Link Details */}
-      <div className="mb-6">
-        <div className="bg-gray-50 rounded-lg p-4 space-y-2">
-          <div className="flex justify-between">
-            <span className="font-medium">Title:</span>
-            <span>{link.title}</span>
-          </div>
-          {link.description && (
-            <div className="flex justify-between">
-              <span className="font-medium">Description:</span>
-              <span className="text-sm text-gray-600">{link.description}</span>
-            </div>
-          )}
-          {link.category && (
-            <div className="flex justify-between">
-              <span className="font-medium">Category:</span>
-              <span className="capitalize">{link.category}</span>
-            </div>
-          )}
-          {link.url && (
-            <div className="flex justify-between">
-              <span className="font-medium">URL:</span>
-              <span className="text-sm text-blue-600 truncate max-w-[200px]">{link.url}</span>
-            </div>
-          )}
-        </div>
-      </div>
-    </ConfirmationModal>
+    />
   );
 }

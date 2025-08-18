@@ -1,5 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabaseServer';
+import { Database } from '@/types/database.types';
+
+type PopularDestination = Database['public']['Tables']['popular_destinations']['Row'];
+type PopularDestinationSelected = Pick<
+  PopularDestination,
+  | 'place_id'
+  | 'name'
+  | 'name_normalized'
+  | 'display_name'
+  | 'category'
+  | 'type'
+  | 'country'
+  | 'region'
+  | 'city'
+  | 'lat'
+  | 'lon'
+  | 'importance'
+  | 'place_rank'
+  | 'boundingbox'
+>;
 
 export async function GET(request: NextRequest) {
   try {
@@ -41,16 +61,16 @@ export async function GET(request: NextRequest) {
 
     // Add category filter if provided
     if (category) {
-      exactMatchQuery = exactMatchQuery.eq('category', category as any);
-      startsWithQuery = startsWithQuery.eq('category', category as any);
-      containsQuery = containsQuery.eq('category', category as any);
+      exactMatchQuery = exactMatchQuery.eq('category', category);
+      startsWithQuery = startsWithQuery.eq('category', category);
+      containsQuery = containsQuery.eq('category', category);
     }
 
     // Add type filter if provided
     if (type) {
-      exactMatchQuery = exactMatchQuery.eq('type', type as any);
-      startsWithQuery = startsWithQuery.eq('type', type as any);
-      containsQuery = containsQuery.eq('type', type as any);
+      exactMatchQuery = exactMatchQuery.eq('type', type);
+      startsWithQuery = startsWithQuery.eq('type', type);
+      containsQuery = containsQuery.eq('type', type);
     }
 
     // Execute queries in order of priority
@@ -68,27 +88,27 @@ export async function GET(request: NextRequest) {
     }
 
     // Combine results in priority order
-    const allResults: any[] = [];
+    const allResults: (PopularDestinationSelected & { priority: number })[] = [];
     
     // 1. Exact matches first (highest priority)
     if (exactMatchResults.data) {
-      allResults.push(...exactMatchResults.data.map((item: any) => ({ ...item, priority: 1 })));
+      allResults.push(...exactMatchResults.data.map((item: PopularDestinationSelected) => ({ ...item, priority: 1 })));
     }
 
     // 2. Starts with matches second (medium priority)
     if (startsWithResults.data) {
       // Filter out items that are already in exact matches
-      const exactMatchIds = new Set(exactMatchResults.data?.map((item: any) => item.place_id) || []);
-      const uniqueStartsWithResults = startsWithResults.data.filter((item: any) => !exactMatchIds.has(item.place_id));
-      allResults.push(...uniqueStartsWithResults.map((item: any) => ({ ...item, priority: 2 })));
+      const exactMatchIds = new Set(exactMatchResults.data?.map((item: PopularDestinationSelected) => item.place_id) || []);
+      const uniqueStartsWithResults = startsWithResults.data.filter((item: PopularDestinationSelected) => !exactMatchIds.has(item.place_id));
+      allResults.push(...uniqueStartsWithResults.map((item: PopularDestinationSelected) => ({ ...item, priority: 2 })));
     }
 
     // 3. Contains matches third (lowest priority)
     if (containsResults.data) {
       // Filter out items that are already in higher priority results
-      const higherPriorityIds = new Set(allResults.map((item: any) => item.place_id));
-      const uniqueContainsResults = containsResults.data.filter((item: any) => !higherPriorityIds.has(item.place_id));
-      allResults.push(...uniqueContainsResults.map((item: any) => ({ ...item, priority: 3 })));
+      const higherPriorityIds = new Set(allResults.map((item: PopularDestinationSelected & { priority: number }) => item.place_id));
+      const uniqueContainsResults = containsResults.data.filter((item: PopularDestinationSelected) => !higherPriorityIds.has(item.place_id));
+      allResults.push(...uniqueContainsResults.map((item: PopularDestinationSelected) => ({ ...item, priority: 3 })));
     }
 
     // Take only the requested limit
@@ -146,7 +166,22 @@ export async function POST(request: NextRequest) {
     }
 
                // Transform the data to match our schema
-           const transformedDestinations = destinations.map((dest: any) => ({
+           const transformedDestinations = destinations.map((dest: {
+             place_id: number;
+             name: string;
+             name_normalized?: string;
+             display_name: string;
+             category: string;
+             type: string;
+             country?: string | null;
+             region?: string | null;
+             city?: string | null;
+             lat: string | number;
+             lon: string | number;
+             importance: string | number;
+             place_rank: string | number;
+             boundingbox?: string[] | null;
+           }) => ({
              place_id: dest.place_id,
              name: dest.name,
              name_normalized: dest.name_normalized || dest.name, // Use provided or fallback to name
@@ -156,16 +191,16 @@ export async function POST(request: NextRequest) {
              country: dest.country || null,
              region: dest.region || null,
              city: dest.city || null,
-             lat: parseFloat(dest.lat),
-             lon: parseFloat(dest.lon),
-             importance: parseFloat(dest.importance),
-             place_rank: parseInt(dest.place_rank),
+             lat: typeof dest.lat === 'string' ? parseFloat(dest.lat) : (dest.lat as number),
+             lon: typeof dest.lon === 'string' ? parseFloat(dest.lon) : (dest.lon as number),
+             importance: typeof dest.importance === 'string' ? parseFloat(dest.importance) : (dest.importance as number),
+             place_rank: typeof dest.place_rank === 'string' ? parseInt(dest.place_rank) : (dest.place_rank as number),
              boundingbox: dest.boundingbox || null
            }));
 
     const { data, error } = await supabase
       .from('popular_destinations')
-      .upsert(transformedDestinations as any, { 
+      .upsert(transformedDestinations, { 
         onConflict: 'place_id',
         ignoreDuplicates: false 
       })

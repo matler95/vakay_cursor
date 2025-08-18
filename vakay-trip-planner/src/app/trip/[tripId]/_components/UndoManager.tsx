@@ -10,7 +10,7 @@ interface ActionHistoryItem {
   action: string;
   timestamp: Date;
   undoFn: () => void;
-  data?: any;
+  data?: unknown;
 }
 
 interface UndoManagerProps {
@@ -20,7 +20,7 @@ interface UndoManagerProps {
 
 // Create context for undo manager
 interface UndoContextType {
-  addAction: (action: string, undoFn: () => void, data?: any) => void;
+  addAction: (action: string, undoFn: () => void, data?: unknown) => void;
   undoLastAction: () => void;
   clearHistory: () => void;
 }
@@ -33,7 +33,7 @@ export function UndoManager({ className, children }: UndoManagerProps) {
   const [currentAction, setCurrentAction] = useState<ActionHistoryItem | null>(null);
 
   // Add action to history
-  const addAction = useCallback((action: string, undoFn: () => void, data?: any) => {
+  const addAction = useCallback((action: string, undoFn: () => void, data?: unknown) => {
     const newAction: ActionHistoryItem = {
       id: `action-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       action,

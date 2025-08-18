@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = createRouteHandlerClient({ cookies });
@@ -39,6 +39,8 @@ export async function PUT(
       expense,
     } = body;
 
+    const { id } = await params;
+
     // Validate required fields
     if (!type || !provider || !departure_location || !arrival_location || !departure_date || !arrival_date) {
       return NextResponse.json(
@@ -51,7 +53,7 @@ export async function PUT(
     const { data: transportation } = await supabase
       .from('transportation')
       .select('trip_id')
-      .eq('id', params.id)
+      .eq('id', id)
       .single();
 
     if (!transportation) {
@@ -93,7 +95,7 @@ export async function PUT(
         notes: notes || null,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', params.id)
+      .eq('id', id)
       .select()
       .single();
 
@@ -111,13 +113,13 @@ export async function PUT(
       const { error: delErr } = await supabase
         .from('transportation_participants')
         .delete()
-        .eq('transportation_id', params.id);
+        .eq('transportation_id', id);
       if (delErr) {
         console.error('Failed to clear transportation participants:', delErr);
       }
       if (participants.length > 0) {
         const inserts = participants.map((pid: string) => ({
-          transportation_id: Number(params.id),
+          transportation_id: Number(id),
           participant_user_id: pid,
         }));
         const { error: insErr } = await supabase
@@ -244,7 +246,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = createRouteHandlerClient({ cookies });
@@ -259,7 +261,7 @@ export async function DELETE(
     const { data: transportation } = await supabase
       .from('transportation')
       .select('trip_id')
-      .eq('id', params.id)
+      .eq('id', (await params).id)
       .single();
 
     if (!transportation) {
@@ -281,7 +283,7 @@ export async function DELETE(
     const { error } = await supabase
       .from('transportation')
       .delete()
-      .eq('id', params.id);
+      .eq('id', (await params).id);
 
     if (error) {
       console.error('Error deleting transportation:', error);

@@ -1,10 +1,26 @@
 import { AutocompleteOption } from '@/components/ui/autocomplete';
 
+interface NominatimLocation {
+  place_id: string | number;
+  name: string;
+  display_name: string;
+  category: string;
+  type: string;
+  country?: string;
+  region?: string;
+  city?: string;
+  lat: string | number;
+  lon: string | number;
+  importance: string | number;
+  place_rank: string | number;
+  boundingbox?: string[];
+}
+
 /**
  * Validates if a location object matches the expected format from Nominatim
  */
-export function validateNominatimLocation(location: any): boolean {
-  const requiredFields = ['place_id', 'name', 'display_name', 'category', 'type', 'lat', 'lon', 'importance', 'place_rank'];
+export function validateNominatimLocation(location: NominatimLocation): boolean {
+  const requiredFields = ['place_id', 'name', 'display_name', 'category', 'type', 'lat', 'lon', 'importance', 'place_rank'] as const;
   
   return requiredFields.every(field => {
     const value = location[field];
@@ -24,9 +40,9 @@ export function validateNominatimLocation(location: any): boolean {
 /**
  * Transforms a Nominatim location object to our internal format
  */
-export function transformNominatimLocation(location: any): AutocompleteOption {
+export function transformNominatimLocation(location: NominatimLocation): AutocompleteOption {
   return {
-    place_id: parseInt(location.place_id),
+    place_id: parseInt(String(location.place_id)),
     name: location.name,
     display_name: location.display_name,
     category: location.category,
@@ -34,10 +50,10 @@ export function transformNominatimLocation(location: any): AutocompleteOption {
     country: location.country || null,
     region: location.region || null,
     city: location.city || null,
-    lat: parseFloat(location.lat),
-    lon: parseFloat(location.lon),
-    importance: parseFloat(location.importance),
-    place_rank: parseInt(location.place_rank),
+    lat: parseFloat(String(location.lat)),
+    lon: parseFloat(String(location.lon)),
+    importance: parseFloat(String(location.importance)),
+    place_rank: parseInt(String(location.place_rank)),
     boundingbox: location.boundingbox || null
   };
 }
@@ -45,7 +61,7 @@ export function transformNominatimLocation(location: any): AutocompleteOption {
 /**
  * Filters locations based on category and type to exclude unwanted items
  */
-export function filterValidDestinations(locations: any[]): any[] {
+export function filterValidDestinations(locations: NominatimLocation[]): NominatimLocation[] {
   const validCategories = ['tourism', 'place'];
   const validTypes = ['attraction', 'city', 'island', 'country', 'region', 'state'];
   
@@ -62,7 +78,7 @@ export function filterValidDestinations(locations: any[]): any[] {
     }
     
     // Must have a minimum importance score (adjust as needed)
-    const importance = parseFloat(location.importance);
+    const importance = parseFloat(String(location.importance));
     if (isNaN(importance) || importance < 0.1) {
       return false;
     }
