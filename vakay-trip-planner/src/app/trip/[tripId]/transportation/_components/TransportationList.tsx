@@ -247,27 +247,27 @@ export function TransportationList({
                 <div className="flex items-center justify-between gap-2">
                   {/* Left side: Navigate button */}
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
                     onClick={() => onOpenInMaps(transport.departure_location || '')}
                     className="h-11"
                   >
-                    <MapPinned className="h-4 w-4 sm:mr-2" />
+                    <MapPinned className="h-4 w-4 text-gray-500 sm:mr-2" />
                     <span className="hidden sm:inline">Navigate</span>
                   </Button>
 
                   {/* Right side: Edit/Delete buttons */}
                   <div className="flex gap-2">
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
                       onClick={() => setEditingTransportation(transport)}
                       className="h-11 w-11 p-0"
                     >
-                      <Edit className="h-4 w-4" />
+                      <Edit className="h-4 w-4 text-gray-500" />
                     </Button>
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
                       onClick={() => setDeletingTransportation(transport)}
                       className="h-11 w-11 p-0 text-red-600 border-red-300 hover:bg-red-50"

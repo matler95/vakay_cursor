@@ -6,7 +6,7 @@ import { Database } from '@/types/database.types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Trash2, Edit, MapPin, CreditCard, Clock, Search, Filter, ArrowUpDown, ArrowUp, ArrowDown, ChevronDown, ChevronRight } from 'lucide-react';
+import { Trash2, Edit, MapPin, CreditCard, Clock, Search, Filter, ArrowUpDown, ArrowUp, ArrowDown, ChevronDown, ChevronRight, Check } from 'lucide-react';
 import { formatCurrency, getCurrencySymbol } from '@/lib/currency';
 import { 
   StandardList, 
@@ -245,7 +245,7 @@ export function ExpensesList({
                       </Select>
 
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         onClick={() => setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))}
                         aria-pressed={sortOrder === 'desc'}
@@ -253,9 +253,9 @@ export function ExpensesList({
                         className="h-9 w-9 p-0 flex-shrink-0"
                       >
                         {sortOrder === 'asc' ? (
-                          <ArrowUp className="h-4 w-4" />
+                          <ArrowUp className="h-4 w-4 text-gray-500" />
                         ) : (
-                          <ArrowDown className="h-4 w-4" />
+                          <ArrowDown className="h-4 w-4 text-gray-500" />
                         )}
                       </Button>
                     </div>
@@ -330,13 +330,13 @@ export function ExpensesList({
                 <div className="flex items-center justify-between gap-2">
                   {/* Left side: Status toggle button */}
                   <Button
-                    variant={expense.payment_status === 'paid' ? 'default' : 'outline'}
+                    variant={expense.payment_status === 'paid' ? 'outline' : 'outline'}
                     size="sm"
                     onClick={() => handleStatusToggle(expense)}
                     disabled={!canEditExpense(expense) || isUpdatingStatus === expense.id}
-                    className={`h-11 ${
+                    className={`h-11 sm:w-auto w-11 p-0 ${
                       expense.payment_status === 'paid' 
-                        ? 'bg-green-600 hover:bg-green-700' 
+                        ? 'border-green-600 text-green-600 hover:bg-green-50' 
                         : 'text-orange-600 border-orange-600 hover:bg-orange-50'
                     }`}
                   >
@@ -344,7 +344,7 @@ export function ExpensesList({
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
                     ) : expense.payment_status === 'paid' ? (
                       <>
-                        <CreditCard className="h-4 w-4 sm:mr-2" />
+                        <Check className="h-4 w-4 sm:mr-2" />
                         <span className="hidden sm:inline">Paid</span>
                       </>
                     ) : (
@@ -359,16 +359,16 @@ export function ExpensesList({
                   {canEditExpense(expense) && (
                     <div className="flex gap-2">
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         onClick={() => setEditExpense(expense)}
                         className="h-11 w-11 p-0"
                         title="Edit expense"
                       >
-                        <Edit className="h-4 w-4" />
+                        <Edit className="h-4 w-4 text-gray-500" />
                       </Button>
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         onClick={() => setDeleteExpense(expense)}
                         className="h-11 w-11 p-0 text-red-600 border-red-300 hover:bg-red-50"

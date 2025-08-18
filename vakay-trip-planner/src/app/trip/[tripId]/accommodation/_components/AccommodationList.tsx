@@ -186,12 +186,12 @@ export function AccommodationList({
                   {/* Left side: Details button */}
                   {Boolean((a as any).booking_url) && (
                     <Button 
-                      variant="outline" 
+                      variant="ghost" 
                       size="sm" 
                       onClick={() => window.open((a as any).booking_url as string, '_blank')} 
                       className="h-11"
                     >
-                      <ExternalLink className="h-4 w-4 sm:mr-2" />
+                      <ExternalLink className="h-4 w-4 text-gray-500 sm:mr-2" />
                       <span className="hidden sm:inline">Details</span>
                     </Button>
                   )}
@@ -199,15 +199,15 @@ export function AccommodationList({
                   {/* Right side: Edit/Delete buttons */}
                   <div className="flex gap-2">
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
                       onClick={() => setEditingAccommodation(a)}
                       className="h-11 w-11 p-0"
                     >
-                      <Edit className="h-4 w-4" />
+                      <Edit className="h-4 w-4 text-gray-500" />
                     </Button>
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
                       onClick={() => setDeletingAccommodation(a)}
                       className="h-11 w-11 p-0 text-red-600 border-red-300 hover:bg-red-50"
