@@ -16,7 +16,9 @@ import {
   EmptyState
 } from '@/components/ui';
 
-type Accommodation = Database['public']['Tables']['accommodations']['Row'];
+type Accommodation = Database['public']['Tables']['accommodations']['Row'] & {
+  booking_url?: string;
+};
 
 interface AccommodationListProps {
   accommodations: Accommodation[];
@@ -95,7 +97,7 @@ export function AccommodationList({
       return (
         a.name.toLowerCase().includes(term) ||
         a.address.toLowerCase().includes(term) ||
-        (a as any).booking_confirmation?.toLowerCase?.().includes(term)
+        a.booking_confirmation?.toLowerCase?.().includes(term)
       );
     });
     // Always sort by check-in date ascending
@@ -133,7 +135,7 @@ export function AccommodationList({
       <div className="space-y-4">
         {filteredSorted.map((a) => {
           const st = getStatus(a.check_in_date as string, a.check_out_date as string);
-          const chip = getStatusChip(st as any);
+          const chip = getStatusChip(st);
           const expenseChip = getExpenseStatusChip(expenseStatus[a.id] || false);
           
           return (
@@ -184,11 +186,11 @@ export function AccommodationList({
               <div className="p-4">
                 <div className="flex items-center justify-between gap-2">
                   {/* Left side: Details button */}
-                  {Boolean((a as any).booking_url) && (
+                  {Boolean(a.booking_url) && (
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      onClick={() => window.open((a as any).booking_url as string, '_blank')} 
+                      onClick={() => window.open(a.booking_url!, '_blank')} 
                       className="h-11"
                     >
                       <ExternalLink className="h-4 w-4 text-gray-500 sm:mr-2" />

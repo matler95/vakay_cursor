@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ConfirmationModal } from '@/components/ui';
+import { StandardModal } from '@/components/ui';
 import { AlertTriangle } from 'lucide-react';
 import { useActionState } from 'react';
 import { deleteAccount } from '../actions';
@@ -30,21 +30,35 @@ export function DeleteAccountModal() {
         Delete account
       </Button>
 
-      <ConfirmationModal
+      <StandardModal
         isOpen={open}
         onClose={() => setOpen(false)}
         title="Permanently delete account"
         description="This will remove your account and access to all trips. This action cannot be undone."
-        confirmText="Delete"
-        cancelText="Cancel"
-        variant="destructive"
-        onConfirm={() => {
-          // The form will handle the submission
-          const form = document.getElementById('delete-account-form') as HTMLFormElement | null;
-          form?.requestSubmit();
-        }}
-        loading={false}
         size="lg"
+        footer={
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button 
+              variant="outline" 
+              className="flex-1" 
+              onClick={() => setOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive"
+              className="flex-1"
+              onClick={() => {
+                // The form will handle the submission
+                const form = document.getElementById('delete-account-form') as HTMLFormElement | null;
+                form?.requestSubmit();
+              }}
+            >
+              Delete
+            </Button>
+          </div>
+        }
+        showFooter
       >
         <div className="space-y-4">
           <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -57,7 +71,7 @@ export function DeleteAccountModal() {
           <form id="delete-account-form" action={formAction} className="space-y-4">
             <div>
               <label htmlFor="confirm" className="block text-sm font-medium text-gray-700 mb-2">
-                Type "delete" to confirm
+                Type &quot;delete&quot; to confirm
               </label>
               <input
                 id="confirm"
@@ -78,7 +92,7 @@ export function DeleteAccountModal() {
             )}
           </form>
         </div>
-      </ConfirmationModal>
+      </StandardModal>
     </>
   );
 }

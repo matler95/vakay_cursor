@@ -232,42 +232,10 @@ export function DayDetailsModal({
     <StandardModal
       isOpen={isOpen}
       onClose={onClose}
-      title=""
-      description=""
+      title={formatDate(currentDateObj)}
+      description={`Day ${currentDateIndex + 1} of ${tripDates.length}`}
       size="full"
-      hideCloseButton={true}
-      customHeader={
-        <div className="flex items-center gap-2 flex-1">
-          <Button
-            onClick={goToPreviousDay}
-            disabled={currentDateIndex === 0}
-            variant="ghost"
-            size="sm"
-            className="p-1.5 disabled:opacity-50 flex-shrink-0"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          
-          <div className="text-center flex-1 min-w-0">
-            <h2 className="text-lg font-semibold text-gray-900 truncate">
-              {formatDate(currentDateObj)}
-            </h2>
-            <p className="text-sm text-gray-600 truncate">
-              Day {currentDateIndex + 1} of {tripDates.length}
-            </p>
-          </div>
-          
-          <Button
-            onClick={goToNextDay}
-            disabled={currentDateIndex === tripDates.length - 1}
-            variant="ghost"
-            size="sm"
-            className="p-1.5 disabled:opacity-50 flex-shrink-0"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      }
+      showCloseButton={false}
     >
       <div 
         ref={modalRef}
@@ -277,6 +245,38 @@ export function DayDetailsModal({
       >
         {/* Content */}
         <div className="p-4 space-y-4 flex-1 overflow-y-auto">
+          {/* Navigation Buttons */}
+          <div className="flex items-center gap-2 justify-center mb-4">
+            <Button
+              onClick={goToPreviousDay}
+              disabled={currentDateIndex === 0}
+              variant="ghost"
+              size="sm"
+              className="p-1.5 disabled:opacity-50 flex-shrink-0"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            
+            <div className="text-center flex-1 min-w-0">
+              <h2 className="text-lg font-semibold text-gray-900 truncate">
+                {formatDate(currentDateObj)}
+              </h2>
+              <p className="text-sm text-gray-600 truncate">
+                Day {currentDateIndex + 1} of {tripDates.length}
+              </p>
+            </div>
+            
+            <Button
+              onClick={goToNextDay}
+              disabled={currentDateIndex === tripDates.length - 1}
+              variant="ghost"
+              size="sm"
+              className="p-1.5 disabled:opacity-50 flex-shrink-0"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+          
           {/* Location Section - Inline Layout */}
           <div className="space-y-3">
             <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
