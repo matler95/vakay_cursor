@@ -6,7 +6,7 @@ import { Database } from '@/types/database.types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Trash2, Edit, MapPin, CreditCard, Clock, Search, Filter, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Trash2, Edit, MapPin, CreditCard, Clock, Search, Filter, ArrowUpDown, ArrowUp, ArrowDown, ChevronDown, ChevronRight } from 'lucide-react';
 import { formatCurrency, getCurrencySymbol } from '@/lib/currency';
 import { 
   StandardList, 
@@ -75,6 +75,7 @@ export function ExpensesList({
   const [isUpdatingStatus, setIsUpdatingStatus] = useState<number | null>(null);
   const [deleteExpense, setDeleteExpense] = useState<Expense | null>(null);
   const [editExpense, setEditExpense] = useState<Expense | null>(null);
+  const [isFiltersExpanded, setIsFiltersExpanded] = useState(false);
 
   // Helper function to get participant name
   const getParticipantName = (userId: string) => {
@@ -159,9 +160,10 @@ export function ExpensesList({
 
       {/* Filters, Search, Sorting */}
       <div className="mb-6">
-        <div className="space-y-4">
-          {/* Search */}
-          <div className="w-full">
+        {/* Search and Filters in horizontal layout */}
+        <div className="flex items-start gap-3">
+          {/* Search - Always visible */}
+          <div className="flex-1">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
@@ -173,81 +175,94 @@ export function ExpensesList({
             </div>
           </div>
 
-          {/* Filters and Sorting - Mobile Optimized */}
-          <div className="space-y-4">
-            {/* Filters */}
-            <div className="space-y-3">
+          {/* Expandable Filters and Sorting Section */}
+          <div className="bg-white rounded-lg border border-gray-200 min-w-0">
+            <div
+              className="flex items-center justify-between p-3 cursor-pointer whitespace-nowrap"
+              onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
+            >
               <div className="flex items-center gap-2">
-                <Filter className="h-5 w-5 text-gray-500 flex-shrink-0" />
+                <Filter className="h-4 w-4 text-gray-500" />
                 <span className="text-sm font-medium text-gray-700">Filters</span>
               </div>
-              
-              <div className="grid grid-cols-2 gap-3">
-                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                  <SelectTrigger className="h-11">
-                    <SelectValue placeholder="Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All categories</SelectItem>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id.toString()}>
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: category.color }} />
-                          {category.name}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="h-11">
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All status</SelectItem>
-                    <SelectItem value="paid">Paid</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {isFiltersExpanded ? (
+                <ChevronDown className="h-4 w-4 text-gray-500" />
+              ) : (
+                <ChevronRight className="h-4 w-4 text-gray-500" />
+              )}
             </div>
 
-            {/* Sorting */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <ArrowUpDown className="h-5 w-5 text-gray-500 flex-shrink-0" />
-                <span className="text-sm font-medium text-gray-700">Sort</span>
-              </div>
-              
-              <div className="flex gap-3">
-                <Select value={sortBy} onValueChange={(value) => setSortBy(value as 'created_at' | 'amount' | 'description')}>
-                  <SelectTrigger className="h-11 flex-1">
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="created_at">Date Created</SelectItem>
-                    <SelectItem value="amount">Amount</SelectItem>
-                    <SelectItem value="description">Description</SelectItem>
-                  </SelectContent>
-                </Select>
+            {isFiltersExpanded && (
+              <div className="px-3 pb-3 border-t border-gray-100">
+                <div className="space-y-3 pt-3">
+                  {/* Filters - Compact horizontal layout */}
+                  <div className="space-y-2">
+                    <span className="text-xs font-medium text-gray-600">Category & Status</span>
+                    <div className="flex gap-2">
+                      <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                        <SelectTrigger className="h-9 text-xs">
+                          <SelectValue placeholder="Category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All categories</SelectItem>
+                          {categories.map((category) => (
+                            <SelectItem key={category.id} value={category.id.toString()}>
+                              <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: category.color }} />
+                                {category.name}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
 
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))}
-                  aria-pressed={sortOrder === 'desc'}
-                  title={sortOrder === 'asc' ? 'Ascending' : 'Descending'}
-                  className="h-11 w-11 p-0 flex-shrink-0"
-                >
-                  {sortOrder === 'asc' ? (
-                    <ArrowUp className="h-5 w-5" />
-                  ) : (
-                    <ArrowDown className="h-5 w-5" />
-                  )}
-                </Button>
+                      <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <SelectTrigger className="h-9 text-xs">
+                          <SelectValue placeholder="Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All status</SelectItem>
+                          <SelectItem value="paid">Paid</SelectItem>
+                          <SelectItem value="pending">Pending</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {/* Sorting - Compact horizontal layout */}
+                  <div className="space-y-2">
+                    <span className="text-xs font-medium text-gray-600">Sort</span>
+                    <div className="flex gap-2">
+                      <Select value={sortBy} onValueChange={(value) => setSortBy(value as 'created_at' | 'amount' | 'description')}>
+                        <SelectTrigger className="h-9 text-xs">
+                          <SelectValue placeholder="Sort by" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="created_at">Date Created</SelectItem>
+                          <SelectItem value="amount">Amount</SelectItem>
+                          <SelectItem value="description">Description</SelectItem>
+                        </SelectContent>
+                      </Select>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))}
+                        aria-pressed={sortOrder === 'desc'}
+                        title={sortOrder === 'asc' ? 'Ascending' : 'Descending'}
+                        className="h-9 w-9 p-0 flex-shrink-0"
+                      >
+                        {sortOrder === 'asc' ? (
+                          <ArrowUp className="h-4 w-4" />
+                        ) : (
+                          <ArrowDown className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
