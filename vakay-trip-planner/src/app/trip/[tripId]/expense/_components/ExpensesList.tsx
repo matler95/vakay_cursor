@@ -156,9 +156,6 @@ export function ExpensesList({
 
   return (
     <ContentSection>
-      <ListHeader
-        title="Expense History"
-      />
 
       {/* Filters, Search, Sorting */}
       <div className="mb-6">
@@ -296,12 +293,8 @@ export function ExpensesList({
                   )}
                 </div>
               </div>
-            </div>
-
-            {/* Content section */}
-            <div className="p-4">
               {/* Location and date */}
-              <div className="flex flex-col gap-3 mb-4">
+              <div className="flex flex-col gap-3 mt-4">
                 {expense.location && (
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <MapPin className="h-4 w-4 flex-shrink-0" />
@@ -312,6 +305,10 @@ export function ExpensesList({
                   {formatDateTime(expense.created_at)}
                 </div>
               </div>
+            </div>
+
+            {/* Content section */}
+            <div>
 
               {/* Action buttons */}
               <div className="p-4">

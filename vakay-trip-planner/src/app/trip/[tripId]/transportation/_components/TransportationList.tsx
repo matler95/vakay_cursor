@@ -249,7 +249,7 @@ export function TransportationList({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => onOpenInMaps(transport.departure_location)}
+                    onClick={() => onOpenInMaps(transport.departure_location || '')}
                     className="h-11"
                   >
                     <MapPinned className="h-4 w-4 sm:mr-2" />

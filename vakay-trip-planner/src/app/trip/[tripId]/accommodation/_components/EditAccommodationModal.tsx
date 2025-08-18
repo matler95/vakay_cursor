@@ -108,11 +108,8 @@ export function EditAccommodationModal({
       }
 
       // Load selected participants for this accommodation (only used if adding expense)
-      const { data: aps } = await supabase
-        .from('accommodation_participants')
-        .select('participant_user_id')
-        .eq('accommodation_id', accommodation.id);
-      setSelectedParticipants(new Set((aps || []).map(r => r.participant_user_id)));
+      // Note: accommodation_participants table doesn't exist, so we'll use trip participants
+      setSelectedParticipants(new Set(ids));
 
       // Check if accommodation already has an expense
       const expectedDescription = `${formData.name || accommodation.name} ${formData.address || accommodation.address}`;

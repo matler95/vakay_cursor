@@ -52,7 +52,7 @@ export function EditDisplayNameModal({ currentName }: EditDisplayNameModalProps)
       </Tooltip>
 
       <Modal
-        open={open}
+        isOpen={open}
         onClose={() => setOpen(false)}
         title="Edit Display Name"
         description="This name will be shown to other participants."
