@@ -110,7 +110,7 @@ export function DeleteAccountModal() {
                   Deleting...
                 </>
               ) : (
-                `Delete ${!isConfirmValid && `(type "delete" to enable)`}`
+                isConfirmValid ? 'Delete' : 'Delete (type "delete" to enable)'
               )}
             </Button>
           </div>
