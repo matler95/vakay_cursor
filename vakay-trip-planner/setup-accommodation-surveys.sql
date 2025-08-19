@@ -1,6 +1,9 @@
 -- Setup Accommodation Surveys Feature
 -- This migration creates the necessary tables and security policies for the accommodation survey functionality
 
+-- Add surveys_enabled field to trips table
+ALTER TABLE public.trips ADD COLUMN IF NOT EXISTS surveys_enabled BOOLEAN DEFAULT false;
+
 -- Create accommodation_surveys table
 CREATE TABLE IF NOT EXISTS public.accommodation_surveys (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
