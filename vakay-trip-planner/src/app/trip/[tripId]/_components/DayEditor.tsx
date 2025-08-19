@@ -130,7 +130,7 @@ export function DayEditor({
   };
 
   // Handle transfer settings changes
-  const handleTransferChange = (field: keyof TransferSettings, value: boolean | number | null | string) => {
+  const handleTransferChange = (field: keyof TransferSettings, value: any) => {
     const newSettings = { ...transferSettings, [field]: value };
     setTransferSettings(newSettings);
 
@@ -143,9 +143,9 @@ export function DayEditor({
         // Disable transfer - clear location_2_id
         onUpdateDraft(dateStr, { location_2_id: null });
       }
-    } else if (field === 'fromLocationId' && typeof value === 'number') {
+    } else if (field === 'fromLocationId') {
       onUpdateDraft(dateStr, { location_1_id: value });
-    } else if (field === 'toLocationId' && typeof value === 'number') {
+    } else if (field === 'toLocationId') {
       onUpdateDraft(dateStr, { location_2_id: value });
     }
   };

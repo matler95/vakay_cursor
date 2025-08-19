@@ -81,12 +81,46 @@ export function DeleteTransportationModal({
       isOpen={isOpen}
       onClose={onClose}
       title={`Delete ${getTransportationTypeLabel(transportation.type)}`}
-      description={`Are you sure you want to delete this ${getTransportationTypeLabel(transportation.type).toLowerCase()}? This action cannot be undone and will remove all associated details including dates, times, and notes. Provider: ${transportation.provider}. Route: ${formatLocationDisplay(transportation.departure_location, transportation.type)} → ${formatLocationDisplay(transportation.arrival_location, transportation.type)}${transportation.departure_date ? `. Date: ${new Date(transportation.departure_date).toLocaleDateString()}` : ''}${transportation.departure_time ? `. Time: ${transportation.departure_time}` : ''}${transportation.booking_reference ? `. Booking Ref: ${transportation.booking_reference}` : ''}`}
+      description="Are you sure you want to delete this transportation? This action cannot be undone and will remove all associated details including dates, times, and notes."
       confirmText="Delete Transportation"
       cancelText="Cancel"
       variant="destructive"
       onConfirm={handleDelete}
       loading={isDeleting}
-    />
+    >
+      {/* Transportation Details */}
+      <div className="mb-6">
+        <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+          <div className="flex justify-between">
+            <span className="font-medium">Provider:</span>
+            <span>{transportation.provider}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="font-medium">Route:</span>
+            <span>
+              {formatLocationDisplay(transportation.departure_location, transportation.type)} → {formatLocationDisplay(transportation.arrival_location, transportation.type)}
+            </span>
+          </div>
+          {transportation.departure_date && (
+            <div className="flex justify-between">
+              <span className="font-medium">Date:</span>
+              <span>{new Date(transportation.departure_date).toLocaleDateString()}</span>
+            </div>
+          )}
+          {transportation.departure_time && (
+            <div className="flex justify-between">
+              <span className="font-medium">Time:</span>
+              <span>{transportation.departure_time}</span>
+            </div>
+          )}
+          {transportation.booking_reference && (
+            <div className="flex justify-between">
+              <span className="font-medium">Booking Ref:</span>
+              <span className="font-mono text-sm">{transportation.booking_reference}</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </ConfirmationModal>
   );
 }

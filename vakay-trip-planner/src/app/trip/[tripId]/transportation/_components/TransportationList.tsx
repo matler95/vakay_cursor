@@ -183,7 +183,7 @@ export function TransportationList({
           const Icon = getTransportationIcon(transport.type);
           const typeLabel = getTransportationTypeLabel(transport.type);
           const st = getStatus(transport.departure_date as string, transport.arrival_date as string);
-          const chip = getStatusChip(st);
+          const chip = getStatusChip(st as any);
           const expenseChip = getExpenseStatusChip(expenseStatus[transport.id] || false);
           
           return (

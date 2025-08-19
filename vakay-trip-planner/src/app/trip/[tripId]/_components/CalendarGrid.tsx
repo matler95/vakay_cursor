@@ -773,7 +773,7 @@ export function CalendarGrid({
               <span className="text-sm font-medium">How to edit:</span>
             </div>
             <p className="text-sm text-blue-700 mt-1">
-              Click and drag to select date ranges, then use the Range Action Bar to assign locations. Changes are saved as drafts until you click &quot;Save Changes&quot;.
+              Click and drag to select date ranges, then use the Range Action Bar to assign locations. Changes are saved as drafts until you click "Save Changes".
             </p>
           </div>
           
