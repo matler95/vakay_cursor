@@ -7,10 +7,10 @@ import { useRouter } from 'next/navigation';
 import { removeParticipant, removeMultipleParticipants } from '../actions';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Plus, Trash2, AlertTriangle, User, Crown, CopyCheck, X, UsersRound } from 'lucide-react';
+import { Plus, Trash2, UserRoundPlus, UsersRound, Crown, User, AlertTriangle } from 'lucide-react';
 import { AddParticipantModal } from './AddParticipantModal';
 import { ConfirmationModal } from '@/components/ui';
-import { EditButton, DeleteButton } from '@/components/ui';
+import { EditButton, DeleteButton, EmptyState } from '@/components/ui';
 
 
 export type Participant = {
@@ -239,10 +239,11 @@ export function ParticipantManager({ tripId, participants, currentUserRole, onPa
             ))}
           </div>
         ) : (
-          <div className="text-center py-8 text-gray-500">
-            <p className="text-sm">No participants yet.</p>
-            <p className="text-xs mt-1">Click the + button to invite your first participant.</p>
-          </div>
+          <EmptyState
+            icon={UsersRound}
+            title="No participants yet"
+            description="Click the + button to invite your first participant."
+          />
         )}
       </div>
 

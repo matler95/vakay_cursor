@@ -2,10 +2,13 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Database } from '@/types/database.types';
-import { Plus, MapPin, Copy, ExternalLink } from 'lucide-react';
+import { Plus, MapPin, Copy, ExternalLink, ClipboardList } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { AccommodationList } from './AccommodationList';
+import { AccommodationOverview } from './AccommodationOverview';
 import { AddAccommodationModal } from './AddAccommodationModal';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -29,7 +32,9 @@ export function AccommodationView({
   currentUserId,
   onDataRefresh
 }: AccommodationViewProps) {
+  const router = useRouter();
   const [isAddAccommodationModalOpen, setIsAddAccommodationModalOpen] = useState(false);
+  const [surveysEnabled, setSurveysEnabled] = useState(false);
 
   const refreshData = async () => {
     await onDataRefresh();
@@ -61,28 +66,65 @@ export function AccommodationView({
     window.open(`https://www.google.com/maps/search/?api=1&query=${encodedAddress}`, '_blank');
   };
 
+  const handleSurveysToggle = (enabled: boolean) => {
+    setSurveysEnabled(enabled);
+  };
+
+  const handleViewSurveys = () => {
+    router.push(`/trip/${trip.id}/accommodation/surveys`);
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Secondary Header - Accommodation */}
-      <div className="sticky top-16 z-30 bg-gray-50 -mx-4 px-4 py-3 border-b border-gray-200 shadow-sm">
-        <div className="flex justify-between items-center gap-4 mb-6">
-          <div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+      <div className="sticky top-16 z-30 bg-gray-50 -mx-4 px-3 sm:px-4 py-3 border-b border-gray-200 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4 sm:mb-6">
+          <div className="min-w-0">
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 leading-tight">
               Accommodation
             </h2>
-            <p className="text-sm sm:text-base text-gray-600 mt-1">
+            <p className="text-sm sm:text-base text-gray-600 mt-1 leading-tight">
               Manage your trip accommodations.
             </p>
           </div>
-          <div className="flex gap-3">
+          
+          {/* Controls Section */}
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-3 w-full sm:w-auto">
+            {/* Survey Controls */}
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-3 w-full sm:w-auto">
+              <Switch
+                checked={surveysEnabled}
+                onChange={(e) => handleSurveysToggle(e.target.checked)}
+                label="Enable Accommodation Surveys"
+              />
+              
+              {/* View Surveys Button */}
+              {surveysEnabled && (
+                <Button
+                  variant="outline"
+                  onClick={handleViewSurveys}
+                  className="flex items-center justify-center gap-2 w-full sm:w-auto"
+                  size="sm"
+                >
+                  <ClipboardList className="h-4 w-4" />
+                  <span className="hidden sm:inline">View Surveys</span>
+                  <span className="sm:hidden">Surveys</span>
+                </Button>
+              )}
+            </div>
+
+            {/* Add Accommodation Button */}
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     onClick={() => setIsAddAccommodationModalOpen(true)}
-                    className="flex items-center gap-2"
+                    className="flex items-center justify-center gap-2 w-full sm:w-auto"
+                    size="sm"
                   >
                     <Plus className="h-4 w-4" />
+                    <span className="hidden sm:inline">Add Accommodation</span>
+                    <span className="sm:hidden">Add</span>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -94,8 +136,14 @@ export function AccommodationView({
         </div>
       </div>
 
-      {/* Accommodation List */}
-      <div className="bg-white rounded-xl shadow">
+      {/* Overview Section */}
+      <AccommodationOverview 
+        accommodations={accommodations}
+        tripId={trip.id}
+      />
+
+      {/* Content */}
+      <div className="bg-white rounded-lg sm:rounded-xl shadow">
         <AccommodationList 
           accommodations={accommodations}
           tripId={trip.id}

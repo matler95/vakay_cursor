@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { Database } from '@/types/database.types';
-import { Plus, Settings, Edit3 } from 'lucide-react';
+import { Plus, Settings, Edit3, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { EditTripModal } from '../../_components/EditTripModal';
 import { ExpenseOverview } from './ExpenseOverview';
@@ -11,6 +11,7 @@ import { ExpensesList } from './ExpensesList';
 import { AddExpenseModal } from './AddExpenseModal';
 import { CurrencySettingsModal } from './CurrencySettingsModal';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { EmptyState } from '@/components/ui';
 
 type Expense = Database['public']['Tables']['expenses']['Row'] & {
   expense_categories: {
@@ -127,27 +128,31 @@ export function ExpenseView({
       </div>
       </div>
 
-      {/* Expense Overview */}
-      <ExpenseOverview 
-        expenses={expenses}
-        tripParticipants={tripParticipants}
-        mainCurrency={trip.main_currency || 'USD'}
-      />
+      {/* Expense Overview - Only show when expenses exist */}
+      {expenses.length > 0 && (
+        <ExpenseOverview 
+          expenses={expenses}
+          tripParticipants={tripParticipants}
+          mainCurrency={trip.main_currency || 'USD'}
+        />
+      )}
 
-      {/* Expenses List */}
-      <ExpensesList
-        expenses={expenses}
-        categories={categories}
-        tripParticipants={tripParticipants}
-        tripId={trip.id}
-        userRole={userRole}
-        currentUserId={currentUserId}
-        mainCurrency={trip.main_currency || 'USD'}
-        onExpenseUpdated={refreshData}
-        updateExpenseStatusAction={updateExpenseStatusAction}
-        deleteExpenseAction={deleteExpenseAction}
-        updateExpenseAction={updateExpenseAction}
-      />
+      {/* Content */}
+      <div className="bg-white rounded-lg sm:rounded-xl shadow">
+        <ExpensesList
+          expenses={expenses}
+          categories={categories}
+          tripParticipants={tripParticipants}
+          tripId={trip.id}
+          userRole={userRole}
+          currentUserId={currentUserId}
+          mainCurrency={trip.main_currency || 'USD'}
+          onExpenseUpdated={refreshData}
+          updateExpenseStatusAction={updateExpenseStatusAction}
+          deleteExpenseAction={deleteExpenseAction}
+          updateExpenseAction={updateExpenseAction}
+        />
+      </div>
 
       {/* Modals */}
       {isAddExpenseModalOpen && (

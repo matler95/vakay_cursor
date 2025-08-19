@@ -9,6 +9,7 @@ import { Calendar, MapPin, MapPinPlus, UserRoundPlus, Bed, Plane, Link as LinkIc
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { AddLocationModal } from './AddLocationModal';
 import { AddParticipantModal } from './AddParticipantModal';
 import { AccommodationView } from '../accommodation/_components/AccommodationView';
@@ -73,6 +74,7 @@ export function TripPageClient({
   transportationExpenseStatus,
   currentUserId,
 }: TripPageClientProps) {
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<TabType>('plan');
   const [isAddParticipantModalOpen, setIsAddParticipantModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -85,6 +87,14 @@ export function TripPageClient({
   const [currentExpenses, setCurrentExpenses] = useState(expenses);
   const [currentLocations, setCurrentLocations] = useState(locations);
   const [currentItineraryDays, setCurrentItineraryDays] = useState(itineraryDays);
+
+  // Set initial tab from URL search params
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam && ['plan', 'accommodation', 'transportation', 'links', 'expenses'].includes(tabParam)) {
+      setActiveTab(tabParam as TabType);
+    }
+  }, [searchParams]);
 
   // Debug logging for locations state changes
   useEffect(() => {
