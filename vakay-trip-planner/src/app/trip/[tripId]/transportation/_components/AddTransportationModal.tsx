@@ -11,12 +11,13 @@ import {
   FormModal, 
   StandardInput, 
   StandardTextarea, 
-  StandardDateInput, 
-  StandardTimeInput, 
+  StandardTimePicker, 
   FormSection, 
   FormRow, 
   FormField 
 } from '@/components/ui';
+import { DatePicker } from '@/components/ui/date-picker';
+import { validateTransportationDates } from '@/lib/dateValidation';
 
 type Transportation = Database['public']['Tables']['transportation']['Row'];
 
@@ -85,6 +86,9 @@ export function AddTransportationModal({
   const [highlightedDepartureIndex, setHighlightedDepartureIndex] = useState(-1);
   const [highlightedArrivalIndex, setHighlightedArrivalIndex] = useState(-1);
 
+  const [dateError, setDateError] = useState('');
+  const [tripDates, setTripDates] = useState<{ start_date: string | null; end_date: string | null }>({ start_date: null, end_date: null });
+
   useEffect(() => {
     if (!isOpen) return;
     const loadParticipants = async () => {
@@ -116,12 +120,43 @@ export function AddTransportationModal({
         setExpenseCurrency(mc);
       }
     };
+    const loadTripDates = async () => {
+      const { data: trip } = await supabase
+        .from('trips')
+        .select('start_date, end_date')
+        .eq('id', tripId)
+        .single();
+      
+      setTripDates({
+        start_date: trip?.start_date || null,
+        end_date: trip?.end_date || null
+      });
+    };
     loadParticipants();
     loadMainCurrency();
+    loadTripDates();
   }, [isOpen, supabase, tripId]);
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
+
+    // Clear any previous errors
+    setDateError('');
+    
+    // Validate dates before submission
+    if (formData.departure_date && formData.arrival_date) {
+      const validation = validateTransportationDates(
+        formData.departure_date, 
+        formData.arrival_date,
+        tripDates.start_date || undefined,
+        tripDates.end_date || undefined
+      );
+      if (!validation.isValid) {
+        setDateError(validation.error!);
+        setIsSubmitting(false);
+        return;
+      }
+    }
 
     try {
       const response = await fetch('/api/transportation', {
@@ -165,6 +200,23 @@ export function AddTransportationModal({
         handleAirportSearch(value, 'departure');
       } else if (field === 'arrival_location') {
         handleAirportSearch(value, 'arrival');
+      }
+    }
+
+    // Validate dates when they change
+    if (field === 'departure_date' || field === 'arrival_date') {
+      const departure = field === 'departure_date' ? value : formData.departure_date;
+      const arrival = field === 'arrival_date' ? value : formData.arrival_date;
+      
+      if (departure && arrival) {
+        const validation = validateTransportationDates(departure, arrival, tripDates.start_date || undefined, tripDates.end_date || undefined);
+        if (!validation.isValid) {
+          setDateError(validation.error!);
+        } else {
+          setDateError('');
+        }
+      } else {
+        setDateError('');
       }
     }
 
@@ -390,21 +442,31 @@ export function AddTransportationModal({
           </FormField>
 
           <FormRow cols={2}>
-            <StandardDateInput
+            <DatePicker
               label="Departure Date"
-              name="departure_date"
               value={formData.departure_date}
-              onChange={(e) => handleInputChange('departure_date', e.target.value)}
+              onChange={(date) => handleInputChange('departure_date', date)}
+              placeholder="Select departure date"
               required
+              min={tripDates.start_date || undefined}
+              max={tripDates.end_date || undefined}
             />
             
-            <StandardTimeInput
+            <StandardTimePicker
               label="Departure Time"
               name="departure_time"
               value={formData.departure_time}
-              onChange={(e) => handleInputChange('departure_time', e.target.value)}
+              onChange={(time) => handleInputChange('departure_time', time)}
+              placeholder="Select departure time"
             />
           </FormRow>
+          
+          {dateError && (
+            <p className="text-sm text-red-600 bg-red-50 p-3 rounded-md border border-red-200">
+              {dateError}
+            </p>
+          )}
+
         </FormSection>
 
         <FormSection title="Arrival Details">
@@ -455,21 +517,31 @@ export function AddTransportationModal({
           </FormField>
 
           <FormRow cols={2}>
-            <StandardDateInput
+            <DatePicker
               label="Arrival Date"
-              name="arrival_date"
               value={formData.arrival_date}
-              onChange={(e) => handleInputChange('arrival_date', e.target.value)}
+              onChange={(date) => handleInputChange('arrival_date', date)}
+              placeholder="Select arrival date"
               required
+              min={formData.departure_date || tripDates.start_date || undefined}
+              max={tripDates.end_date || undefined}
             />
             
-            <StandardTimeInput
+            <StandardTimePicker
               label="Arrival Time"
               name="arrival_time"
               value={formData.arrival_time}
-              onChange={(e) => handleInputChange('arrival_time', e.target.value)}
+              onChange={(time) => handleInputChange('arrival_time', time)}
+              placeholder="Select arrival time"
             />
           </FormRow>
+
+          {dateError && (
+            <p className="text-sm text-red-600 bg-red-50 p-3 rounded-md border border-red-200">
+              {dateError}
+            </p>
+          )}
+
         </FormSection>
 
 

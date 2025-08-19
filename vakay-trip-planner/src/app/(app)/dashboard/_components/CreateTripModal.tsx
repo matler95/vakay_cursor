@@ -11,13 +11,14 @@ import { createTrip } from '../actions';
 import { 
   FormModal, 
   StandardInput, 
-  StandardDateInput,
   FormSection,
   FormRow,
   FormField
 } from '@/components/ui';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CURRENCIES } from '@/lib/currency';
+import { validateTripDates } from '@/lib/dateValidation';
 
 // Submit button component that shows loading state
 function SubmitButton() {
@@ -45,6 +46,9 @@ export function CreateTripModal() {
   const [open, setOpen] = useState(false);
   const [state, formAction] = useActionState(createTrip, { message: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [dateError, setDateError] = useState('');
 
   // Reset submitting state when form action completes
   useEffect(() => {
@@ -61,12 +65,54 @@ export function CreateTripModal() {
     }, 1000);
   }
 
+  const handleStartDateChange = (date: string) => {
+    setStartDate(date);
+    validateDates(date, endDate);
+  };
+
+  const handleEndDateChange = (date: string) => {
+    setEndDate(date);
+    validateDates(startDate, date);
+  };
+
+  const validateDates = (start: string, end: string) => {
+    if (start && end) {
+      const validation = validateTripDates(start, end);
+      if (!validation.isValid) {
+        setDateError(validation.error!);
+      } else {
+        setDateError('');
+      }
+    } else {
+      setDateError('');
+    }
+  };
+
   const handleSubmit = () => {
+    // Clear any previous errors
+    setDateError('');
+    
+    // Validate dates before submission
+    if (startDate && endDate) {
+      const validation = validateTripDates(startDate, endDate);
+      if (!validation.isValid) {
+        setDateError(validation.error!);
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     const form = document.getElementById('create-trip-form') as HTMLFormElement | null;
     if (form) {
       form.requestSubmit();
     }
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+    setStartDate('');
+    setEndDate('');
+    setDateError('');
   };
 
   return (
@@ -89,7 +135,7 @@ export function CreateTripModal() {
 
       <FormModal
         isOpen={open}
-        onClose={() => setOpen(false)}
+        onClose={handleClose}
         title="Create New Trip"
         description="Plan your next adventure by creating a new trip."
         size="lg"
@@ -120,17 +166,31 @@ export function CreateTripModal() {
             </FormRow>
 
             <FormRow>
-              <StandardDateInput
+              <DatePicker
                 label="Start Date"
                 name="start_date"
+                value={startDate}
+                onChange={handleStartDateChange}
+                placeholder="Select start date"
                 required
+                min={new Date().toISOString().split('T')[0]}
               />
-              <StandardDateInput
+              <DatePicker
                 label="End Date"
                 name="end_date"
+                value={endDate}
+                onChange={handleEndDateChange}
+                placeholder="Select end date"
                 required
+                min={startDate || new Date().toISOString().split('T')[0]}
               />
             </FormRow>
+            
+            {dateError && (
+              <p className="text-sm text-red-600 bg-red-50 p-3 rounded-md border border-red-200">
+                {dateError}
+              </p>
+            )}
 
             <FormRow>
               <FormField label="Main Currency">

@@ -10,28 +10,52 @@ import { Textarea } from '@/components/ui/textarea';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CURRENCIES } from '@/lib/currency';
+import { DatePicker } from '@/components/ui/date-picker';
+import { validateAccommodationDates } from '@/lib/dateValidation';
 
 // Add missing type alias for Accommodation
 type Accommodation = Database['public']['Tables']['accommodations']['Row'];
 
 type ParticipantOption = { id: string; name: string };
 
+interface AccommodationFormData {
+  name: string;
+  address: string;
+  check_in_date: string;
+  check_out_date: string;
+  booking_confirmation: string;
+  booking_url: string;
+  contact_phone: string;
+  notes: string;
+}
+
 interface EditAccommodationModalProps {
   accommodation: Accommodation;
   isOpen: boolean;
   onClose: () => void;
   onAccommodationUpdated: () => void;
+  tripId: string;
 }
 
 export function EditAccommodationModal({
   accommodation,
   isOpen,
   onClose,
-  onAccommodationUpdated
+  onAccommodationUpdated,
+  tripId
 }: EditAccommodationModalProps) {
   const supabase = createClientComponentClient<Database>();
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState<any>({});
+  const [formData, setFormData] = useState<AccommodationFormData>({
+    name: '',
+    address: '',
+    check_in_date: '',
+    check_out_date: '',
+    booking_confirmation: '',
+    booking_url: '',
+    contact_phone: '',
+    notes: ''
+  });
 
   const [participantOptions, setParticipantOptions] = useState<ParticipantOption[]>([]);
   const [selectedParticipants, setSelectedParticipants] = useState<Set<string>>(new Set());
@@ -44,97 +68,66 @@ export function EditAccommodationModal({
   const [mainCurrency, setMainCurrency] = useState('USD');
   const [hasExistingExpense, setHasExistingExpense] = useState(false);
 
+  const [dateError, setDateError] = useState('');
+  const [tripDates, setTripDates] = useState<{ start_date: string | null; end_date: string | null }>({ start_date: null, end_date: null });
 
 
   useEffect(() => {
     if (accommodation) {
       setFormData({
-        name: accommodation.name,
-        address: accommodation.address,
-        check_in_date: accommodation.check_in_date,
-        check_in_time: (accommodation as any).check_in_time,
-        check_out_date: accommodation.check_out_date,
-        check_out_time: (accommodation as any).check_out_time,
-        booking_confirmation: (accommodation as any).booking_confirmation,
+        name: accommodation.name || '',
+        address: accommodation.address || '',
+        check_in_date: accommodation.check_in_date || '',
+        check_out_date: accommodation.check_out_date || '',
+        booking_confirmation: (accommodation as any).booking_confirmation || '',
         booking_url: (accommodation as any).booking_url || '',
-        contact_phone: (accommodation as any).contact_phone,
-        notes: accommodation.notes
+        contact_phone: (accommodation as any).contact_phone || '',
+        notes: accommodation.notes || ''
       });
     }
   }, [accommodation]);
 
   useEffect(() => {
     if (!isOpen) return;
-    const load = async () => {
-      // Load trip id for this accommodation
-      const { data: acc } = await supabase
-        .from('accommodations')
-        .select('trip_id')
-        .eq('id', accommodation.id)
-        .single();
-      if (!acc) return;
-
-      // Load main currency and last used currency
+    
+    const loadTripDates = async () => {
       const { data: trip } = await supabase
         .from('trips')
-        .select('main_currency')
-        .eq('id', acc.trip_id)
+        .select('start_date, end_date')
+        .eq('id', tripId)
         .single();
-      const mc = trip?.main_currency || 'USD';
-      setMainCurrency(mc);
-      try {
-        const lastCurrency = localStorage.getItem('lastUsedCurrency');
-        if (lastCurrency && CURRENCIES.find(c => c.code === lastCurrency)) {
-          setExpenseCurrency(lastCurrency);
-        } else {
-          setExpenseCurrency(mc);
-        }
-      } catch {
-        setExpenseCurrency(mc);
-      }
-
-      // Load participants for the trip
-      const { data: tp } = await supabase
-        .from('trip_participants')
-        .select('user_id')
-        .eq('trip_id', acc.trip_id);
-      const ids = (tp || []).map(p => p.user_id);
-      if (ids.length > 0) {
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('id, full_name')
-          .in('id', ids);
-        setParticipantOptions((profiles || []).map(p => ({ id: p.id, name: p.full_name || 'Unknown' })));
-      }
-
-      // Load selected participants for this accommodation (only used if adding expense)
-      // Note: accommodation_participants table doesn't exist, so we'll use trip participants
-      setSelectedParticipants(new Set(ids));
-
-      // Check if accommodation already has an expense
-      const expectedDescription = `${formData.name || accommodation.name} ${formData.address || accommodation.address}`;
-      const { data: existingExpense } = await supabase
-        .from('expenses')
-        .select('id, amount, currency, payment_status')
-        .eq('trip_id', acc.trip_id)
-        .eq('description', expectedDescription)
-        .single();
-
-      if (existingExpense) {
-        setHasExistingExpense(true);
-        setExpenseAmount(existingExpense.amount.toString());
-        setExpenseCurrency(existingExpense.currency);
-        setPaymentStatus(existingExpense.payment_status as 'pending' | 'paid' || 'paid');
-      }
+      
+      setTripDates({
+        start_date: trip?.start_date || null,
+        end_date: trip?.end_date || null
+      });
     };
-    load();
-  }, [isOpen, supabase, accommodation.id]);
+    
+    loadTripDates();
+  }, [isOpen, supabase, tripId]);
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData((prev: any) => ({
+    setFormData(prev => ({
       ...prev,
       [field]: value
     }));
+
+    // Validate dates when they change
+    if (field === 'check_in_date' || field === 'check_out_date') {
+      const checkIn = field === 'check_in_date' ? value : formData.check_in_date;
+      const checkOut = field === 'check_out_date' ? value : formData.check_out_date;
+      
+      if (checkIn && checkOut) {
+        const validation = validateAccommodationDates(checkIn, checkOut, tripDates.start_date || undefined, tripDates.end_date || undefined);
+        if (!validation.isValid) {
+          setDateError(validation.error!);
+        } else {
+          setDateError('');
+        }
+      } else {
+        setDateError('');
+      }
+    }
   };
 
   const toggleParticipant = (id: string) => {
@@ -150,6 +143,24 @@ export function EditAccommodationModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+
+    // Clear any previous errors
+    setDateError('');
+    
+    // Validate dates before submission
+    if (formData.check_in_date && formData.check_out_date) {
+      const validation = validateAccommodationDates(
+        formData.check_in_date, 
+        formData.check_out_date,
+        tripDates.start_date || undefined,
+        tripDates.end_date || undefined
+      );
+      if (!validation.isValid) {
+        setDateError(validation.error!);
+        setIsLoading(false);
+        return;
+      }
+    }
 
     try {
       const response = await fetch(`/api/accommodation/${accommodation.id}`, {
@@ -265,27 +276,37 @@ export function EditAccommodationModal({
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="check_in_date">Check-in Date *</Label>
-                <Input
-                  id="check_in_date"
-                  type="date"
+                <DatePicker
+                  label="Check-in Date"
                   value={formData.check_in_date || ''}
-                  onChange={(e) => handleInputChange('check_in_date', e.target.value)}
+                  onChange={(date) => handleInputChange('check_in_date', date)}
+                  placeholder="Select check-in date"
                   required
+                  min={tripDates.start_date || undefined}
+                  max={tripDates.end_date || undefined}
                 />
               </div>
               
               <div>
-                <Label htmlFor="check_out_date">Check-out Date *</Label>
-                <Input
-                  id="check_out_date"
-                  type="date"
+                <DatePicker
+                  label="Check-out Date"
                   value={formData.check_out_date || ''}
-                  onChange={(e) => handleInputChange('check_out_date', e.target.value)}
+                  onChange={(date) => handleInputChange('check_out_date', date)}
+                  placeholder="Select check-out date"
                   required
+                  min={formData.check_in_date || tripDates.start_date || undefined}
+                  max={tripDates.end_date || undefined}
                 />
               </div>
             </div>
+
+
+            
+            {dateError && (
+              <p className="text-sm text-red-600 bg-red-50 p-3 rounded-md border border-red-200">
+                {dateError}
+              </p>
+            )}
           </div>
 
           {/* Expense Section - Only show if no existing expense */}
