@@ -18,6 +18,7 @@ export interface DatePickerProps {
   error?: string;
   name?: string;
   id?: string;
+  initialMonth?: string; // Suggest initial month context (e.g., from related date field)
 }
 
 export const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
@@ -33,15 +34,23 @@ export const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
     className,
     error,
     name,
-    id
+    id,
+    initialMonth
   }, ref) => {
     const [isOpen, setIsOpen] = useState(false);
     const [selectedDate, setSelectedDate] = useState<Date | null>(
       value && value.trim() ? new Date(value + 'T12:00:00') : null
     );
-    const [currentMonth, setCurrentMonth] = useState<Date>(
-      value && value.trim() ? new Date(value + 'T12:00:00') : new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate(), 12, 0, 0, 0)
-    );
+    const [currentMonth, setCurrentMonth] = useState<Date>(() => {
+      // Priority: 1. value (selected date), 2. initialMonth (context), 3. current date
+      if (value && value.trim()) {
+        return new Date(value + 'T12:00:00');
+      }
+      if (initialMonth && initialMonth.trim()) {
+        return new Date(initialMonth + 'T12:00:00');
+      }
+      return new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate(), 12, 0, 0, 0);
+    });
     const [inputValue, setInputValue] = useState(value || '');
     
     const containerRef = useRef<HTMLDivElement>(null);
@@ -95,10 +104,20 @@ export const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
         }
       } else {
         setSelectedDate(null);
-        setCurrentMonth(new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate(), 12, 0, 0, 0)); // Ensure currentMonth is always a valid date
+        // When no value, use initialMonth if available, otherwise current date
+        if (initialMonth && initialMonth.trim()) {
+          const initialDate = new Date(initialMonth + 'T12:00:00');
+          if (!isNaN(initialDate.getTime())) {
+            setCurrentMonth(initialDate);
+          } else {
+            setCurrentMonth(new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate(), 12, 0, 0, 0));
+          }
+        } else {
+          setCurrentMonth(new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate(), 12, 0, 0, 0));
+        }
         setInputValue('');
       }
-    }, [value]);
+    }, [value, initialMonth]);
 
     const formatDate = (date: Date): string => {
       // Fix timezone issue by using local date instead of UTC

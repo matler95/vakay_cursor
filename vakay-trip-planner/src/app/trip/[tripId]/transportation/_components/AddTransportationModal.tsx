@@ -517,15 +517,16 @@ export function AddTransportationModal({
           </FormField>
 
           <FormRow cols={2}>
-            <DatePicker
-              label="Arrival Date"
-              value={formData.arrival_date}
-              onChange={(date) => handleInputChange('arrival_date', date)}
-              placeholder="Select arrival date"
-              required
-              min={formData.departure_date || tripDates.start_date || undefined}
-              max={tripDates.end_date || undefined}
-            />
+                             <DatePicker
+                   label="Arrival Date"
+                   value={formData.arrival_date}
+                   onChange={(date) => handleInputChange('arrival_date', date)}
+                   placeholder="Select arrival date"
+                   required
+                   min={formData.departure_date || tripDates.start_date || undefined}
+                   max={tripDates.end_date || undefined}
+                   initialMonth={formData.departure_date || tripDates.start_date || undefined} // Open on departure month for better UX
+                 />
             
             <StandardTimePicker
               label="Arrival Time"

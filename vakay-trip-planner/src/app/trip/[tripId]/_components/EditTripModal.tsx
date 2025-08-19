@@ -162,6 +162,7 @@ export function EditTripModal({ trip, isOpen, onClose, onTripUpdated }: EditTrip
               placeholder="Select end date"
               required
               min={startDate || new Date().toISOString().split('T')[0]}
+              initialMonth={startDate} // Open on the month of the start date for better UX
             />
           </FormRow>
           

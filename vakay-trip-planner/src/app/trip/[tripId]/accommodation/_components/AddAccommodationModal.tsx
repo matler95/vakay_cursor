@@ -163,16 +163,16 @@ export function AddAccommodationModal({
       const checkIn = field === 'check_in_date' ? value : formData.check_in_date;
       const checkOut = field === 'check_out_date' ? value : formData.check_out_date;
       
-      if (checkIn && checkOut) {
-        const validation = validateAccommodationDates(checkIn, checkOut);
-        if (!validation.isValid) {
-          setDateError(validation.error!);
-        } else {
-          setDateError('');
-        }
-      } else {
-        setDateError('');
-      }
+             if (checkIn && checkOut) {
+         const validation = validateAccommodationDates(checkIn, checkOut, tripDates.start_date || undefined, tripDates.end_date || undefined);
+         if (!validation.isValid) {
+           setDateError(validation.error!);
+         } else {
+           setDateError('');
+         }
+       } else {
+         setDateError('');
+       }
     }
   };
 
@@ -386,15 +386,16 @@ export function AddAccommodationModal({
               max={tripDates.end_date || undefined}
             />
             
-            <DatePicker
-              label="Check-out Date"
-              value={formData.check_out_date}
-              onChange={(date) => handleInputChange('check_out_date', date)}
-              placeholder="Select check-out date"
-              required
-              min={formData.check_in_date || tripDates.start_date || undefined}
-              max={tripDates.end_date || undefined}
-            />
+                         <DatePicker
+               label="Check-out Date"
+               value={formData.check_out_date}
+               onChange={(date) => handleInputChange('check_out_date', date)}
+               placeholder="Select check-out date"
+               required
+               min={formData.check_in_date || tripDates.start_date || undefined}
+               max={tripDates.end_date || undefined}
+               initialMonth={formData.check_in_date || tripDates.start_date || undefined} // Open on check-in month for better UX
+             />
           </FormRow>
 
 

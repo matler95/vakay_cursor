@@ -288,15 +288,16 @@ export function EditAccommodationModal({
               </div>
               
               <div>
-                <DatePicker
-                  label="Check-out Date"
-                  value={formData.check_out_date || ''}
-                  onChange={(date) => handleInputChange('check_out_date', date)}
-                  placeholder="Select check-out date"
-                  required
-                  min={formData.check_in_date || tripDates.start_date || undefined}
-                  max={tripDates.end_date || undefined}
-                />
+                                 <DatePicker
+                   label="Check-out Date"
+                   value={formData.check_out_date || ''}
+                   onChange={(date) => handleInputChange('check_out_date', date)}
+                   placeholder="Select check-out date"
+                   required
+                   min={formData.check_in_date || tripDates.start_date || undefined}
+                   max={tripDates.end_date || undefined}
+                   initialMonth={formData.check_in_date || tripDates.start_date || undefined} // Open on check-in month for better UX
+                 />
               </div>
             </div>
 
