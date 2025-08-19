@@ -20,6 +20,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Trip ID is required' }, { status: 400 });
     }
 
+    console.log('Fetching surveys for trip:', tripId, 'by user:', user.id);
+
     // Check if user is a participant in the trip
     const { data: participant, error: participantError } = await supabase
       .from('trip_participants')
@@ -29,17 +31,27 @@ export async function GET(request: NextRequest) {
       .single();
 
     if (participantError || !participant) {
+      console.error('Access denied:', participantError);
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
-    // Get surveys with options and vote counts
+    console.log('User access verified, fetching surveys...');
+
+    // First, let's check if surveys exist at all
+    const { data: surveyCount, error: countError } = await supabase
+      .from('accommodation_surveys')
+      .select('*', { count: 'exact', head: true })
+      .eq('trip_id', tripId);
+
+    console.log('Survey count:', surveyCount);
+
+    // Get surveys with options and vote counts in a single optimized query
     const { data: surveys, error: surveysError } = await supabase
       .from('accommodation_surveys')
       .select(`
-        *,
+        id, name, status, created_by, trip_id, created_at,
         survey_options (
-          *,
-          survey_votes (count)
+          id, accommodation_name, location, url
         )
       `)
       .eq('trip_id', tripId)
@@ -50,41 +62,79 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch surveys' }, { status: 500 });
     }
 
-    // Transform data to include vote counts and user's votes
-    const transformedSurveys = await Promise.all(
-      surveys.map(async (survey) => {
-        const options = survey.survey_options || [];
-        
-        // Get vote counts for each option
-        const optionsWithVotes = await Promise.all(
-          options.map(async (option) => {
-            const { count: voteCount } = await supabase
-              .from('survey_votes')
-              .select('*', { count: 'exact', head: true })
-              .eq('option_id', option.id);
+    console.log('Raw surveys data:', surveys);
+    console.log('Surveys with options:', surveys?.map(s => ({
+      id: s.id,
+      name: s.name,
+      optionsCount: s.survey_options?.length || 0,
+      options: s.survey_options
+    })));
 
-            // Check if current user has voted for this option
-            const { data: userVote } = await supabase
-              .from('survey_votes')
-              .select('*')
-              .eq('option_id', option.id)
-              .eq('user_id', user.id)
-              .single();
+    // Let's also check if survey_options exist directly
+    if (surveys && surveys.length > 0) {
+      const surveyIds = surveys.map(s => s.id);
+      const { data: directOptions, error: optionsError } = await supabase
+        .from('survey_options')
+        .select('*')
+        .in('survey_id', surveyIds);
+      
+      console.log('Direct survey options query:', directOptions);
+      console.log('Direct options error:', optionsError);
+    }
 
-            return {
-              ...option,
-              vote_count: voteCount || 0,
-              user_has_voted: !!userVote
-            };
-          })
-        );
+    // Get all vote counts in a single query for better performance
+    const { data: allVoteCounts, error: voteCountsError } = await supabase
+      .from('survey_votes')
+      .select('option_id', { count: 'exact', head: true })
+      .in('option_id', surveys.flatMap(s => s.survey_options?.map(o => o.id) || []));
 
-        return {
-          ...survey,
-          options: optionsWithVotes
-        };
-      })
+    if (voteCountsError) {
+      console.error('Error fetching vote counts:', voteCountsError);
+      return NextResponse.json({ error: 'Failed to fetch vote counts' }, { status: 500 });
+    }
+
+    // Get all user votes in a single query
+    const { data: allUserVotes, error: userVotesError } = await supabase
+      .from('survey_votes')
+      .select('option_id')
+      .eq('user_id', user.id)
+      .in('option_id', surveys.flatMap(s => s.survey_options?.map(o => o.id) || []));
+
+    if (userVotesError) {
+      console.error('Error fetching user votes:', userVotesError);
+      return NextResponse.json({ error: 'Failed to fetch user votes' }, { status: 500 });
+    }
+
+    // Create lookup maps for O(1) access
+    const voteCountsMap = new Map(
+      allVoteCounts?.map(vc => [vc.option_id, (vc as any).count || 0]) || []
     );
+    const userVotesSet = new Set(
+      allUserVotes?.map(uv => uv.option_id) || []
+    );
+
+    // Transform data efficiently using the lookup maps
+    const transformedSurveys = surveys.map((survey) => {
+      const options = survey.survey_options || [];
+      
+      const optionsWithVotes = options.map((option) => ({
+        ...option,
+        vote_count: voteCountsMap.get(option.id) || 0,
+        user_has_voted: userVotesSet.has(option.id)
+      }));
+
+      return {
+        ...survey,
+        options: optionsWithVotes
+      };
+    });
+
+    console.log('Final transformed surveys:', transformedSurveys?.map(s => ({
+      id: s.id,
+      name: s.name,
+      optionsCount: s.options?.length || 0,
+      options: s.options
+    })));
 
     return NextResponse.json({ surveys: transformedSurveys });
   } catch (error) {
@@ -106,7 +156,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { tripId, name, options } = body;
 
+    console.log('Creating survey with data:', { tripId, name, options });
+
     if (!tripId || !name || !options || !Array.isArray(options) || options.length === 0) {
+      console.error('Invalid request data:', { tripId, name, options });
       return NextResponse.json({ error: 'Invalid request data' }, { status: 400 });
     }
 
@@ -119,8 +172,11 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (participantError || !participant) {
+      console.error('Access denied:', participantError);
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
+
+    console.log('User access verified, creating survey...');
 
     // Create survey
     const { data: survey, error: surveyError } = await supabase
@@ -139,6 +195,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create survey' }, { status: 500 });
     }
 
+    console.log('Survey created successfully:', survey.id);
+
     // Create survey options
     const surveyOptions = options.map((option: any) => ({
       survey_id: survey.id,
@@ -147,22 +205,30 @@ export async function POST(request: NextRequest) {
       url: option.url || null
     }));
 
-    const { error: optionsError } = await supabase
+    console.log('Creating survey options:', surveyOptions);
+    console.log('Survey ID for options:', survey.id);
+
+    const { data: createdOptions, error: optionsError } = await supabase
       .from('survey_options')
-      .insert(surveyOptions);
+      .insert(surveyOptions)
+      .select('id, accommodation_name, location, url, survey_id');
 
     if (optionsError) {
       console.error('Error creating survey options:', optionsError);
+      console.error('Options that failed to insert:', surveyOptions);
       // Clean up the survey if options creation fails
       await supabase.from('accommodation_surveys').delete().eq('id', survey.id);
       return NextResponse.json({ error: 'Failed to create survey options' }, { status: 500 });
     }
 
+    console.log('Survey options created successfully:', createdOptions?.length);
+    console.log('Created options data:', createdOptions);
+
     return NextResponse.json({ 
       message: 'Survey created successfully',
       survey: {
         ...survey,
-        options: surveyOptions
+        options: createdOptions
       }
     });
   } catch (error) {

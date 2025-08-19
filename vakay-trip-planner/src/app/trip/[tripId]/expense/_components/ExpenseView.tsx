@@ -137,7 +137,7 @@ export function ExpenseView({
         />
       )}
 
-      {/* Content */}
+      {/* Expenses List */}
       <div className="bg-white rounded-lg sm:rounded-xl shadow">
         <ExpensesList
           expenses={expenses}
