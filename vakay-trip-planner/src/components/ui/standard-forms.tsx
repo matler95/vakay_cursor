@@ -5,6 +5,7 @@ import { Input } from './input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
 import { Textarea } from './textarea';
 import { Checkbox } from './checkbox';
+import { TimePicker } from './time-picker';
 
 // Standardized Form Field Component
 interface FormFieldProps {
@@ -407,3 +408,43 @@ export function FormActions({ children, className, position = 'right' }: FormAct
     </div>
   );
 }
+
+// Standardized Time Input
+interface StandardTimePickerProps {
+  label: string;
+  description?: string;
+  error?: string;
+  required?: boolean;
+  value?: string;
+  onChange?: (time: string) => void;
+  placeholder?: string;
+  disabled?: boolean;
+  name?: string;
+  id?: string;
+  className?: string;
+  use24Hour?: boolean;
+}
+
+export const StandardTimePicker = forwardRef<HTMLInputElement, StandardTimePickerProps>(
+  ({ label, description, error, required, className, ...props }, ref) => {
+    return (
+      <FormField 
+        label={label} 
+        description={description} 
+        error={error} 
+        required={required}
+      >
+        <TimePicker 
+          ref={ref}
+          className={cn(
+            'transition-colors focus:ring-2 focus:ring-primary/20',
+            error && 'border-red-300 focus:border-red-500 focus:ring-red-500/20',
+            className
+          )}
+          {...props}
+        />
+      </FormField>
+    );
+  }
+);
+StandardTimePicker.displayName = 'StandardTimePicker';

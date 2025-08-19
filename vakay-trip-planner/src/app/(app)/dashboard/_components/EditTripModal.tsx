@@ -1,18 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Database } from '@/types/database.types';
 import { 
   FormModal, 
   StandardInput, 
-  StandardDateInput,
   FormSection, 
   FormRow, 
   FormField 
 } from '@/components/ui';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { updateTripDetails } from '../../../trip/[tripId]/actions';
 import { CURRENCIES } from '@/lib/currency';
+import { validateTripDates } from '@/lib/dateValidation';
 
 type Trip = Database['public']['Tables']['trips']['Row'];
 
@@ -26,8 +27,53 @@ interface EditTripModalProps {
 export function EditTripModal({ trip, isOpen, onClose, onTripUpdated }: EditTripModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [startDate, setStartDate] = useState(trip.start_date || '');
+  const [endDate, setEndDate] = useState(trip.end_date || '');
+  const [dateError, setDateError] = useState('');
+
+  // Update local state when trip prop changes
+  useEffect(() => {
+    setStartDate(trip.start_date || '');
+    setEndDate(trip.end_date || '');
+    setDateError('');
+  }, [trip]);
+
+  const handleStartDateChange = (date: string) => {
+    setStartDate(date);
+    validateDates(date, endDate);
+  };
+
+  const handleEndDateChange = (date: string) => {
+    setEndDate(date);
+    validateDates(startDate, date);
+  };
+
+  const validateDates = (start: string, end: string) => {
+    if (start && end) {
+      const validation = validateTripDates(start, end);
+      if (!validation.isValid) {
+        setDateError(validation.error!);
+      } else {
+        setDateError('');
+      }
+    } else {
+      setDateError('');
+    }
+  };
 
   const handleSubmit = async (formData: FormData) => {
+    // Clear any previous errors
+    setDateError('');
+    
+    // Validate dates before submission
+    if (startDate && endDate) {
+      const validation = validateTripDates(startDate, endDate);
+      if (!validation.isValid) {
+        setDateError(validation.error!);
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     setError(null);
 
@@ -36,8 +82,8 @@ export function EditTripModal({ trip, isOpen, onClose, onTripUpdated }: EditTrip
         trip.id,
         formData.get('name') as string,
         formData.get('destination') as string || undefined,
-        formData.get('start_date') as string,
-        formData.get('end_date') as string,
+        startDate,
+        endDate,
         formData.get('main_currency') as string
       );
       
@@ -64,10 +110,15 @@ export function EditTripModal({ trip, isOpen, onClose, onTripUpdated }: EditTrip
     if (form) form.requestSubmit();
   };
 
+  const handleClose = () => {
+    onClose();
+    setDateError('');
+  };
+
   return (
     <FormModal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleClose}
       title="Edit Trip Details"
       description="Update your trip information and settings."
       size="lg"
@@ -97,20 +148,32 @@ export function EditTripModal({ trip, isOpen, onClose, onTripUpdated }: EditTrip
 
         <FormSection title="Dates">
           <FormRow cols={2}>
-            <StandardDateInput
+            <DatePicker
               label="Start Date"
               name="start_date"
-              defaultValue={trip.start_date || ''}
+              value={startDate}
+              onChange={handleStartDateChange}
+              placeholder="Select start date"
               required
+              min={new Date().toISOString().split('T')[0]}
             />
             
-            <StandardDateInput
+            <DatePicker
               label="End Date"
               name="end_date"
-              defaultValue={trip.end_date || ''}
+              value={endDate}
+              onChange={handleEndDateChange}
+              placeholder="Select end date"
               required
+              min={startDate || new Date().toISOString().split('T')[0]}
             />
           </FormRow>
+          
+          {dateError && (
+            <p className="text-sm text-red-600 bg-red-50 p-3 rounded-md border border-red-200">
+              {dateError}
+            </p>
+          )}
         </FormSection>
 
         <FormSection title="Settings">
@@ -135,7 +198,7 @@ export function EditTripModal({ trip, isOpen, onClose, onTripUpdated }: EditTrip
         </FormSection>
 
         {error && (
-          <p className="text-sm text-red-600">
+          <p className="text-sm text-red-600 bg-red-50 p-3 rounded-md border border-red-200">
             {error}
           </p>
         )}

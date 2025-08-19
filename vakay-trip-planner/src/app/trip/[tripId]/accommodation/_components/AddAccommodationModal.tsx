@@ -11,14 +11,14 @@ import {
   FormModal, 
   StandardInput, 
   StandardTextarea, 
-  StandardDateInput, 
-  StandardTimeInput, 
   StandardUrlInput, 
   StandardPhoneInput, 
   FormSection, 
   FormRow, 
   FormField 
 } from '@/components/ui';
+import { DatePicker } from '@/components/ui/date-picker';
+import { validateAccommodationDates } from '@/lib/dateValidation';
 
 interface AddAccommodationModalProps {
   tripId: string;
@@ -50,9 +50,7 @@ export function AddAccommodationModal({
     name: '',
     address: '',
     check_in_date: '',
-    check_in_time: '',
     check_out_date: '',
-    check_out_time: '',
     booking_confirmation: '',
     booking_url: '',
     contact_phone: '',
@@ -62,6 +60,7 @@ export function AddAccommodationModal({
   const [participantOptions, setParticipantOptions] = useState<ParticipantOption[]>([]);
   const [selectedParticipants, setSelectedParticipants] = useState<Set<string>>(new Set());
   const [tripLocations, setTripLocations] = useState<TripLocation[]>([]);
+  const [tripDates, setTripDates] = useState<{ start_date: string | null; end_date: string | null }>({ start_date: null, end_date: null });
 
   const [expenseEnabled, setExpenseEnabled] = useState(false);
   const [expenseAmount, setExpenseAmount] = useState('');
@@ -73,6 +72,8 @@ export function AddAccommodationModal({
   const [addressSuggestions, setAddressSuggestions] = useState<TripLocation[]>([]);
   const [showAddressSuggestions, setShowAddressSuggestions] = useState(false);
   const [highlightedSuggestionIndex, setHighlightedSuggestionIndex] = useState(-1);
+
+  const [dateError, setDateError] = useState('');
 
   useEffect(() => {
     if (!isOpen) return;
@@ -104,11 +105,15 @@ export function AddAccommodationModal({
     const loadMainCurrency = async () => {
       const { data: trip } = await supabase
         .from('trips')
-        .select('main_currency')
+        .select('main_currency, start_date, end_date')
         .eq('id', tripId)
         .single();
       const mc = trip?.main_currency || 'USD';
       setMainCurrency(mc);
+      setTripDates({
+        start_date: trip?.start_date || null,
+        end_date: trip?.end_date || null
+      });
       const lastCurrency = localStorage.getItem('lastUsedCurrency');
       if (lastCurrency && CURRENCIES.find(c => c.code === lastCurrency)) {
         setExpenseCurrency(lastCurrency);
@@ -151,6 +156,23 @@ export function AddAccommodationModal({
       setAddressSuggestions(filtered);
       setShowAddressSuggestions(filtered.length > 0);
       setHighlightedSuggestionIndex(-1);
+    }
+
+    // Validate dates when they change
+    if (field === 'check_in_date' || field === 'check_out_date') {
+      const checkIn = field === 'check_in_date' ? value : formData.check_in_date;
+      const checkOut = field === 'check_out_date' ? value : formData.check_out_date;
+      
+      if (checkIn && checkOut) {
+        const validation = validateAccommodationDates(checkIn, checkOut);
+        if (!validation.isValid) {
+          setDateError(validation.error!);
+        } else {
+          setDateError('');
+        }
+      } else {
+        setDateError('');
+      }
     }
   };
 
@@ -215,6 +237,22 @@ export function AddAccommodationModal({
 
   const handleSubmit = async () => {
     setIsLoading(true);
+
+    // Clear any previous errors
+    setDateError('');
+    
+    // Validate dates before submission
+    if (formData.check_in_date && formData.check_out_date) {
+      const validation = validateAccommodationDates(
+        formData.check_in_date, 
+        formData.check_out_date
+      );
+      if (!validation.isValid) {
+        setDateError(validation.error!);
+        setIsLoading(false);
+        return;
+      }
+    }
 
     try {
       const response = await fetch('/api/accommodation', {
@@ -338,22 +376,34 @@ export function AddAccommodationModal({
 
         <FormSection title="Check-in & Check-out">
           <FormRow cols={2}>
-            <StandardDateInput
+            <DatePicker
               label="Check-in Date"
-              name="check_in_date"
               value={formData.check_in_date}
-              onChange={(e) => handleInputChange('check_in_date', e.target.value)}
+              onChange={(date) => handleInputChange('check_in_date', date)}
+              placeholder="Select check-in date"
               required
+              min={tripDates.start_date || undefined}
+              max={tripDates.end_date || undefined}
             />
             
-            <StandardDateInput
+            <DatePicker
               label="Check-out Date"
-              name="check_out_date"
               value={formData.check_out_date}
-              onChange={(e) => handleInputChange('check_out_date', e.target.value)}
+              onChange={(date) => handleInputChange('check_out_date', date)}
+              placeholder="Select check-out date"
               required
+              min={formData.check_in_date || tripDates.start_date || undefined}
+              max={tripDates.end_date || undefined}
             />
           </FormRow>
+
+
+          
+          {dateError && (
+            <p className="text-sm text-red-600 bg-red-50 p-3 rounded-md border border-red-200">
+              {dateError}
+            </p>
+          )}
         </FormSection>
 
         {/* Expense Section */}
