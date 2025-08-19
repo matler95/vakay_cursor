@@ -553,6 +553,7 @@ export function EditTransportationModal({
               required
               min={formData.departure_date || tripDates.start_date || undefined}
               max={tripDates.end_date || undefined}
+              initialMonth={formData.departure_date || tripDates.start_date || undefined} // Open on departure month for better UX
             />
             
             <StandardTimePicker
