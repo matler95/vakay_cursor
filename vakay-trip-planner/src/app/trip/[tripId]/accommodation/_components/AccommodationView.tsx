@@ -77,7 +77,7 @@ export function AccommodationView({
       <div className="flex justify-between items-center gap-4 mb-6">
       <div>
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
-              Accommodation
+              Accommodations
             </h2>
             <p className="text-sm sm:text-base text-gray-600 mt-1">
               Manage your trip accommodations.
@@ -85,24 +85,17 @@ export function AccommodationView({
           </div>
           
                      {/* Controls Section */}
-           <div className="flex flex-col sm:flex-row gap-3 sm:gap-3 w-full sm:w-auto">
-             {/* View Surveys Button */}
+                     <div className="flex gap-3">
+                     {/* View Surveys Button */}
              <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
                       variant="outline"
                       onClick={handleViewSurveys}
-                      className="flex items-center justify-center gap-2 w-full sm:w-auto"
-                      size="sm"
+                      className="flex items-center gap-2"
                     >
                       <ClipboardList className="h-4 w-4" />
-                      <span className="hidden sm:inline">
-                        View Surveys
-                      </span>
-                      <span className="sm:hidden">
-                        Surveys
-                      </span>
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -117,8 +110,7 @@ export function AccommodationView({
                 <TooltipTrigger asChild>
                   <Button
                     onClick={() => setIsAddAccommodationModalOpen(true)}
-                    className="flex items-center justify-center gap-2 w-full sm:w-auto"
-                    size="sm"
+                    className="flex items-center gap-2"
                   >
                     <Plus className="h-4 w-4" />
                   </Button>
