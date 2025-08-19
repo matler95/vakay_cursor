@@ -262,10 +262,11 @@ export function DeleteButton({ onClick, disabled, loading, tooltip = 'Delete', .
     <ActionButton
       icon={Trash2}
       onClick={onClick}
-      variant="destructive"
+      variant="ghost"
       disabled={disabled}
       loading={loading}
       tooltip={tooltip}
+      className="text-red-600 hover:text-red-600 border-red-300 hover:bg-red-50"
       {...props}
     />
   );

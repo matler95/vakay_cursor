@@ -12,7 +12,7 @@ import { UndoManager, useUndoManager } from './UndoManager';
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Pencil, CheckCircle, AlertCircle, X, MapPin, Settings, MapPinPlus, UserRoundPlus, CopyCheck, Plus } from 'lucide-react';
+import { Pencil, CheckCircle, AlertCircle, X, MapPin, Settings, MapPinPlus, UserRoundPlus, CopyCheck, Plus, MailPlus } from 'lucide-react';
 import { BulkActionPanel } from './BulkActionPanel';
 import { LocationManager } from './LocationManager';
 import { ParticipantManager, type Participant } from './ParticipantManager';
@@ -371,7 +371,7 @@ function ItineraryViewContent({ trip, itineraryDays, locations, transportation, 
                     variant="default"
                     className="flex items-center gap-2"
                     >
-                    <Plus className="h-4 w-4" />
+                    <MapPinPlus className="h-4 w-4" />
                     {/* <span className="hidden sm:inline">Add Location</span> */}
                   </Button>
                 </TooltipTrigger>
@@ -423,7 +423,7 @@ function ItineraryViewContent({ trip, itineraryDays, locations, transportation, 
                     variant="default"
                     className="flex items-center gap-2"
                     >
-                    <Plus className="h-4 w-4" />
+                    <MailPlus className="h-4 w-4" />
                     {/* <span className="hidden sm:inline">Add Participant</span> */}
                   </Button>
                 </TooltipTrigger>
