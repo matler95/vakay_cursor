@@ -1,7 +1,7 @@
 // src/app/(app)/dashboard/profile/_components/DeleteAccountModal.tsx
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { StandardModal } from '@/components/ui';
 import { AlertTriangle } from 'lucide-react';
@@ -13,8 +13,22 @@ export function DeleteAccountModal() {
   const [open, setOpen] = useState(false);
   const [confirmText, setConfirmText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
-  const [state, formAction] = useActionState(deleteAccount, { message: '' });
+  const [state, formAction] = useActionState(deleteAccount, { message: '', success: false });
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Handle successful deletion and redirect
+  useEffect(() => {
+    if (state?.success) {
+      console.log('Account deleted successfully, redirecting...');
+      // Show success message briefly before redirecting
+      setTimeout(() => {
+        // Close the modal
+        setOpen(false);
+        // Redirect to home page
+        window.location.href = '/';
+      }, 2000);
+    }
+  }, [state?.success]);
 
   function DeleteButton({ disabled }: { disabled: boolean }) {
     const { pending } = useFormStatus();
@@ -130,7 +144,11 @@ export function DeleteAccountModal() {
             </div>
             
             {state?.message && (
-              <p className="text-sm text-red-600 bg-red-50 p-3 rounded-md border border-red-200">
+              <p className={`text-sm p-3 rounded-md border ${
+                state.success 
+                  ? 'text-green-600 bg-green-50 border-green-200' 
+                  : 'text-red-600 bg-red-50 border-red-200'
+              }`}>
                 {state.message}
               </p>
             )}
