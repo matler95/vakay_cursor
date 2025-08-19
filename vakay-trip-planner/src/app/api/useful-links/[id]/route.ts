@@ -5,7 +5,7 @@ import { Database } from '@/types/database.types';
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
     const supabase = createRouteHandlerClient<Database>({ cookies });
@@ -40,7 +40,7 @@ export async function PUT(
     const { data: existingLink, error: fetchError } = await supabase
       .from('useful_links')
       .select('trip_id')
-      .eq('id', Number((await params).id))
+      .eq('id', params.id)
       .single();
 
     if (fetchError || !existingLink) {
@@ -79,7 +79,7 @@ export async function PUT(
         is_favorite: is_favorite || false,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', Number((await params).id))
+      .eq('id', params.id)
       .select()
       .single();
 
@@ -103,7 +103,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
     const supabase = createRouteHandlerClient<Database>({ cookies });
@@ -118,7 +118,7 @@ export async function DELETE(
     const { data: existingLink, error: fetchError } = await supabase
       .from('useful_links')
       .select('trip_id')
-      .eq('id', Number((await params).id))
+      .eq('id', params.id)
       .single();
 
     if (fetchError || !existingLink) {
@@ -147,7 +147,7 @@ export async function DELETE(
     const { error } = await supabase
       .from('useful_links')
       .delete()
-      .eq('id', Number((await params).id));
+      .eq('id', params.id);
 
     if (error) {
       console.error('Error deleting useful link:', error);

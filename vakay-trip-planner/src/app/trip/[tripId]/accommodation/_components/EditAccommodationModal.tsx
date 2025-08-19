@@ -12,24 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { CURRENCIES } from '@/lib/currency';
 
 // Add missing type alias for Accommodation
-type Accommodation = Database['public']['Tables']['accommodations']['Row'] & {
-  booking_url?: string;
-};
+type Accommodation = Database['public']['Tables']['accommodations']['Row'];
 
 type ParticipantOption = { id: string; name: string };
-
-type FormData = {
-  name: string;
-  address: string;
-  check_in_date: string;
-  check_in_time: string | null;
-  check_out_date: string;
-  check_out_time: string | null;
-  booking_confirmation: string | null;
-  booking_url: string;
-  contact_phone: string | null;
-  notes: string | null;
-};
 
 interface EditAccommodationModalProps {
   accommodation: Accommodation;
@@ -46,18 +31,7 @@ export function EditAccommodationModal({
 }: EditAccommodationModalProps) {
   const supabase = createClientComponentClient<Database>();
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState<FormData>({
-    name: '',
-    address: '',
-    check_in_date: '',
-    check_in_time: null,
-    check_out_date: '',
-    check_out_time: null,
-    booking_confirmation: null,
-    booking_url: '',
-    contact_phone: null,
-    notes: null
-  });
+  const [formData, setFormData] = useState<any>({});
 
   const [participantOptions, setParticipantOptions] = useState<ParticipantOption[]>([]);
   const [selectedParticipants, setSelectedParticipants] = useState<Set<string>>(new Set());
@@ -78,12 +52,12 @@ export function EditAccommodationModal({
         name: accommodation.name,
         address: accommodation.address,
         check_in_date: accommodation.check_in_date,
-        check_in_time: accommodation.check_in_time,
+        check_in_time: (accommodation as any).check_in_time,
         check_out_date: accommodation.check_out_date,
-        check_out_time: accommodation.check_out_time,
-        booking_confirmation: accommodation.booking_confirmation,
-        booking_url: accommodation.booking_url || '',
-        contact_phone: accommodation.contact_phone,
+        check_out_time: (accommodation as any).check_out_time,
+        booking_confirmation: (accommodation as any).booking_confirmation,
+        booking_url: (accommodation as any).booking_url || '',
+        contact_phone: (accommodation as any).contact_phone,
         notes: accommodation.notes
       });
     }
@@ -157,7 +131,7 @@ export function EditAccommodationModal({
   }, [isOpen, supabase, accommodation.id]);
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData((prev: FormData) => ({
+    setFormData((prev: any) => ({
       ...prev,
       [field]: value
     }));
