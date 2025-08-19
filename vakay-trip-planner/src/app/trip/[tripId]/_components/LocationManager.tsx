@@ -44,7 +44,15 @@ export function LocationManager({ tripId, locations, onLocationsChange, isDelete
   const handleLocationAdded = async () => {
     console.log('Location added, calling onLocationsChange callback...');
     // Call the parent callback to refresh locations data
+  const handleLocationAdded = async () => {
+    console.log('Location added, calling onLocationsChange callback...');
+    // Call the parent callback to refresh locations data
     if (onLocationsChange) {
+      console.log('onLocationsChange callback exists, calling it...');
+      await onLocationsChange(locations);
+      console.log('onLocationsChange callback completed');
+    } else {
+      console.log('No onLocationsChange callback provided');
       console.log('onLocationsChange callback exists, calling it...');
       await onLocationsChange(locations);
       console.log('onLocationsChange callback completed');
@@ -61,7 +69,15 @@ export function LocationManager({ tripId, locations, onLocationsChange, isDelete
   const handleLocationUpdated = async () => {
     console.log('Location updated, calling onLocationsChange callback...');
     // Call the parent callback to refresh locations data
+  const handleLocationUpdated = async () => {
+    console.log('Location updated, calling onLocationsChange callback...');
+    // Call the parent callback to refresh locations data
     if (onLocationsChange) {
+      console.log('onLocationsChange callback exists, calling it...');
+      await onLocationsChange(locations);
+      console.log('onLocationsChange callback completed');
+    } else {
+      console.log('No onLocationsChange callback provided');
       console.log('onLocationsChange callback exists, calling it...');
       await onLocationsChange(locations);
       console.log('onLocationsChange callback completed');
