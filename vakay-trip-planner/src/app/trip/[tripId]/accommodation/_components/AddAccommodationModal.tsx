@@ -337,22 +337,6 @@ export function AddAccommodationModal({
               required
             />
           </FormRow>
-
-          <FormRow cols={2}>
-            <StandardTimeInput
-              label="Check-in Time"
-              name="check_in_time"
-              value={formData.check_in_time}
-              onChange={(e) => handleInputChange('check_in_time', e.target.value)}
-            />
-            
-            <StandardTimeInput
-              label="Check-out Time"
-              name="check_out_time"
-              value={formData.check_out_time}
-              onChange={(e) => handleInputChange('check_out_time', e.target.value)}
-            />
-          </FormRow>
         </FormSection>
 
         {/* Expense Section */}

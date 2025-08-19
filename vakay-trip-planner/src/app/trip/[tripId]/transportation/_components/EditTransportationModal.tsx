@@ -509,46 +509,6 @@ export function EditTransportationModal({
           </FormRow>
         </FormSection>
 
-        {/* Flight-specific fields */}
-        {formData.type === 'flight' && (
-          <FormSection title="Flight Details">
-            <FormRow cols={2}>
-              <StandardInput
-                label="Flight Number"
-                name="flight_number"
-                placeholder="e.g., DL1234"
-                value={formData.flight_number}
-                onChange={(e) => handleInputChange('flight_number', e.target.value)}
-              />
-              
-              <StandardInput
-                label="Terminal"
-                name="terminal"
-                placeholder="e.g., Terminal 1"
-                value={formData.terminal}
-                onChange={(e) => handleInputChange('terminal', e.target.value)}
-              />
-            </FormRow>
-
-            <FormRow cols={2}>
-              <StandardInput
-                label="Gate"
-                name="gate"
-                placeholder="e.g., A12"
-                value={formData.gate}
-                onChange={(e) => handleInputChange('gate', e.target.value)}
-              />
-              
-              <StandardInput
-                label="Seat"
-                name="seat"
-                placeholder="e.g., 12A"
-                value={formData.seat}
-                onChange={(e) => handleInputChange('seat', e.target.value)}
-              />
-            </FormRow>
-          </FormSection>
-        )}
 
         {/* Expense Section - Only show if no existing expense */}
         {!hasExistingExpense && (
