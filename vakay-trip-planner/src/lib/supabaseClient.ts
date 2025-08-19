@@ -1,5 +1,5 @@
 // src/lib/supabaseClient.ts
-import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs'
-import { Database } from '../types/database.types' // We will create this file next
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { Database } from '../types/database.types'
 
-export const supabase = createPagesBrowserClient<Database>()
+export const supabase = createClientComponentClient<Database>()
