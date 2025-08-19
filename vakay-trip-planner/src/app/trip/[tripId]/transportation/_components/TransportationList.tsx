@@ -22,6 +22,7 @@ interface TransportationListProps {
   transportation: Transportation[];
   tripId: string;
   expenseStatus: Record<string, boolean>;
+  onTransportationChange?: (transportation: Transportation[]) => void;
   onCopyLocation: (text: string) => void;
   onOpenInMaps: (location: string) => void;
 }
@@ -30,6 +31,7 @@ export function TransportationList({
   transportation, 
   tripId,
   expenseStatus,
+  onTransportationChange,
   onCopyLocation, 
   onOpenInMaps 
 }: TransportationListProps) {
@@ -258,22 +260,14 @@ export function TransportationList({
 
                   {/* Right side: Edit/Delete buttons */}
                   <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
+                    <EditButton
                       onClick={() => setEditingTransportation(transport)}
-                      className="h-11 w-11 p-0"
-                    >
-                      <Edit className="h-4 w-4 text-gray-500" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
+                      tooltip="Edit transportation"
+                    />
+                    <DeleteButton
                       onClick={() => setDeletingTransportation(transport)}
-                      className="h-11 w-11 p-0 text-red-600 border-red-300 hover:bg-red-50"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                      tooltip="Delete transportation"
+                    />
                   </div>
                 </div>
               </div>
@@ -290,7 +284,10 @@ export function TransportationList({
           onClose={() => setEditingTransportation(null)}
           onTransportationUpdated={() => {
             setEditingTransportation(null);
-            window.location.reload();
+            // Call the parent callback to refresh transportation data
+            if (onTransportationChange) {
+              onTransportationChange(transportation);
+            }
           }}
         />
       )}
@@ -302,7 +299,10 @@ export function TransportationList({
           onClose={() => setDeletingTransportation(null)}
           onTransportationDeleted={() => {
             setDeletingTransportation(null);
-            window.location.reload();
+            // Call the parent callback to refresh transportation data
+            if (onTransportationChange) {
+              onTransportationChange(transportation);
+            }
           }}
         />
       )}

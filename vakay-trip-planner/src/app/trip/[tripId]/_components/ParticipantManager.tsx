@@ -10,6 +10,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { Plus, Trash2, AlertTriangle, User, Crown, CopyCheck, X, UsersRound } from 'lucide-react';
 import { AddParticipantModal } from './AddParticipantModal';
 import { ConfirmationModal } from '@/components/ui';
+import { EditButton, DeleteButton } from '@/components/ui';
 
 
 export type Participant = {
@@ -24,13 +25,14 @@ interface ParticipantManagerProps {
   tripId: string;
   participants: Participant[];
   currentUserRole: string | null;
+  onParticipantsChange?: (participants: Participant[]) => void;
   isDeleteMode?: boolean;
   setIsDeleteMode?: (value: boolean) => void;
   isAddParticipantModalOpen?: boolean;
   setIsAddParticipantModalOpen?: (value: boolean) => void;
 }
 
-export function ParticipantManager({ tripId, participants, currentUserRole, isDeleteMode, setIsDeleteMode, isAddParticipantModalOpen, setIsAddParticipantModalOpen }: ParticipantManagerProps) {
+export function ParticipantManager({ tripId, participants, currentUserRole, onParticipantsChange, isDeleteMode, setIsDeleteMode, isAddParticipantModalOpen, setIsAddParticipantModalOpen }: ParticipantManagerProps) {
   const [selectedParticipants, setSelectedParticipants] = useState<Set<string>>(new Set());
   const [participantToDelete, setParticipantToDelete] = useState<Participant | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -44,8 +46,11 @@ export function ParticipantManager({ tripId, participants, currentUserRole, isDe
 
   const isAdmin = currentUserRole === 'admin';
 
-  const handleParticipantAdded = () => {
-    router.refresh();
+  const handleParticipantAdded = async () => {
+    // Call the parent callback to refresh participants data
+    if (onParticipantsChange) {
+      await onParticipantsChange(participants);
+    }
   };
 
   const handleDeleteClick = (participant: Participant) => {
@@ -85,13 +90,17 @@ export function ParticipantManager({ tripId, participants, currentUserRole, isDe
           // Success message handled by server action
         }
       }
+
+      // Call the parent callback to refresh participants data
+      if (onParticipantsChange) {
+        await onParticipantsChange(participants);
+      }
     } catch (error) {
       console.error('Error removing participant(s):', error);
+    } finally {
+      setIsDeleting(false);
+      setParticipantToDelete(null);
     }
-
-    setIsDeleting(false);
-    setParticipantToDelete(null);
-    router.refresh();
   };
 
   const cancelDelete = () => {
@@ -220,22 +229,10 @@ export function ParticipantManager({ tripId, participants, currentUserRole, isDe
                     {getRoleLabel(participant.role)}
                   </span>
                   {isAdmin && !deleteMode && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          onClick={() => handleDeleteClick(participant)}
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 w-7 sm:h-8 sm:w-8 p-0 text-gray-400 hover:text-red-500 hover:bg-red-50"
-                          aria-label={`Remove ${participant.profiles?.full_name || 'participant'}`}
-                        >
-                          <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Remove {participant.profiles?.full_name || 'participant'}</p>
-                      </TooltipContent>
-                    </Tooltip>
+                    <DeleteButton
+                      onClick={() => handleDeleteClick(participant)}
+                      tooltip={`Remove ${participant.profiles?.full_name || 'participant'}`}
+                    />
                   )}
                 </div>
               </div>

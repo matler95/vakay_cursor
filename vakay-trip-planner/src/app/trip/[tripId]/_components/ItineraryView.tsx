@@ -528,6 +528,12 @@ function ItineraryViewContent({ trip, itineraryDays, locations, transportation, 
             tripId={trip.id} 
             participants={participants} 
             currentUserRole={participantRole}
+            onParticipantsChange={async (updatedParticipants: any[]) => {
+              console.log('ItineraryView onParticipantsChange called with:', updatedParticipants);
+              console.log('Calling onDataRefresh...');
+              await onDataRefresh();
+              console.log('onDataRefresh completed');
+            }}
             isDeleteMode={isDeleteParticipantsMode}
             setIsDeleteMode={setIsDeleteParticipantsMode}
             isAddParticipantModalOpen={isAddParticipantModalOpen}

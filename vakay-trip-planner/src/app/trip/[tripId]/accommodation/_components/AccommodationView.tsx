@@ -100,6 +100,9 @@ export function AccommodationView({
           accommodations={accommodations}
           tripId={trip.id}
           expenseStatus={expenseStatus}
+          onAccommodationsChange={async () => {
+            await refreshData();
+          }}
           onCopyAddress={copyToClipboard}
           onOpenInMaps={openInMaps}
         />

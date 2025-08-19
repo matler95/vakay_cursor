@@ -358,24 +358,14 @@ export function ExpensesList({
                   {/* Right side: Edit/Delete buttons */}
                   {canEditExpense(expense) && (
                     <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
+                      <EditButton
                         onClick={() => setEditExpense(expense)}
-                        className="h-11 w-11 p-0"
-                        title="Edit expense"
-                      >
-                        <Edit className="h-4 w-4 text-gray-500" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
+                        tooltip="Edit expense"
+                      />
+                      <DeleteButton
                         onClick={() => setDeleteExpense(expense)}
-                        className="h-11 w-11 p-0 text-red-600 border-red-300 hover:bg-red-50"
-                        title="Delete expense"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                        tooltip="Delete expense"
+                      />
                     </div>
                   )}
                 </div>

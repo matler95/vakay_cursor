@@ -114,6 +114,9 @@ export function TransportationView({
           transportation={transportation}
           tripId={trip.id}
           expenseStatus={expenseStatus}
+          onTransportationChange={async () => {
+            await refreshData();
+          }}
           onCopyLocation={copyToClipboard}
           onOpenInMaps={openInMaps}
         />

@@ -12,6 +12,7 @@ import { AddLocationModal } from './AddLocationModal';
 import { EditLocationModal } from './EditLocationModal';
 import { MultiEditLocationsModal } from './MultiEditLocationsModal';
 import { ConfirmationModal } from '@/components/ui';
+import { EditButton, DeleteButton } from '@/components/ui';
 
 type Location = Database['public']['Tables']['locations']['Row'];
 
@@ -90,25 +91,29 @@ export function LocationManager({ tripId, locations, onLocationsChange, isDelete
 
     setIsDeleting(true);
 
-    if (locationToDelete.id === -1) {
-      // Bulk delete
-      for (const locationId of selectedLocations) {
-        await deleteLocation(parseInt(locationId), tripId);
+    try {
+      if (locationToDelete.id === -1) {
+        // Bulk delete
+        for (const locationId of selectedLocations) {
+          await deleteLocation(parseInt(locationId), tripId);
+        }
+        setSelectedLocations(new Set());
+        setDeleteMode(false);
+      } else {
+        // Single delete
+        await deleteLocation(locationToDelete.id, tripId);
       }
-      setSelectedLocations(new Set());
-      setDeleteMode(false);
-    } else {
-      // Single delete
-      await deleteLocation(locationToDelete.id, tripId);
-    }
 
-    setIsDeleting(false);
-    setLocationToDelete(null);
-    
-    // Call the parent callback to refresh locations data
-    if (onLocationsChange) {
-      console.log('Location deleted, calling onLocationsChange callback...');
-      await onLocationsChange(locations);
+      // Call the parent callback to refresh locations data
+      if (onLocationsChange) {
+        console.log('Location deleted, calling onLocationsChange callback...');
+        await onLocationsChange(locations);
+      }
+    } catch (error) {
+      console.error('Error deleting location(s):', error);
+    } finally {
+      setIsDeleting(false);
+      setLocationToDelete(null);
     }
   };
 
@@ -227,38 +232,14 @@ export function LocationManager({ tripId, locations, onLocationsChange, isDelete
 
                 {!deleteMode && (
                   <div className="flex items-center gap-1">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          onClick={() => handleEditClick(location)}
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 text-gray-400 hover:text-blue-500 hover:bg-blue-50"
-                          aria-label={`Edit ${location.name}`}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Edit {location.name}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          onClick={() => handleDeleteClick(location)}
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 text-gray-400 hover:text-red-500 hover:bg-red-50"
-                          aria-label={`Delete ${location.name}`}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Delete {location.name}</p>
-                      </TooltipContent>
-                    </Tooltip>
+                    <EditButton
+                      onClick={() => handleEditClick(location)}
+                      tooltip={`Edit ${location.name}`}
+                    />
+                    <DeleteButton
+                      onClick={() => handleDeleteClick(location)}
+                      tooltip={`Delete ${location.name}`}
+                    />
                   </div>
                 )}
               </div>

@@ -5,6 +5,8 @@ import { Database } from '@/types/database.types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { EditButton, DeleteButton } from '@/components/ui';
+import { Badge } from '@/components/ui/badge';
 import { MapPin, Star, Clock, Plus, Search, Filter, Edit, Trash2, Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -295,49 +297,21 @@ export function LocationsSidebar({
                 {/* Action buttons */}
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   {onEditLocation && (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onEditLocation(location);
-                            }}
-                            className="h-7 w-7 p-0 text-gray-400 hover:text-gray-600"
-                          >
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Edit location</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <EditButton
+                        onClick={() => onEditLocation(location)}
+                        tooltip="Edit location"
+                      />
+                    </div>
                   )}
                   
                   {onDeleteLocation && (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onDeleteLocation(location.id);
-                            }}
-                            className="h-7 w-7 p-0 text-red-400 hover:text-red-600 hover:bg-red-50"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Delete location</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <DeleteButton
+                        onClick={() => onDeleteLocation(location.id)}
+                        tooltip="Delete location"
+                      />
+                    </div>
                   )}
                 </div>
               </div>

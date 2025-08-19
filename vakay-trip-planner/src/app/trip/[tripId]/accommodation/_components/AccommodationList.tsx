@@ -22,6 +22,7 @@ interface AccommodationListProps {
   accommodations: Accommodation[];
   tripId: string;
   expenseStatus: Record<string, boolean>;
+  onAccommodationsChange?: (accommodations: Accommodation[]) => void;
   onCopyAddress: (text: string) => void;
   onOpenInMaps: (address: string) => void;
 }
@@ -30,6 +31,7 @@ export function AccommodationList({
   accommodations, 
   tripId,
   expenseStatus,
+  onAccommodationsChange,
   onCopyAddress, 
   onOpenInMaps 
 }: AccommodationListProps) {
@@ -198,22 +200,14 @@ export function AccommodationList({
 
                   {/* Right side: Edit/Delete buttons */}
                   <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
+                    <EditButton
                       onClick={() => setEditingAccommodation(a)}
-                      className="h-11 w-11 p-0"
-                    >
-                      <Edit className="h-4 w-4 text-gray-500" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
+                      tooltip="Edit accommodation"
+                    />
+                    <DeleteButton
                       onClick={() => setDeletingAccommodation(a)}
-                      className="h-11 w-11 p-0 text-red-600 border-red-300 hover:bg-red-50"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                      tooltip="Delete accommodation"
+                    />
                   </div>
                 </div>
               </div>
@@ -230,7 +224,10 @@ export function AccommodationList({
           onClose={() => setEditingAccommodation(null)}
           onAccommodationUpdated={() => {
             setEditingAccommodation(null);
-            window.location.reload();
+            // Call the parent callback to refresh accommodations data
+            if (onAccommodationsChange) {
+              onAccommodationsChange(accommodations);
+            }
           }}
         />
       )}
@@ -242,7 +239,10 @@ export function AccommodationList({
           onClose={() => setDeletingAccommodation(null)}
           onAccommodationDeleted={() => {
             setDeletingAccommodation(null);
-            window.location.reload();
+            // Call the parent callback to refresh accommodations data
+            if (onAccommodationsChange) {
+              onAccommodationsChange(accommodations);
+            }
           }}
         />
       )}
