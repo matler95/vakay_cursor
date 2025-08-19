@@ -1,9 +1,9 @@
 // src/app/(app)/dashboard/profile/_components/DeleteAccountModal.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { ConfirmationModal } from '@/components/ui';
+import { StandardModal } from '@/components/ui';
 import { AlertTriangle } from 'lucide-react';
 import { useActionState } from 'react';
 import { deleteAccount } from '../actions';
@@ -12,7 +12,9 @@ import { useFormStatus } from 'react-dom';
 export function DeleteAccountModal() {
   const [open, setOpen] = useState(false);
   const [confirmText, setConfirmText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
   const [state, formAction] = useActionState(deleteAccount, { message: '' });
+  const inputRef = useRef<HTMLInputElement>(null);
 
   function DeleteButton({ disabled }: { disabled: boolean }) {
     const { pending } = useFormStatus();
@@ -24,27 +26,81 @@ export function DeleteAccountModal() {
     );
   }
 
+  const handleConfirm = useCallback(async () => {
+    if (confirmText.toLowerCase() === 'delete') {
+      setIsDeleting(true);
+      try {
+        const form = document.getElementById('delete-account-form') as HTMLFormElement | null;
+        if (form) {
+          form.requestSubmit();
+        }
+      } catch (error) {
+        console.error('Error submitting form:', error);
+        setIsDeleting(false);
+      }
+    }
+  }, [confirmText]);
+
+  const handleConfirmTextChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setConfirmText(e.target.value);
+  }, []);
+
+  const handleOpen = useCallback(() => {
+    setOpen(true);
+    // Focus the input after modal opens
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 100);
+  }, []);
+
+  const handleClose = useCallback(() => {
+    setOpen(false);
+    setConfirmText('');
+    setIsDeleting(false);
+  }, []);
+
+  const isConfirmValid = confirmText.toLowerCase() === 'delete';
+
   return (
     <>
-      <Button variant="destructive" size="sm" className="h-8" onClick={() => setOpen(true)}>
+      <Button variant="destructive" size="sm" className="h-8" onClick={handleOpen}>
         Delete account
       </Button>
 
-      <ConfirmationModal
+      <StandardModal
         isOpen={open}
-        onClose={() => setOpen(false)}
+        onClose={handleClose}
         title="Permanently delete account"
         description="This will remove your account and access to all trips. This action cannot be undone."
-        confirmText="Delete"
-        cancelText="Cancel"
-        variant="destructive"
-        onConfirm={() => {
-          // The form will handle the submission
-          const form = document.getElementById('delete-account-form') as HTMLFormElement | null;
-          form?.requestSubmit();
-        }}
-        loading={false}
         size="lg"
+        showFooter
+        footer={
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button 
+              variant="outline" 
+              className="flex-1" 
+              onClick={handleClose}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive"
+              className="flex-1"
+              onClick={handleConfirm}
+              disabled={!isConfirmValid || isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                  Deleting...
+                </>
+              ) : (
+                `Delete ${!isConfirmValid && `(type "delete" to enable)`}`
+              )}
+            </Button>
+          </div>
+        }
       >
         <div className="space-y-4">
           <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -60,14 +116,16 @@ export function DeleteAccountModal() {
                 Type "delete" to confirm
               </label>
               <input
+                ref={inputRef}
                 id="confirm"
                 type="text"
                 name="confirm"
                 value={confirmText}
-                onChange={(e) => setConfirmText(e.target.value)}
+                onChange={handleConfirmTextChange}
                 placeholder="delete"
                 className="block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500"
                 required
+                disabled={isDeleting}
               />
             </div>
             
@@ -78,7 +136,7 @@ export function DeleteAccountModal() {
             )}
           </form>
         </div>
-      </ConfirmationModal>
+      </StandardModal>
     </>
   );
 }

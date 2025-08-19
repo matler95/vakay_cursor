@@ -182,18 +182,125 @@ export async function deleteAccount(prevState: unknown, formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { message: 'Not authenticated.' };
 
-  await supabase.auth.signOut();
-
   const admin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { autoRefreshToken: false, persistSession: false } }
   );
 
-  const { error } = await admin.auth.admin.deleteUser(user.id);
-  if (error) {
-    return { message: `Failed to delete account: ${error.message}` };
-  }
+  try {
+    console.log('Starting account deletion for user:', user.id);
 
-  redirect('/');
+    // Delete in order of dependencies (child tables first, then parent tables)
+    
+    // 1. Delete survey votes (depends on survey_options)
+    console.log('Deleting survey votes...');
+    await admin
+      .from('survey_votes')
+      .delete()
+      .eq('user_id', user.id);
+
+    // 2. Delete survey options (depends on accommodation_surveys)
+    console.log('Deleting survey options...');
+    const { data: userSurveys } = await admin
+      .from('accommodation_surveys')
+      .select('id')
+      .eq('created_by', user.id);
+    
+    if (userSurveys && userSurveys.length > 0) {
+      const surveyIds = userSurveys.map(s => s.id);
+      await admin
+        .from('survey_options')
+        .delete()
+        .in('survey_id', surveyIds);
+    }
+
+    // 3. Delete accommodation surveys
+    console.log('Deleting accommodation surveys...');
+    await admin
+      .from('accommodation_surveys')
+      .delete()
+      .eq('created_by', user.id);
+
+    // 4. Delete expenses
+    console.log('Deleting expenses...');
+    await admin
+      .from('expenses')
+      .delete()
+      .eq('user_id', user.id);
+
+    // 5. Delete expense categories (if user created them)
+    console.log('Deleting expense categories...');
+    await admin
+      .from('expense_categories')
+      .delete()
+      .eq('user_id', user.id);
+
+    // 6. Delete accommodations
+    console.log('Deleting accommodations...');
+    await admin
+      .from('accommodations')
+      .delete()
+      .eq('user_id', user.id);
+
+    // 7. Delete transportation
+    console.log('Deleting transportation...');
+    await admin
+      .from('transportation')
+      .delete()
+      .eq('user_id', user.id);
+
+    // 8. Delete itinerary days
+    console.log('Deleting itinerary days...');
+    await admin
+      .from('itinerary_days')
+      .delete()
+      .eq('user_id', user.id);
+
+    // 9. Delete locations
+    console.log('Deleting locations...');
+    await admin
+      .from('locations')
+      .delete()
+      .eq('user_id', user.id);
+
+    // 10. Delete useful links
+    console.log('Deleting useful links...');
+    await admin
+      .from('useful_links')
+      .delete()
+      .eq('user_id', user.id);
+
+    // 11. Delete trip participants
+    console.log('Deleting trip participants...');
+    await admin
+      .from('trip_participants')
+      .delete()
+      .eq('user_id', user.id);
+
+    // 12. Delete profile
+    console.log('Deleting profile...');
+    await admin
+      .from('profiles')
+      .delete()
+      .eq('id', user.id);
+
+    // 13. Finally, delete the user account
+    console.log('Deleting user account...');
+    const { error } = await admin.auth.admin.deleteUser(user.id);
+    if (error) {
+      console.error('Error deleting user account:', error);
+      return { message: `Failed to delete account: ${error.message}` };
+    }
+
+    console.log('Account deletion completed successfully');
+    
+    // Sign out the current session
+    await supabase.auth.signOut();
+
+    redirect('/');
+  } catch (error) {
+    console.error('Error deleting account:', error);
+    return { message: 'Database error deleting user. Please try again or contact support.' };
+  }
 }
