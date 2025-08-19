@@ -1,6 +1,7 @@
 // src/app/set-password/page.tsx
 'use client';
 import { useActionState, useState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { completeAccountSetup } from '../(app)/dashboard/profile/actions';
 import { Eye, EyeOff } from 'lucide-react';
 import { 
@@ -9,6 +10,28 @@ import {
   ContentSection,
   StandardInput
 } from '@/components/ui';
+
+// Loading button component
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  
+  return (
+    <button 
+      type="submit" 
+      disabled={pending}
+      className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors disabled:bg-indigo-400 disabled:cursor-not-allowed flex items-center justify-center min-w-[140px]"
+    >
+      {pending ? (
+        <>
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+          Saving...
+        </>
+      ) : (
+        'Save and Continue'
+      )}
+    </button>
+  );
+}
 
 export default function SetPasswordPage() {
   const [state, formAction] = useActionState(completeAccountSetup, { message: '' });
@@ -102,12 +125,7 @@ export default function SetPasswordPage() {
           )}
           
           <div className="flex justify-end">
-            <button 
-              type="submit" 
-              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors"
-            >
-              Save and Continue
-            </button>
+            <SubmitButton />
           </div>
         </form>
       </ContentSection>
