@@ -508,6 +508,12 @@ function ItineraryViewContent({ trip, itineraryDays, locations, transportation, 
           <LocationManager 
             tripId={trip.id} 
             locations={locations} 
+            onLocationsChange={async (updatedLocations: Location[]) => {
+              console.log('ItineraryView onLocationsChange called with:', updatedLocations);
+              console.log('Calling onDataRefresh...');
+              await onDataRefresh();
+              console.log('onDataRefresh completed');
+            }}
             isDeleteMode={isDeleteMode}
             setIsDeleteMode={setIsDeleteMode}
             isAddLocationModalOpen={isAddLocationModalOpen}

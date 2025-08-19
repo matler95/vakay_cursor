@@ -40,14 +40,15 @@ export function LocationManager({ tripId, locations, onLocationsChange, isDelete
   const addModalOpen = isAddLocationModalOpen ?? false;
   const setAddModalOpen = setIsAddLocationModalOpen ?? (() => {});
 
-  const handleLocationAdded = () => {
-    // Refresh the page to get updated locations
-    router.refresh();
-    
-    // Also notify parent component if callback is provided
+  const handleLocationAdded = async () => {
+    console.log('Location added, calling onLocationsChange callback...');
+    // Call the parent callback to refresh locations data
     if (onLocationsChange) {
-      // We'll need to fetch the updated locations here
-      // For now, just refresh the page
+      console.log('onLocationsChange callback exists, calling it...');
+      await onLocationsChange(locations);
+      console.log('onLocationsChange callback completed');
+    } else {
+      console.log('No onLocationsChange callback provided');
     }
   };
 
@@ -56,14 +57,15 @@ export function LocationManager({ tripId, locations, onLocationsChange, isDelete
     setIsEditModalOpen(true);
   };
 
-  const handleLocationUpdated = () => {
-    // Refresh the page to get updated locations
-    router.refresh();
-    
-    // Also notify parent component if callback is provided
+  const handleLocationUpdated = async () => {
+    console.log('Location updated, calling onLocationsChange callback...');
+    // Call the parent callback to refresh locations data
     if (onLocationsChange) {
-      // We'll need to fetch the updated locations here
-      // For now, just refresh the page
+      console.log('onLocationsChange callback exists, calling it...');
+      await onLocationsChange(locations);
+      console.log('onLocationsChange callback completed');
+    } else {
+      console.log('No onLocationsChange callback provided');
     }
   };
 
@@ -102,7 +104,12 @@ export function LocationManager({ tripId, locations, onLocationsChange, isDelete
 
     setIsDeleting(false);
     setLocationToDelete(null);
-    router.refresh();
+    
+    // Call the parent callback to refresh locations data
+    if (onLocationsChange) {
+      console.log('Location deleted, calling onLocationsChange callback...');
+      await onLocationsChange(locations);
+    }
   };
 
   const cancelDelete = () => {

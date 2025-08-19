@@ -74,7 +74,6 @@ export function TripPageClient({
   currentUserId,
 }: TripPageClientProps) {
   const [activeTab, setActiveTab] = useState<TabType>('plan');
-  const [isAddLocationModalOpen, setIsAddLocationModalOpen] = useState(false);
   const [isAddParticipantModalOpen, setIsAddParticipantModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
@@ -86,6 +85,11 @@ export function TripPageClient({
   const [currentExpenses, setCurrentExpenses] = useState(expenses);
   const [currentLocations, setCurrentLocations] = useState(locations);
   const [currentItineraryDays, setCurrentItineraryDays] = useState(itineraryDays);
+
+  // Debug logging for locations state changes
+  useEffect(() => {
+    console.log('currentLocations state changed to:', currentLocations);
+  }, [currentLocations]);
 
   // Refresh functions for different data types
   const refreshAccommodations = async () => {
@@ -137,13 +141,18 @@ export function TripPageClient({
   };
 
   const refreshLocations = async () => {
+    console.log('Refreshing locations...');
     const supabase = createClientComponentClient<Database>();
     const { data } = await supabase
       .from('locations')
       .select('*')
       .eq('trip_id', trip.id)
       .order('name');
-    if (data) setCurrentLocations(data);
+    console.log('Fetched locations:', data);
+    if (data) {
+      setCurrentLocations(data);
+      console.log('Updated currentLocations state:', data);
+    }
   };
 
   const refreshItineraryDays = async () => {
@@ -200,12 +209,14 @@ export function TripPageClient({
                 isEditing={isEditing}
                 setIsEditing={setIsEditing}
                 onDataRefresh={async () => {
+                  console.log('ItineraryView onDataRefresh called');
                   await Promise.all([
                     refreshLocations(),
                     refreshTransportation(),
                     refreshAccommodations(),
                     refreshItineraryDays()
                   ]);
+                  console.log('ItineraryView onDataRefresh completed');
                 }}
               />
             </div>
@@ -460,23 +471,6 @@ export function TripPageClient({
       />
 
       {/* Modals */}
-      {isAddLocationModalOpen && (
-        <div className="animate-in fade-in-0 duration-200">
-          <AddLocationModal
-            tripId={trip.id}
-            isOpen={isAddLocationModalOpen}
-            onClose={() => setIsAddLocationModalOpen(false)}
-            onLocationAdded={async () => {
-              setIsAddLocationModalOpen(false);
-              await Promise.all([
-                refreshLocations(),
-                refreshItineraryDays(),
-              ]);
-            }}
-          />
-        </div>
-      )}
-
       {isAddParticipantModalOpen && (
         <div className="animate-in fade-in-0 duration-200">
           <AddParticipantModal
