@@ -17,7 +17,7 @@ import {
   Clock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { StandardCard, SectionHeader } from '@/components/ui/design-system';
+import { StandardCard, SectionHeader, EmptyState } from '@/components/ui/design-system';
 import { formatCurrency } from '@/lib/currency';
 import { 
   PieChart as RechartsPieChart, 
@@ -82,7 +82,7 @@ export function ExpenseAnalytics({
     const pathParts = window.location.pathname.split('/');
     const tripIdIndex = pathParts.findIndex(part => part === 'trip') + 1;
     const tripId = pathParts[tripIdIndex];
-    router.push(`/trip/${tripId}`);
+    router.push(`/trip/${tripId}?tab=expenses`);
   };
 
   // Get unique categories from expenses
@@ -456,83 +456,95 @@ export function ExpenseAnalytics({
         </div>
       </div>
 
-      {/* Overview Dashboard - Key Metrics */}
-      <div className={`grid gap-1 sm:gap-4 ${
-        statusFilter === 'all' 
-          ? 'grid-cols-2 lg:grid-cols-4' 
-          : 'grid-cols-2 lg:grid-cols-3'
-      }`}>
-        <StandardCard className="text-center">
-        <div className="flex flex-col">
-            <div className="flex items-center gap-2 mb-2">
-              <DollarSign className="h-4 w-4 text-blue-600" />
-              <h3 className="text-xs  sm:text-xl font-medium text-gray-600">Total</h3>
-            </div>
-            <p className="text-lg sm:text-2xl font-bold text-gray-900">
-              {formatCurrency(analyticsData.totalExpenses, mainCurrency)}
-            </p>
-            <p className="text-xs text-gray-500 mt-1">
-              {analyticsData.totalExpenseCount} expenses
-            </p>
-          </div>
-        </StandardCard>
-        
-        <StandardCard className="text-center">
-        <div className="flex flex-col">
-        <div className="flex items-center gap-2 mb-2">
-        <Calendar className="h-4 w-4 text-purple-600" />
-            <h3 className="text-xs sm:text-xl font-medium text-gray-600">Average/Day</h3>
-            </div>
-            <p className="text-lg sm:text-2xl font-bold text-gray-900">
-              {formatCurrency(analyticsData.averagePerDay, mainCurrency)}
-            </p>
-            <p className="text-xs text-gray-500 mt-1">
-              {analyticsData.tripDuration} days
-            </p>
-          </div>
-        </StandardCard>
+      {/* Empty State - Show when no expenses exist */}
+      {expenses.length === 0 && (
+        <EmptyState
+          icon={BarChart3}
+          title="No expenses yet"
+          description="Start tracking your trip expenses to see detailed analytics, spending patterns, and insights."
+        />
+      )}
 
-        {statusFilter !== 'pending' && (
+      {/* Overview Dashboard - Key Metrics */}
+      {expenses.length > 0 && (
+        <div className={`grid gap-1 sm:gap-4 ${
+          statusFilter === 'all' 
+            ? 'grid-cols-2 lg:grid-cols-4' 
+            : 'grid-cols-2 lg:grid-cols-3'
+        }`}>
           <StandardCard className="text-center">
             <div className="flex flex-col">
-            <div className="flex items-center gap-2 mb-2">
-                <Check className="h-4 w-4 text-green-600" />
-                <h3 className="text-xs sm:text-xl font-medium text-gray-600">Paid</h3>
-              </div>
-              <p className="text-lg sm:text-2xl font-bold text-green-700">
-                {formatCurrency(analyticsData.paidExpenses, mainCurrency)}
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                {analyticsData.totalExpenses > 0 
-                  ? Math.round((analyticsData.paidExpenses / analyticsData.totalExpenses) * 100)
-                  : 0}% of total
-              </p>
-            </div>
-          </StandardCard>
-        )}
-
-        {statusFilter !== 'paid' && (
-          <StandardCard className="text-center">
-          <div className="flex flex-col">
               <div className="flex items-center gap-2 mb-2">
-                <Clock className="h-4 w-4 text-orange-600" />
-                <h3 className="text-xs sm:text-xl font-medium text-gray-600">Pending</h3>
+                <DollarSign className="h-4 w-4 text-blue-600" />
+                <h3 className="text-xs  sm:text-xl font-medium text-gray-600">Total</h3>
               </div>
-              <p className="text-lg sm:text-2xl font-bold text-orange-700">
-                {formatCurrency(analyticsData.pendingExpenses, mainCurrency)}
+              <p className="text-lg sm:text-2xl font-bold text-gray-900">
+                {formatCurrency(analyticsData.totalExpenses, mainCurrency)}
               </p>
               <p className="text-xs text-gray-500 mt-1">
-                {analyticsData.totalExpenses > 0 
-                  ? Math.round((analyticsData.pendingExpenses / analyticsData.totalExpenses) * 100)
-                  : 0}% of total
+                {analyticsData.totalExpenseCount} expenses
               </p>
             </div>
           </StandardCard>
-        )}
-      </div>
+          
+          <StandardCard className="text-center">
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2 mb-2">
+                <Calendar className="h-4 w-4 text-purple-600" />
+                <h3 className="text-xs sm:text-xl font-medium text-gray-600">Average/Day</h3>
+              </div>
+              <p className="text-lg sm:text-2xl font-bold text-gray-900">
+                {formatCurrency(analyticsData.averagePerDay, mainCurrency)}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                {analyticsData.tripDuration} days
+              </p>
+            </div>
+          </StandardCard>
+
+          {statusFilter !== 'pending' && (
+            <StandardCard className="text-center">
+              <div className="flex flex-col">
+                <div className="flex items-center gap-2 mb-2">
+                  <Check className="h-4 w-4 text-green-600" />
+                  <h3 className="text-xs sm:text-xl font-medium text-gray-600">Paid</h3>
+                </div>
+                <p className="text-lg sm:text-2xl font-bold text-green-700">
+                  {formatCurrency(analyticsData.paidExpenses, mainCurrency)}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {analyticsData.totalExpenses > 0 
+                    ? Math.round((analyticsData.paidExpenses / analyticsData.totalExpenses) * 100)
+                    : 0}% of total
+                </p>
+              </div>
+            </StandardCard>
+          )}
+
+          {statusFilter !== 'paid' && (
+            <StandardCard className="text-center">
+              <div className="flex flex-col">
+                <div className="flex items-center gap-2 mb-2">
+                  <Clock className="h-4 w-4 text-orange-600" />
+                  <h3 className="text-xs sm:text-xl font-medium text-gray-600">Pending</h3>
+                </div>
+                <p className="text-lg sm:text-2xl font-bold text-orange-700">
+                  {formatCurrency(analyticsData.pendingExpenses, mainCurrency)}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {analyticsData.totalExpenses > 0 
+                    ? Math.round((analyticsData.pendingExpenses / analyticsData.totalExpenses) * 100)
+                    : 0}% of total
+                </p>
+              </div>
+            </StandardCard>
+          )}
+        </div>
+      )}
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+      {expenses.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Category Breakdown */}
         <StandardCard>
           <SectionHeader title="Category Breakdown" description="Spending by category">
@@ -618,8 +630,10 @@ export function ExpenseAnalytics({
 
 
       </div>
+      )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+      {expenses.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
 
       {/* Participant Analytics */}
       <StandardCard>
@@ -711,6 +725,7 @@ export function ExpenseAnalytics({
         </div>
       </StandardCard>
     </div>
+    )}
     </div>
   );
 }

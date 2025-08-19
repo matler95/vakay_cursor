@@ -6,7 +6,7 @@ import { Database } from '@/types/database.types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Trash2, Edit, MapPin, CreditCard, Clock, Search, Filter, ArrowUpDown, ArrowUp, ArrowDown, ChevronDown, ChevronRight, Check } from 'lucide-react';
+import { Trash2, Edit, MapPin, CreditCard, Clock, Search, Filter, ArrowUpDown, ArrowUp, ArrowDown, ChevronDown, ChevronRight, Check, DollarSign } from 'lucide-react';
 import { formatCurrency, getCurrencySymbol } from '@/lib/currency';
 import { 
   StandardList, 
@@ -14,7 +14,8 @@ import {
   ListHeader, 
   EditButton, 
   DeleteButton,
-  ContentSection
+  ContentSection,
+  EmptyState
 } from '@/components/ui';
 // Server actions will be passed as props
 import { DeleteExpenseModal } from './DeleteExpenseModal';
@@ -155,225 +156,240 @@ export function ExpensesList({
     });
   };
 
+  if (expenses.length === 0) {
+    return (
+      <EmptyState
+        icon={DollarSign}
+        title="No expenses yet"
+        description="Add your first expense to start tracking your trip spending"
+      />
+    );
+  }
+
+
   return (
     <ContentSection>
-
-      {/* Filters, Search, Sorting */}
-      <div className="mb-6">
-        {/* Search and Filters in horizontal layout */}
-        <div className="flex items-start gap-3">
-          {/* Search - Always visible */}
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Search expenses..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 h-11"
-              />
-            </div>
-          </div>
-
-          {/* Expandable Filters and Sorting Section */}
-          <div className="bg-white rounded-lg border border-gray-200 min-w-0">
-            <div
-              className="flex items-center justify-between p-3 cursor-pointer whitespace-nowrap"
-              onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
-            >
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-gray-500" />
-                <span className="text-sm font-medium text-gray-700">Filters</span>
-              </div>
-              {isFiltersExpanded ? (
-                <ChevronDown className="h-4 w-4 text-gray-500" />
-              ) : (
-                <ChevronRight className="h-4 w-4 text-gray-500" />
-              )}
-            </div>
-
-            {isFiltersExpanded && (
-              <div className="px-3 pb-3 border-t border-gray-100">
-                <div className="space-y-3 pt-3">
-                  {/* Filters - Compact horizontal layout */}
-                  <div className="space-y-2">
-                    <span className="text-xs font-medium text-gray-600">Category & Status</span>
-                    <div className="flex gap-2">
-                      <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                        <SelectTrigger className="h-9 text-xs">
-                          <SelectValue placeholder="Category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All categories</SelectItem>
-                          {categories.map((category) => (
-                            <SelectItem key={category.id} value={category.id.toString()}>
-                              <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: category.color }} />
-                                {category.name}
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-
-                      <Select value={statusFilter} onValueChange={setStatusFilter}>
-                        <SelectTrigger className="h-9 text-xs">
-                          <SelectValue placeholder="Status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All status</SelectItem>
-                          <SelectItem value="paid">Paid</SelectItem>
-                          <SelectItem value="pending">Pending</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  {/* Sorting - Compact horizontal layout */}
-                  <div className="space-y-2">
-                    <span className="text-xs font-medium text-gray-600">Sort</span>
-                    <div className="flex gap-2">
-                      <Select value={sortBy} onValueChange={(value) => setSortBy(value as 'created_at' | 'amount' | 'description')}>
-                        <SelectTrigger className="h-9 text-xs">
-                          <SelectValue placeholder="Sort by" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="created_at">Date Created</SelectItem>
-                          <SelectItem value="amount">Amount</SelectItem>
-                          <SelectItem value="description">Description</SelectItem>
-                        </SelectContent>
-                      </Select>
-
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))}
-                        aria-pressed={sortOrder === 'desc'}
-                        title={sortOrder === 'asc' ? 'Ascending' : 'Descending'}
-                        className="h-9 w-9 p-0 flex-shrink-0"
-                      >
-                        {sortOrder === 'asc' ? (
-                          <ArrowUp className="h-4 w-4 text-gray-500" />
-                        ) : (
-                          <ArrowDown className="h-4 w-4 text-gray-500" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
+      {/* Only show filters and list when expenses exist */}
+      {expenses.length > 0 && (
+        <>
+          {/* Filters, Search, Sorting */}
+          <div className="mb-6">
+            {/* Search and Filters in horizontal layout */}
+            <div className="flex items-start gap-3">
+              {/* Search - Always visible */}
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    placeholder="Search expenses..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 h-11"
+                  />
                 </div>
               </div>
-            )}
-          </div>
-        </div>
-      </div>
 
-      {/* Expenses List */}
-      <div className="space-y-4">
-        {filteredExpenses.map((expense) => (
-          <div
-            key={expense.id}
-            className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden"
-          >
-            {/* Header with amount and status */}
-            <div className="p-4 border-b border-gray-100">
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0 pr-4">
-                  <h4 className="font-semibold text-gray-900 text-base leading-tight mb-2">
-                    {expense.description}
-                  </h4>
-                  <div className="flex items-center gap-3">
-                    {expense.expense_categories && (
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-3 h-3 rounded-full"
-                          style={{ backgroundColor: expense.expense_categories.color }}
-                        />
-                        <span className="text-sm text-gray-600">{expense.expense_categories.name}</span>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                      <span>By</span>
-                      <span className="font-medium text-gray-700">{getParticipantName(expense.user_id)}</span>
-                    </div>
+              {/* Expandable Filters and Sorting Section */}
+              <div className="bg-white rounded-lg border border-gray-200 min-w-0">
+                <div
+                  className="flex items-center justify-between p-3 cursor-pointer whitespace-nowrap"
+                  onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
+                >
+                  <div className="flex items-center gap-2">
+                    <Filter className="h-4 w-4 text-gray-500" />
+                    <span className="text-sm font-medium text-gray-700">Filters</span>
                   </div>
-                </div>
-                <div className="text-right flex-shrink-0">
-                  <p className="font-bold text-xl text-gray-900">
-                    {formatCurrency(Number(expense.amount), mainCurrency)}
-                  </p>
-                  {expense.original_currency !== mainCurrency && (
-                    <p className="text-sm text-gray-500">
-                      {getCurrencySymbol(expense.original_currency || '')}{expense.original_amount}
-                    </p>
+                  {isFiltersExpanded ? (
+                    <ChevronDown className="h-4 w-4 text-gray-500" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 text-gray-500" />
                   )}
                 </div>
-              </div>
-              {/* Location and date */}
-              <div className="flex flex-col gap-3 mt-4">
-                {expense.location && (
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <MapPin className="h-4 w-4 flex-shrink-0" />
-                    <span className="truncate">{expense.location}</span>
+
+                {isFiltersExpanded && (
+                  <div className="px-3 pb-3 border-t border-gray-100">
+                    <div className="space-y-3 pt-3">
+                      {/* Filters - Compact horizontal layout */}
+                      <div className="space-y-2">
+                        <span className="text-xs font-medium text-gray-600">Category & Status</span>
+                        <div className="flex gap-2">
+                          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                            <SelectTrigger className="h-9 text-xs">
+                              <SelectValue placeholder="Category" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All categories</SelectItem>
+                              {categories.map((category) => (
+                                <SelectItem key={category.id} value={category.id.toString()}>
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: category.color }} />
+                                    {category.name}
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+
+                          <Select value={statusFilter} onValueChange={setStatusFilter}>
+                            <SelectTrigger className="h-9 text-xs">
+                              <SelectValue placeholder="Status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All status</SelectItem>
+                              <SelectItem value="paid">Paid</SelectItem>
+                              <SelectItem value="pending">Pending</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      {/* Sorting - Compact horizontal layout */}
+                      <div className="space-y-2">
+                        <span className="text-xs font-medium text-gray-600">Sort</span>
+                        <div className="flex gap-2">
+                          <Select value={sortBy} onValueChange={(value) => setSortBy(value as 'created_at' | 'amount' | 'description')}>
+                            <SelectTrigger className="h-9 text-xs">
+                              <SelectValue placeholder="Sort by" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="created_at">Date Created</SelectItem>
+                              <SelectItem value="amount">Amount</SelectItem>
+                              <SelectItem value="description">Description</SelectItem>
+                            </SelectContent>
+                          </Select>
+
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))}
+                            aria-pressed={sortOrder === 'desc'}
+                            title={sortOrder === 'asc' ? 'Ascending' : 'Descending'}
+                            className="h-9 w-9 p-0 flex-shrink-0"
+                          >
+                            {sortOrder === 'asc' ? (
+                              <ArrowUp className="h-4 w-4 text-gray-500" />
+                            ) : (
+                              <ArrowDown className="h-4 w-4 text-gray-500" />
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
-                <div className="text-sm text-gray-500">
-                  {formatDateTime(expense.created_at)}
-                </div>
-              </div>
-            </div>
-
-            {/* Content section */}
-            <div>
-
-              {/* Action buttons */}
-              <div className="p-4">
-                <div className="flex items-center justify-between gap-2">
-                  {/* Left side: Status toggle button */}
-                  <Button
-                    variant={expense.payment_status === 'paid' ? 'outline' : 'outline'}
-                    size="sm"
-                    onClick={() => handleStatusToggle(expense)}
-                    disabled={!canEditExpense(expense) || isUpdatingStatus === expense.id}
-                    className={`h-11 sm:w-auto w-11 p-0 ${
-                      expense.payment_status === 'paid' 
-                        ? 'border-green-600 text-green-600 hover:bg-green-50' 
-                        : 'text-orange-600 border-orange-600 hover:bg-orange-50'
-                    }`}
-                  >
-                    {isUpdatingStatus === expense.id ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
-                    ) : expense.payment_status === 'paid' ? (
-                      <>
-                        <Check className="h-4 w-4 sm:mr-2" />
-                        <span className="hidden sm:inline">Paid</span>
-                      </>
-                    ) : (
-                      <>
-                        <Clock className="h-4 w-4 sm:mr-2" />
-                        <span className="hidden sm:inline">Pending</span>
-                      </>
-                    )}
-                  </Button>
-
-                  {/* Right side: Edit/Delete buttons */}
-                  {canEditExpense(expense) && (
-                    <div className="flex gap-2">
-                      <EditButton
-                        onClick={() => setEditExpense(expense)}
-                        tooltip="Edit expense"
-                      />
-                      <DeleteButton
-                        onClick={() => setDeleteExpense(expense)}
-                        tooltip="Delete expense"
-                      />
-                    </div>
-                  )}
-                </div>
               </div>
             </div>
           </div>
-        ))}
-      </div>
+
+          {/* Expenses List */}
+          <div className="space-y-4">
+            {filteredExpenses.map((expense) => (
+              <div
+                key={expense.id}
+                className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden"
+              >
+                {/* Header with amount and status */}
+                <div className="p-4 border-b border-gray-100">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0 pr-4">
+                      <h4 className="font-semibold text-gray-900 text-base leading-tight mb-2">
+                        {expense.description}
+                      </h4>
+                      <div className="flex items-center gap-3">
+                        {expense.expense_categories && (
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="w-3 h-3 rounded-full"
+                              style={{ backgroundColor: expense.expense_categories.color }}
+                            />
+                            <span className="text-sm text-gray-600">{expense.expense_categories.name}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                          <span>By</span>
+                          <span className="font-medium text-gray-700">{getParticipantName(expense.user_id)}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <p className="font-bold text-xl text-gray-900">
+                        {formatCurrency(Number(expense.amount), mainCurrency)}
+                      </p>
+                      {expense.original_currency !== mainCurrency && (
+                        <p className="text-sm text-gray-500">
+                          {getCurrencySymbol(expense.original_currency || '')}{expense.original_amount}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  {/* Location and date */}
+                  <div className="flex flex-col gap-3 mt-4">
+                    {expense.location && (
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <MapPin className="h-4 w-4 flex-shrink-0" />
+                        <span className="truncate">{expense.location}</span>
+                      </div>
+                    )}
+                    <div className="text-sm text-gray-500">
+                      {formatDateTime(expense.created_at)}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Content section */}
+                <div>
+
+                  {/* Action buttons */}
+                  <div className="p-4">
+                    <div className="flex items-center justify-between gap-2">
+                      {/* Left side: Status toggle button */}
+                      <Button
+                        variant={expense.payment_status === 'paid' ? 'outline' : 'outline'}
+                        size="sm"
+                        onClick={() => handleStatusToggle(expense)}
+                        disabled={!canEditExpense(expense) || isUpdatingStatus === expense.id}
+                        className={`h-11 sm:w-auto w-11 p-0 ${
+                          expense.payment_status === 'paid' 
+                            ? 'border-green-600 text-green-600 hover:bg-green-50' 
+                            : 'text-orange-600 border-orange-600 hover:bg-orange-50'
+                        }`}
+                      >
+                        {isUpdatingStatus === expense.id ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
+                        ) : expense.payment_status === 'paid' ? (
+                          <>
+                            <Check className="h-4 w-4 sm:mr-2" />
+                            <span className="hidden sm:inline">Paid</span>
+                          </>
+                        ) : (
+                          <>
+                            <Clock className="h-4 w-4 sm:mr-2" />
+                            <span className="hidden sm:inline">Pending</span>
+                          </>
+                        )}
+                      </Button>
+
+                      {/* Right side: Edit/Delete buttons */}
+                      {canEditExpense(expense) && (
+                        <div className="flex gap-2">
+                          <EditButton
+                            onClick={() => setEditExpense(expense)}
+                            tooltip="Edit expense"
+                          />
+                          <DeleteButton
+                            onClick={() => setDeleteExpense(expense)}
+                            tooltip="Delete expense"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
 
       {/* Modals */}
       {deleteExpense && (

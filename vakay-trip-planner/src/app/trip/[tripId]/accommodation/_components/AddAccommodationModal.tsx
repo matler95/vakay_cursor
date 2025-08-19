@@ -25,6 +25,11 @@ interface AddAccommodationModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAccommodationAdded: () => void;
+  prefilledData?: {
+    name?: string;
+    address?: string;
+    booking_url?: string;
+  };
 }
 
 type ParticipantOption = { id: string; name: string };
@@ -34,7 +39,8 @@ export function AddAccommodationModal({
   tripId,
   isOpen,
   onClose,
-  onAccommodationAdded
+  onAccommodationAdded,
+  prefilledData
 }: AddAccommodationModalProps) {
   const supabase = createClientComponentClient<Database>();
 
@@ -70,6 +76,17 @@ export function AddAccommodationModal({
 
   useEffect(() => {
     if (!isOpen) return;
+    
+    // Set prefilled data if available
+    if (prefilledData) {
+      setFormData(prev => ({
+        ...prev,
+        name: prefilledData.name || prev.name,
+        address: prefilledData.address || prev.address,
+        booking_url: prefilledData.booking_url || prev.booking_url
+      }));
+    }
+    
     const loadParticipants = async () => {
       const { data: tp } = await supabase
         .from('trip_participants')
@@ -110,7 +127,7 @@ export function AddAccommodationModal({
     loadParticipants();
     loadMainCurrency();
     loadTripLocations();
-  }, [isOpen, supabase, tripId]);
+  }, [isOpen, supabase, tripId, prefilledData]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({

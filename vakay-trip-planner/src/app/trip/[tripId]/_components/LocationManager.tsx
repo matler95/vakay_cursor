@@ -6,13 +6,14 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { deleteLocation } from '../actions';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { EditButton, DeleteButton, EmptyState } from '@/components/ui';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Plus, Trash2, AlertTriangle, CopyCheck, X, MapPin, Edit } from 'lucide-react';
 import { AddLocationModal } from './AddLocationModal';
 import { EditLocationModal } from './EditLocationModal';
 import { MultiEditLocationsModal } from './MultiEditLocationsModal';
 import { ConfirmationModal } from '@/components/ui';
-import { EditButton, DeleteButton } from '@/components/ui';
 
 type Location = Database['public']['Tables']['locations']['Row'];
 
@@ -246,10 +247,11 @@ export function LocationManager({ tripId, locations, onLocationsChange, isDelete
             ))}
           </div>
         ) : (
-          <div className="text-center py-8 text-gray-500">
-            <p className="text-sm">No locations defined yet.</p>
-            <p className="text-xs mt-1">Click the + button to add your first location.</p>
-          </div>
+          <EmptyState
+            icon={MapPin}
+            title="No locations defined yet"
+            description="Click the + button to add your first location."
+          />
         )}
       </div>
 

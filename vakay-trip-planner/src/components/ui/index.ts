@@ -1,5 +1,4 @@
 // Standardized UI Components
-export * from './design-system';
 export * from './standard-modal';
 export * from './standard-forms';
 export * from './standard-lists';
@@ -17,3 +16,4 @@ export * from './tooltip';
 export * from './badge';
 export * from './autocomplete';
 export * from './modal';
+export * from './switch';
