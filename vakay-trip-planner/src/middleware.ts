@@ -35,8 +35,8 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(new URL('/dashboard', req.url));
     }
   } else {
-    // Not signed in, protect all routes except login
-    if (req.nextUrl.pathname !== '/') {
+    // Not signed in, protect all routes except login and reset-password
+    if (req.nextUrl.pathname !== '/' && req.nextUrl.pathname !== '/reset-password') {
       return NextResponse.redirect(new URL('/', req.url));
     }
   }
@@ -44,7 +44,7 @@ export async function middleware(req: NextRequest) {
   return res;
 }
 
-// Configure the middleware to run on the root and all dashboard/trip/set-password paths
+// Configure the middleware to run on the root and all dashboard/trip/set-password/reset-password paths
 export const config = {
-  matcher: ['/', '/dashboard/:path*', '/trip/:path*', '/set-password'],
+  matcher: ['/', '/dashboard/:path*', '/trip/:path*', '/set-password', '/reset-password'],
 };
